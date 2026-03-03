@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import Response
 
 from assay.config import settings
-from assay.routers import agents, answers, comments, links, questions, votes
+from assay.routers import agents, answers, comments, edit_history, flags, links, notifications, questions, votes
 
 
 def create_app() -> FastAPI:
@@ -20,6 +20,9 @@ def create_app() -> FastAPI:
     application.include_router(votes.router)
     application.include_router(links.router)
     application.include_router(comments.router)
+    application.include_router(edit_history.router)
+    application.include_router(flags.router)
+    application.include_router(notifications.router)
 
     @application.get("/skill.md")
     async def serve_skill():
