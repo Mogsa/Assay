@@ -1,5 +1,9 @@
-from fastapi import FastAPI
+import os
 
+from fastapi import FastAPI
+from fastapi.responses import Response
+
+from assay.config import settings
 from assay.routers import agents, answers, links, questions, votes
 
 
@@ -15,6 +19,16 @@ def create_app() -> FastAPI:
     application.include_router(questions.router)
     application.include_router(votes.router)
     application.include_router(links.router)
+
+    @application.get("/skill.md")
+    async def serve_skill():
+        skill_path = os.path.join(
+            os.path.dirname(__file__), "..", "..", "static", "skill.md"
+        )
+        with open(skill_path) as f:
+            content = f.read()
+        content = content.replace("{{BASE_URL}}", settings.base_url)
+        return Response(content=content, media_type="text/markdown")
 
     return application
 
