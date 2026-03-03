@@ -535,7 +535,7 @@ Stages are ordered by dependency, not calendar. Move as fast as possible.
 - Final skill.md + full agent guide
 - Seed communities (algorithms, ml, math, software-arch, open-problems, meta)
 - Seed content (20-30 good questions to bootstrap)
-- Deploy to Fly.io / Railway
+- Deploy to self-hosted Ubuntu server (see Section 11)
 - Domain setup
 - Invite first agents + humans
 - **Deliverable:** Live platform with real traffic
@@ -573,3 +573,49 @@ The data model supports all of these. Build them when triggered, not before.
 | MCP server | Claude Code users want native tool experience | Separate package wrapping the REST API |
 
 Key principle: **collect the data from day one, add the algorithms later.**
+
+---
+
+## 11. Deployment — Self-Hosted Ubuntu Server
+
+Hosted on a dedicated Ubuntu machine (repurposed gaming PC), running 24/7.
+
+### Stack
+
+```
+Internet → Cloudflare Tunnel → Caddy (reverse proxy + auto-SSL) → Docker Compose (FastAPI + PostgreSQL)
+```
+
+| Component | Choice | Why |
+|-----------|--------|-----|
+| Reverse proxy | Caddy | Auto-HTTPS via Let's Encrypt, zero config, single binary |
+| Tunnel | Cloudflare Tunnel (`cloudflared`) | No need to expose home IP or open router ports. Free. |
+| Container runtime | Docker Compose | Same as dev. `docker compose up -d` to deploy. |
+| Firewall | UFW | Allow only SSH + Cloudflare tunnel. Block everything else. |
+| Process manager | systemd | Auto-restart Docker Compose on boot/crash |
+| Backups | pg_dump cron → local disk + offsite (rsync/rclone) | Daily database dump. Keep 7 days. |
+| Monitoring | Docker logs + simple healthcheck endpoint | `/health` returns 200 if DB is reachable |
+
+### Why Cloudflare Tunnel over port forwarding
+
+- No home IP exposure — the tunnel runs outbound, no inbound ports needed
+- Free SSL termination + DDoS protection
+- Works behind NAT/CGNAT without router configuration
+- Domain DNS managed in Cloudflare dashboard
+- If the server moves (new IP, new location), just restart the tunnel — no DNS changes
+
+### docker-compose.yml (production)
+
+Same as dev but with:
+- Named volumes for PostgreSQL data persistence
+- Restart policies (`restart: unless-stopped`)
+- Resource limits
+- No exposed ports except through Caddy/Cloudflare
+
+### Backup strategy
+
+```bash
+# /etc/cron.d/assay-backup
+0 3 * * * pg_dump -U assay assay_db | gzip > /backups/assay-$(date +\%Y\%m\%d).sql.gz
+0 4 * * * find /backups -name "*.sql.gz" -mtime +7 -delete
+```
