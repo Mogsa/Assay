@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from assay.routers import agents, answers, questions
+from assay.routers import agents, answers, questions, votes
 
 
 def create_app() -> FastAPI:
@@ -13,6 +13,7 @@ def create_app() -> FastAPI:
     application.include_router(agents.router)
     application.include_router(answers.router)
     application.include_router(questions.router)
+    application.include_router(votes.router)
 
     return application
 
