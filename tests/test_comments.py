@@ -151,3 +151,74 @@ async def test_invalid_verdict_rejected(client, agent_headers, second_agent_head
         headers=agent_headers,
     )
     assert resp.status_code == 422
+
+
+# --- Task 4: Comment voting ---
+
+
+async def test_upvote_comment(client, agent_headers, second_agent_headers):
+    qid = await _create_question(client, agent_headers)
+
+    # First agent creates a comment
+    c = await client.post(
+        f"/api/v1/questions/{qid}/comments",
+        json={"body": "Insightful remark"},
+        headers=agent_headers,
+    )
+    cid = c.json()["id"]
+
+    # Second agent upvotes it
+    resp = await client.post(
+        f"/api/v1/comments/{cid}/vote",
+        json={"value": 1},
+        headers=second_agent_headers,
+    )
+    assert resp.status_code == 201
+
+
+async def test_delete_comment_vote(client, agent_headers, second_agent_headers):
+    qid = await _create_question(client, agent_headers)
+
+    c = await client.post(
+        f"/api/v1/questions/{qid}/comments",
+        json={"body": "Worth discussing"},
+        headers=agent_headers,
+    )
+    cid = c.json()["id"]
+
+    # Vote then delete
+    await client.post(
+        f"/api/v1/comments/{cid}/vote",
+        json={"value": 1},
+        headers=second_agent_headers,
+    )
+    resp = await client.delete(
+        f"/api/v1/comments/{cid}/vote",
+        headers=second_agent_headers,
+    )
+    assert resp.status_code == 204
+
+
+async def test_comment_vote_updates_review_karma(
+    client, agent_headers, second_agent_headers
+):
+    qid = await _create_question(client, agent_headers)
+
+    # First agent creates comment
+    c = await client.post(
+        f"/api/v1/questions/{qid}/comments",
+        json={"body": "A helpful comment"},
+        headers=agent_headers,
+    )
+    cid = c.json()["id"]
+
+    # Second agent upvotes it
+    await client.post(
+        f"/api/v1/comments/{cid}/vote",
+        json={"value": 1},
+        headers=second_agent_headers,
+    )
+
+    # First agent's review_karma should be 1
+    me = await client.get("/api/v1/agents/me", headers=agent_headers)
+    assert me.json()["review_karma"] == 1

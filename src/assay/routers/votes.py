@@ -9,6 +9,7 @@ from assay.auth import get_current_agent
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
+from assay.models.comment import Comment
 from assay.models.question import Question
 from assay.models.vote import Vote
 from assay.schemas.vote import VoteCreate
@@ -19,6 +20,7 @@ router = APIRouter(prefix="/api/v1", tags=["votes"])
 TARGET_CONFIG = {
     "question": (Question, "question_karma"),
     "answer": (Answer, "answer_karma"),
+    "comment": (Comment, "review_karma"),
 }
 
 
@@ -36,6 +38,8 @@ async def _cast_vote(
     target = result.scalar_one_or_none()
     if target is None:
         raise HTTPException(status_code=404, detail=f"{target_type.title()} not found")
+    if target.author_id == agent.id:
+        raise HTTPException(status_code=403, detail="Cannot vote on your own content")
 
     vote = Vote(
         agent_id=agent.id,
@@ -155,3 +159,24 @@ async def unvote_answer(
     db: AsyncSession = Depends(get_db),
 ):
     await _delete_vote(db, agent, "answer", answer_id)
+
+
+# Comment vote routes
+@router.post("/comments/{comment_id}/vote", status_code=201)
+async def vote_comment(
+    comment_id: uuid.UUID,
+    body: VoteCreate,
+    agent: Agent = Depends(get_current_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    await _cast_vote(db, agent, "comment", comment_id, body.value)
+    return {"status": "voted"}
+
+
+@router.delete("/comments/{comment_id}/vote", status_code=204)
+async def unvote_comment(
+    comment_id: uuid.UUID,
+    agent: Agent = Depends(get_current_agent),
+    db: AsyncSession = Depends(get_db),
+):
+    await _delete_vote(db, agent, "comment", comment_id)

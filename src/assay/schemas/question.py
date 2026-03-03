@@ -25,6 +25,18 @@ class QuestionSummary(BaseModel):
     created_at: datetime
 
 
+class CommentInQuestion(BaseModel):
+    id: uuid.UUID
+    body: str
+    author_id: uuid.UUID
+    parent_id: uuid.UUID | None
+    verdict: str | None
+    upvotes: int
+    downvotes: int
+    score: int
+    created_at: datetime
+
+
 class AnswerInQuestion(BaseModel):
     id: uuid.UUID
     body: str
@@ -33,6 +45,7 @@ class AnswerInQuestion(BaseModel):
     downvotes: int
     score: int
     created_at: datetime
+    comments: list[CommentInQuestion] = []
 
 
 class LinkInQuestion(BaseModel):
@@ -45,7 +58,8 @@ class LinkInQuestion(BaseModel):
 
 
 class QuestionDetail(QuestionSummary):
-    """For single question — includes answers and related links."""
+    """For single question — includes answers, comments, and related links."""
 
     answers: list[AnswerInQuestion]
+    comments: list[CommentInQuestion] = []
     related: list[LinkInQuestion]

@@ -9,6 +9,7 @@ from assay.auth import get_current_agent
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
+from assay.models.comment import Comment
 from assay.models.link import Link
 from assay.models.question import Question
 from assay.pagination import decode_cursor, encode_cursor
@@ -52,11 +53,14 @@ async def list_questions(
     stmt = select(Question).order_by(Question.created_at.desc(), Question.id.desc())
 
     if cursor:
-        c = decode_cursor(cursor)
-        stmt = stmt.where(
-            tuple_(Question.created_at, Question.id)
-            < tuple_(datetime.fromisoformat(c["created_at"]), uuid.UUID(c["id"]))
-        )
+        try:
+            c = decode_cursor(cursor)
+            stmt = stmt.where(
+                tuple_(Question.created_at, Question.id)
+                < tuple_(datetime.fromisoformat(c["created_at"]), uuid.UUID(c["id"]))
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail="Invalid cursor") from exc
 
     stmt = stmt.limit(limit + 1)
     result = await db.execute(stmt)
@@ -123,6 +127,26 @@ async def get_question(
     )
     answers = ans_result.scalars().all()
 
+    # Fetch comments on the question
+    q_comment_result = await db.execute(
+        select(Comment)
+        .where(Comment.target_type == "question", Comment.target_id == question_id)
+        .order_by(Comment.created_at.asc())
+    )
+    q_comments = q_comment_result.scalars().all()
+
+    # Fetch comments on answers (batch)
+    answer_ids = [a.id for a in answers]
+    answer_comments_map: dict[uuid.UUID, list] = {aid: [] for aid in answer_ids}
+    if answer_ids:
+        a_comment_result = await db.execute(
+            select(Comment)
+            .where(Comment.target_type == "answer", Comment.target_id.in_(answer_ids))
+            .order_by(Comment.created_at.asc())
+        )
+        for c in a_comment_result.scalars().all():
+            answer_comments_map[c.target_id].append(c)
+
     # Fetch inbound links (things that reference this question)
     link_result = await db.execute(
         select(Link)
@@ -130,6 +154,19 @@ async def get_question(
         .order_by(Link.created_at.desc())
     )
     links = link_result.scalars().all()
+
+    def _comment_dict(c: Comment) -> dict:
+        return {
+            "id": c.id,
+            "body": c.body,
+            "author_id": c.author_id,
+            "parent_id": c.parent_id,
+            "verdict": c.verdict,
+            "upvotes": c.upvotes,
+            "downvotes": c.downvotes,
+            "score": c.score,
+            "created_at": c.created_at,
+        }
 
     return QuestionDetail(
         id=question.id,
@@ -152,9 +189,11 @@ async def get_question(
                 "downvotes": a.downvotes,
                 "score": a.score,
                 "created_at": a.created_at,
+                "comments": [_comment_dict(c) for c in answer_comments_map.get(a.id, [])],
             }
             for a in answers
         ],
+        comments=[_comment_dict(c) for c in q_comments],
         related=[
             {
                 "id": lnk.id,
