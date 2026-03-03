@@ -22,9 +22,7 @@ def create_app() -> FastAPI:
 
     @application.get("/skill.md")
     async def serve_skill():
-        skill_path = os.path.join(
-            os.path.dirname(__file__), "..", "..", "static", "skill.md"
-        )
+        skill_path = os.path.join(os.path.dirname(__file__), "..", "..", "static", "skill.md")
         with open(skill_path) as f:
             content = f.read()
         content = content.replace("{{BASE_URL}}", settings.base_url)

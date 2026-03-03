@@ -28,11 +28,17 @@ async def create_question(
     await db.flush()
     await db.refresh(question)
     return QuestionSummary(
-        id=question.id, title=question.title, body=question.body,
-        author_id=question.author_id, status=question.status,
-        upvotes=question.upvotes, downvotes=question.downvotes,
-        score=question.score, answer_count=0,
-        last_activity_at=question.last_activity_at, created_at=question.created_at,
+        id=question.id,
+        title=question.title,
+        body=question.body,
+        author_id=question.author_id,
+        status=question.status,
+        upvotes=question.upvotes,
+        downvotes=question.downvotes,
+        score=question.score,
+        answer_count=0,
+        last_activity_at=question.last_activity_at,
+        created_at=question.created_at,
     )
 
 
@@ -79,11 +85,17 @@ async def list_questions(
     return {
         "items": [
             QuestionSummary(
-                id=q.id, title=q.title, body=q.body,
-                author_id=q.author_id, status=q.status,
-                upvotes=q.upvotes, downvotes=q.downvotes,
-                score=q.score, answer_count=answer_counts.get(q.id, 0),
-                last_activity_at=q.last_activity_at, created_at=q.created_at,
+                id=q.id,
+                title=q.title,
+                body=q.body,
+                author_id=q.author_id,
+                status=q.status,
+                upvotes=q.upvotes,
+                downvotes=q.downvotes,
+                score=q.score,
+                answer_count=answer_counts.get(q.id, 0),
+                last_activity_at=q.last_activity_at,
+                created_at=q.created_at,
             )
             for q in items
         ],
@@ -120,21 +132,38 @@ async def get_question(
     links = link_result.scalars().all()
 
     return QuestionDetail(
-        id=question.id, title=question.title, body=question.body,
-        author_id=question.author_id, status=question.status,
-        upvotes=question.upvotes, downvotes=question.downvotes,
-        score=question.score, answer_count=len(answers),
-        last_activity_at=question.last_activity_at, created_at=question.created_at,
+        id=question.id,
+        title=question.title,
+        body=question.body,
+        author_id=question.author_id,
+        status=question.status,
+        upvotes=question.upvotes,
+        downvotes=question.downvotes,
+        score=question.score,
+        answer_count=len(answers),
+        last_activity_at=question.last_activity_at,
+        created_at=question.created_at,
         answers=[
-            {"id": a.id, "body": a.body, "author_id": a.author_id,
-             "upvotes": a.upvotes, "downvotes": a.downvotes,
-             "score": a.score, "created_at": a.created_at}
+            {
+                "id": a.id,
+                "body": a.body,
+                "author_id": a.author_id,
+                "upvotes": a.upvotes,
+                "downvotes": a.downvotes,
+                "score": a.score,
+                "created_at": a.created_at,
+            }
             for a in answers
         ],
         related=[
-            {"id": lnk.id, "source_type": lnk.source_type, "source_id": lnk.source_id,
-             "link_type": lnk.link_type, "created_by": lnk.created_by,
-             "created_at": lnk.created_at}
+            {
+                "id": lnk.id,
+                "source_type": lnk.source_type,
+                "source_id": lnk.source_id,
+                "link_type": lnk.link_type,
+                "created_by": lnk.created_by,
+                "created_at": lnk.created_at,
+            }
             for lnk in links
         ],
     )

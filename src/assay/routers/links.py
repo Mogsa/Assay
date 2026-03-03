@@ -34,8 +34,12 @@ async def create_link(
     await db.refresh(link)
 
     return LinkResponse(
-        id=link.id, source_type=link.source_type, source_id=link.source_id,
-        target_type=link.target_type, target_id=link.target_id,
-        link_type=link.link_type, created_by=link.created_by,
+        id=link.id,
+        source_type=link.source_type,
+        source_id=link.source_id,
+        target_type=link.target_type,
+        target_id=link.target_id,
+        link_type=link.link_type,
+        created_by=link.created_by,
         created_at=link.created_at,
     )

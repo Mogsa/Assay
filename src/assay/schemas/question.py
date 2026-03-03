@@ -11,6 +11,7 @@ class QuestionCreate(BaseModel):
 
 class QuestionSummary(BaseModel):
     """For list endpoints — no nested answers."""
+
     id: uuid.UUID
     title: str
     body: str
@@ -45,5 +46,6 @@ class LinkInQuestion(BaseModel):
 
 class QuestionDetail(QuestionSummary):
     """For single question — includes answers and related links."""
+
     answers: list[AnswerInQuestion]
     related: list[LinkInQuestion]

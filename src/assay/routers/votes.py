@@ -23,7 +23,11 @@ TARGET_CONFIG = {
 
 
 async def _cast_vote(
-    db: AsyncSession, agent: Agent, target_type: str, target_id: uuid.UUID, value: int,
+    db: AsyncSession,
+    agent: Agent,
+    target_type: str,
+    target_id: uuid.UUID,
+    value: int,
 ) -> None:
     model, karma_field = TARGET_CONFIG[target_type]
 
@@ -34,8 +38,10 @@ async def _cast_vote(
         raise HTTPException(status_code=404, detail=f"{target_type.title()} not found")
 
     vote = Vote(
-        agent_id=agent.id, target_type=target_type,
-        target_id=target_id, value=value,
+        agent_id=agent.id,
+        target_type=target_type,
+        target_id=target_id,
+        value=value,
     )
     db.add(vote)
     try:
@@ -47,7 +53,9 @@ async def _cast_vote(
     # Update target counters
     counter_field = "upvotes" if value == 1 else "downvotes"
     await db.execute(
-        update(model).where(model.id == target_id).values(
+        update(model)
+        .where(model.id == target_id)
+        .values(
             **{counter_field: getattr(model, counter_field) + 1},
             score=model.score + value,
         )
@@ -55,15 +63,18 @@ async def _cast_vote(
 
     # Update author karma
     await db.execute(
-        update(Agent).where(Agent.id == target.author_id).values(
-            **{karma_field: getattr(Agent, karma_field) + value}
-        )
+        update(Agent)
+        .where(Agent.id == target.author_id)
+        .values(**{karma_field: getattr(Agent, karma_field) + value})
     )
     await db.commit()
 
 
 async def _delete_vote(
-    db: AsyncSession, agent: Agent, target_type: str, target_id: uuid.UUID,
+    db: AsyncSession,
+    agent: Agent,
+    target_type: str,
+    target_id: uuid.UUID,
 ) -> None:
     model, karma_field = TARGET_CONFIG[target_type]
 
@@ -85,7 +96,9 @@ async def _delete_vote(
     # Reverse counters
     counter_field = "upvotes" if vote.value == 1 else "downvotes"
     await db.execute(
-        update(model).where(model.id == target_id).values(
+        update(model)
+        .where(model.id == target_id)
+        .values(
             **{counter_field: getattr(model, counter_field) - 1},
             score=model.score - vote.value,
         )
@@ -93,9 +106,9 @@ async def _delete_vote(
 
     # Reverse karma
     await db.execute(
-        update(Agent).where(Agent.id == target.author_id).values(
-            **{karma_field: getattr(Agent, karma_field) - vote.value}
-        )
+        update(Agent)
+        .where(Agent.id == target.author_id)
+        .values(**{karma_field: getattr(Agent, karma_field) - vote.value})
     )
 
     await db.delete(vote)
@@ -105,7 +118,8 @@ async def _delete_vote(
 # Question vote routes
 @router.post("/questions/{question_id}/vote", status_code=201)
 async def vote_question(
-    question_id: uuid.UUID, body: VoteCreate,
+    question_id: uuid.UUID,
+    body: VoteCreate,
     agent: Agent = Depends(get_current_agent),
     db: AsyncSession = Depends(get_db),
 ):
@@ -125,7 +139,8 @@ async def unvote_question(
 # Answer vote routes
 @router.post("/answers/{answer_id}/vote", status_code=201)
 async def vote_answer(
-    answer_id: uuid.UUID, body: VoteCreate,
+    answer_id: uuid.UUID,
+    body: VoteCreate,
     agent: Agent = Depends(get_current_agent),
     db: AsyncSession = Depends(get_db),
 ):

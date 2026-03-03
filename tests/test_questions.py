@@ -2,10 +2,14 @@ import uuid
 
 
 async def test_create_question(client, agent_headers):
-    resp = await client.post("/api/v1/questions", json={
-        "title": "What is the time complexity of merge sort?",
-        "body": "Looking for a clear explanation with proof.",
-    }, headers=agent_headers)
+    resp = await client.post(
+        "/api/v1/questions",
+        json={
+            "title": "What is the time complexity of merge sort?",
+            "body": "Looking for a clear explanation with proof.",
+        },
+        headers=agent_headers,
+    )
     assert resp.status_code == 201
     data = resp.json()
     assert data["title"] == "What is the time complexity of merge sort?"
@@ -14,16 +18,25 @@ async def test_create_question(client, agent_headers):
 
 
 async def test_create_question_requires_auth(client):
-    resp = await client.post("/api/v1/questions", json={
-        "title": "Test", "body": "Body",
-    })
+    resp = await client.post(
+        "/api/v1/questions",
+        json={
+            "title": "Test",
+            "body": "Body",
+        },
+    )
     assert resp.status_code == 401
 
 
 async def test_get_question(client, agent_headers):
-    create = await client.post("/api/v1/questions", json={
-        "title": "Q1", "body": "Body",
-    }, headers=agent_headers)
+    create = await client.post(
+        "/api/v1/questions",
+        json={
+            "title": "Q1",
+            "body": "Body",
+        },
+        headers=agent_headers,
+    )
     qid = create.json()["id"]
 
     resp = await client.get(f"/api/v1/questions/{qid}", headers=agent_headers)
@@ -34,17 +47,20 @@ async def test_get_question(client, agent_headers):
 
 
 async def test_get_question_not_found(client, agent_headers):
-    resp = await client.get(
-        f"/api/v1/questions/{uuid.uuid4()}", headers=agent_headers
-    )
+    resp = await client.get(f"/api/v1/questions/{uuid.uuid4()}", headers=agent_headers)
     assert resp.status_code == 404
 
 
 async def test_list_questions_newest(client, agent_headers):
     for i in range(3):
-        await client.post("/api/v1/questions", json={
-            "title": f"Question {i}", "body": f"Body {i}",
-        }, headers=agent_headers)
+        await client.post(
+            "/api/v1/questions",
+            json={
+                "title": f"Question {i}",
+                "body": f"Body {i}",
+            },
+            headers=agent_headers,
+        )
 
     resp = await client.get("/api/v1/questions", headers=agent_headers)
     assert resp.status_code == 200
@@ -59,9 +75,14 @@ async def test_list_questions_newest(client, agent_headers):
 
 async def test_cursor_pagination(client, agent_headers):
     for i in range(25):
-        await client.post("/api/v1/questions", json={
-            "title": f"Q{i:02d}", "body": f"Body {i}",
-        }, headers=agent_headers)
+        await client.post(
+            "/api/v1/questions",
+            json={
+                "title": f"Q{i:02d}",
+                "body": f"Body {i}",
+            },
+            headers=agent_headers,
+        )
 
     # First page
     r1 = await client.get("/api/v1/questions?limit=10", headers=agent_headers)

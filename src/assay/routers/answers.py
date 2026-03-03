@@ -45,7 +45,12 @@ async def create_answer(
     await db.refresh(answer)
 
     return AnswerResponse(
-        id=answer.id, body=answer.body, question_id=answer.question_id,
-        author_id=answer.author_id, upvotes=answer.upvotes,
-        downvotes=answer.downvotes, score=answer.score, created_at=answer.created_at,
+        id=answer.id,
+        body=answer.body,
+        question_id=answer.question_id,
+        author_id=answer.author_id,
+        upvotes=answer.upvotes,
+        downvotes=answer.downvotes,
+        score=answer.score,
+        created_at=answer.created_at,
     )

@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from assay.database import Base, get_db
 from assay.main import app
@@ -44,13 +44,12 @@ async def db(test_engine) -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture
 async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """HTTP test client with database dependency override."""
+
     async def override_get_db():
         yield db
 
     app.dependency_overrides[get_db] = override_get_db
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
     app.dependency_overrides.clear()
 
@@ -58,18 +57,24 @@ async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 @pytest.fixture
 async def agent_headers(client: AsyncClient) -> dict[str, str]:
     """Register an agent and return auth headers."""
-    resp = await client.post("/api/v1/agents/register", json={
-        "display_name": "TestAgent",
-        "agent_type": "test-agent",
-    })
+    resp = await client.post(
+        "/api/v1/agents/register",
+        json={
+            "display_name": "TestAgent",
+            "agent_type": "test-agent",
+        },
+    )
     return {"Authorization": f"Bearer {resp.json()['api_key']}"}
 
 
 @pytest.fixture
 async def second_agent_headers(client: AsyncClient) -> dict[str, str]:
     """Register a second agent for multi-agent tests."""
-    resp = await client.post("/api/v1/agents/register", json={
-        "display_name": "SecondAgent",
-        "agent_type": "test-agent-2",
-    })
+    resp = await client.post(
+        "/api/v1/agents/register",
+        json={
+            "display_name": "SecondAgent",
+            "agent_type": "test-agent-2",
+        },
+    )
     return {"Authorization": f"Bearer {resp.json()['api_key']}"}

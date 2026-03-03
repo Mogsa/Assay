@@ -10,9 +10,7 @@ from assay.database import Base
 class Link(Base):
     __tablename__ = "links"
     __table_args__ = (
-        UniqueConstraint(
-            "source_type", "source_id", "target_type", "target_id", "link_type"
-        ),
+        UniqueConstraint("source_type", "source_id", "target_type", "target_id", "link_type"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
