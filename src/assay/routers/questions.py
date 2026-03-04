@@ -49,34 +49,73 @@ async def list_questions(
     db: AsyncSession = Depends(get_db),
     cursor: str | None = None,
     limit: int = Query(20, ge=1, le=100),
+    sort: str = Query("new", pattern="^(hot|open|new)$"),
 ):
-    stmt = select(Question).order_by(Question.created_at.desc(), Question.id.desc())
+    if sort == "hot":
+        sort_expr = func.hot_score(
+            Question.upvotes, Question.downvotes, Question.last_activity_at
+        ).label("sort_val")
+        stmt = select(Question, sort_expr).order_by(sort_expr.desc(), Question.id.desc())
+    elif sort == "open":
+        sort_expr = func.wilson_lower(
+            Question.upvotes, Question.downvotes
+        ).label("sort_val")
+        stmt = (
+            select(Question, sort_expr)
+            .where(Question.status == "open")
+            .order_by(sort_expr.desc(), Question.id.desc())
+        )
+    else:  # new
+        stmt = select(Question).order_by(Question.created_at.desc(), Question.id.desc())
 
     if cursor:
         try:
             c = decode_cursor(cursor)
-            stmt = stmt.where(
-                tuple_(Question.created_at, Question.id)
-                < tuple_(datetime.fromisoformat(c["created_at"]), uuid.UUID(c["id"]))
-            )
+            if sort in ("hot", "open"):
+                stmt = stmt.where(
+                    tuple_(sort_expr, Question.id)
+                    < tuple_(float(c["sort_val"]), uuid.UUID(c["id"]))
+                )
+            else:
+                stmt = stmt.where(
+                    tuple_(Question.created_at, Question.id)
+                    < tuple_(
+                        datetime.fromisoformat(c["created_at"]), uuid.UUID(c["id"])
+                    )
+                )
         except (KeyError, TypeError, ValueError) as exc:
             raise HTTPException(status_code=400, detail="Invalid cursor") from exc
 
     stmt = stmt.limit(limit + 1)
     result = await db.execute(stmt)
-    questions = result.scalars().all()
 
-    has_more = len(questions) > limit
-    items = questions[:limit]
+    if sort in ("hot", "open"):
+        rows = result.all()  # list of (Question, sort_val)
+        has_more = len(rows) > limit
+        items_raw = rows[:limit]
+        questions = [row[0] for row in items_raw]
 
-    next_cursor = None
-    if has_more and items:
-        last = items[-1]
-        next_cursor = encode_cursor({"created_at": last.created_at, "id": str(last.id)})
+        next_cursor = None
+        if has_more and items_raw:
+            last_q, last_val = items_raw[-1]
+            next_cursor = encode_cursor(
+                {"sort_val": str(last_val), "id": str(last_q.id)}
+            )
+    else:
+        questions_all = result.scalars().all()
+        has_more = len(questions_all) > limit
+        questions = questions_all[:limit]
+
+        next_cursor = None
+        if has_more and questions:
+            last = questions[-1]
+            next_cursor = encode_cursor(
+                {"created_at": last.created_at, "id": str(last.id)}
+            )
 
     # Get answer counts in bulk
-    if items:
-        q_ids = [q.id for q in items]
+    if questions:
+        q_ids = [q.id for q in questions]
         count_result = await db.execute(
             select(Answer.question_id, func.count(Answer.id))
             .where(Answer.question_id.in_(q_ids))
@@ -101,7 +140,7 @@ async def list_questions(
                 last_activity_at=q.last_activity_at,
                 created_at=q.created_at,
             )
-            for q in items
+            for q in questions
         ],
         "has_more": has_more,
         "next_cursor": next_cursor,

@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import Response
 
 from assay.config import settings
-from assay.routers import agents, answers, comments, edit_history, flags, leaderboard, links, notifications, questions, search, votes
+from assay.routers import agents, answers, comments, edit_history, flags, home, leaderboard, links, notifications, questions, search, votes
 
 
 def create_app() -> FastAPI:
@@ -22,6 +22,7 @@ def create_app() -> FastAPI:
     application.include_router(comments.router)
     application.include_router(edit_history.router)
     application.include_router(flags.router)
+    application.include_router(home.router)
     application.include_router(leaderboard.router)
     application.include_router(notifications.router)
     application.include_router(search.router)

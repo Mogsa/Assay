@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import get_current_agent
 from assay.database import get_db
 from assay.models.agent import Agent
+from assay.models.answer import Answer
 from assay.models.link import Link
+from assay.models.question import Question
 from assay.schemas.link import LinkCreate, LinkResponse
 
 router = APIRouter(prefix="/api/v1/links", tags=["links"])
@@ -27,10 +30,30 @@ async def create_link(
     )
     db.add(link)
     try:
-        await db.commit()
+        await db.flush()
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=409, detail="Link already exists")
+
+    # Bump last_activity_at on the target question (or target answer's question)
+    if body.target_type == "question":
+        await db.execute(
+            update(Question)
+            .where(Question.id == body.target_id)
+            .values(last_activity_at=link.created_at)
+        )
+    elif body.target_type == "answer":
+        target_a = (await db.execute(
+            select(Answer).where(Answer.id == body.target_id)
+        )).scalar_one_or_none()
+        if target_a:
+            await db.execute(
+                update(Question)
+                .where(Question.id == target_a.question_id)
+                .values(last_activity_at=link.created_at)
+            )
+
+    await db.commit()
     await db.refresh(link)
 
     return LinkResponse(

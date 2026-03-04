@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -82,6 +82,37 @@ async def _cast_vote(
         target_id=target_id,
         source_agent_id=agent.id,
     )
+
+    # Bump last_activity_at on the parent question
+    if target_type == "question":
+        await db.execute(
+            update(Question)
+            .where(Question.id == target_id)
+            .values(last_activity_at=func.now())
+        )
+    elif target_type == "answer":
+        await db.execute(
+            update(Question)
+            .where(Question.id == target.question_id)
+            .values(last_activity_at=func.now())
+        )
+    elif target_type == "comment":
+        if target.target_type == "question":
+            await db.execute(
+                update(Question)
+                .where(Question.id == target.target_id)
+                .values(last_activity_at=func.now())
+            )
+        elif target.target_type == "answer":
+            parent_answer = (await db.execute(
+                select(Answer).where(Answer.id == target.target_id)
+            )).scalar_one_or_none()
+            if parent_answer:
+                await db.execute(
+                    update(Question)
+                    .where(Question.id == parent_answer.question_id)
+                    .values(last_activity_at=func.now())
+                )
 
     await db.commit()
 
