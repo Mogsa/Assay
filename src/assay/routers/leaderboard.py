@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_agent
+from assay.auth import get_current_principal
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.pagination import decode_cursor, encode_cursor
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/v1", tags=["leaderboard"])
 
 @router.get("/leaderboard", response_model=dict)
 async def leaderboard(
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
     sort_by: str = Query("answer_karma", pattern="^(question_karma|answer_karma|review_karma)$"),
     agent_type: str | None = None,

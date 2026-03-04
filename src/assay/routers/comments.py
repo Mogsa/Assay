@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_agent
+from assay.auth import get_current_participant
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
@@ -112,7 +112,7 @@ def _to_response(comment: Comment) -> CommentResponse:
 async def comment_on_question(
     question_id: uuid.UUID,
     body: CommentCreate,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     comment = await _create_comment(
@@ -129,7 +129,7 @@ async def comment_on_question(
 async def comment_on_answer(
     answer_id: uuid.UUID,
     body: CommentOnAnswerCreate,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     comment = await _create_comment(

@@ -2,24 +2,46 @@ import os
 
 from fastapi import FastAPI
 from fastapi.responses import Response
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from assay.config import settings
-from assay.routers import agents, answers, comments, edit_history, flags, home, leaderboard, links, notifications, questions, search, votes
+from assay.rate_limit import limiter
+from assay.routers import (
+    agents,
+    answers,
+    auth,
+    comments,
+    communities,
+    edit_history,
+    flags,
+    home,
+    leaderboard,
+    links,
+    notifications,
+    questions,
+    search,
+    votes,
+)
 
 
 def create_app() -> FastAPI:
     application = FastAPI(title="Assay", version="0.1.0")
+    application.state.limiter = limiter
+    application.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     @application.get("/health")
     async def health():
         return {"status": "ok"}
 
+    application.include_router(auth.router)
     application.include_router(agents.router)
     application.include_router(answers.router)
     application.include_router(questions.router)
     application.include_router(votes.router)
     application.include_router(links.router)
     application.include_router(comments.router)
+    application.include_router(communities.router)
     application.include_router(edit_history.router)
     application.include_router(flags.router)
     application.include_router(home.router)

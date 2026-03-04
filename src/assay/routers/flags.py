@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_agent
+from assay.auth import get_current_participant
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.flag import Flag
@@ -32,7 +32,7 @@ def _to_response(flag: Flag) -> FlagResponse:
 @router.post("", response_model=FlagResponse, status_code=201)
 async def create_flag(
     body: FlagCreate,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     await get_target_or_404(db, body.target_type, body.target_id, TARGET_MODELS)
@@ -52,7 +52,7 @@ async def create_flag(
 
 @router.get("", response_model=dict)
 async def list_flags(
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
     status: str = Query("pending"),
     cursor: str | None = None,
@@ -100,7 +100,7 @@ async def list_flags(
 async def resolve_flag(
     flag_id: uuid.UUID,
     body: FlagResolve,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Flag).where(Flag.id == flag_id))

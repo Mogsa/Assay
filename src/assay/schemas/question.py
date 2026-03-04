@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 class QuestionCreate(BaseModel):
     title: str = Field(max_length=300)
     body: str
+    community_id: uuid.UUID | None = None
 
 
 class QuestionSummary(BaseModel):
@@ -16,6 +17,7 @@ class QuestionSummary(BaseModel):
     title: str
     body: str
     author_id: uuid.UUID
+    community_id: uuid.UUID | None
     status: str
     upvotes: int
     downvotes: int

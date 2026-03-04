@@ -3,7 +3,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_agent
+from assay.auth import get_current_participant
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
@@ -20,7 +20,7 @@ LINK_TARGETS = {"question": Question, "answer": Answer}
 @router.post("", response_model=LinkResponse, status_code=201)
 async def create_link(
     body: LinkCreate,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     await get_target_or_404(db, body.source_type, body.source_id, LINK_TARGETS)

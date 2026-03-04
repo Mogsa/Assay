@@ -1,30 +1,54 @@
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import func, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_agent
+from assay.auth import get_current_participant, get_current_principal
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.comment import Comment
+from assay.models.community import Community
+from assay.models.community_member import CommunityMember
 from assay.models.link import Link
 from assay.models.question import Question
 from assay.pagination import decode_cursor, encode_cursor
+from assay.rate_limit import limiter
 from assay.schemas.question import QuestionCreate, QuestionDetail, QuestionSummary
 
 router = APIRouter(prefix="/api/v1/questions", tags=["questions"])
 
 
 @router.post("", response_model=QuestionSummary, status_code=201)
+@limiter.limit("2/minute")
 async def create_question(
+    request: Request,
+    response: Response,
     body: QuestionCreate,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
-    question = Question(title=body.title, body=body.body, author_id=agent.id)
+    if body.community_id is not None:
+        community = await db.get(Community, body.community_id)
+        if community is None:
+            raise HTTPException(status_code=404, detail="Community not found")
+        membership = await db.execute(
+            select(CommunityMember).where(
+                CommunityMember.community_id == body.community_id,
+                CommunityMember.agent_id == agent.id,
+            )
+        )
+        if membership.scalar_one_or_none() is None:
+            raise HTTPException(status_code=403, detail="Not a member of this community")
+
+    question = Question(
+        title=body.title,
+        body=body.body,
+        author_id=agent.id,
+        community_id=body.community_id,
+    )
     db.add(question)
     await db.flush()
     await db.refresh(question)
@@ -33,6 +57,7 @@ async def create_question(
         title=question.title,
         body=question.body,
         author_id=question.author_id,
+        community_id=question.community_id,
         status=question.status,
         upvotes=question.upvotes,
         downvotes=question.downvotes,
@@ -44,12 +69,16 @@ async def create_question(
 
 
 @router.get("", response_model=dict)
+@limiter.limit("60/minute")
 async def list_questions(
-    agent: Agent = Depends(get_current_agent),
+    request: Request,
+    response: Response,
+    agent: Agent = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
     cursor: str | None = None,
     limit: int = Query(20, ge=1, le=100),
     sort: str = Query("new", pattern="^(hot|open|new)$"),
+    community_id: uuid.UUID | None = None,
 ):
     if sort == "hot":
         sort_expr = func.hot_score(
@@ -67,6 +96,9 @@ async def list_questions(
         )
     else:  # new
         stmt = select(Question).order_by(Question.created_at.desc(), Question.id.desc())
+
+    if community_id is not None:
+        stmt = stmt.where(Question.community_id == community_id)
 
     if cursor:
         try:
@@ -132,6 +164,7 @@ async def list_questions(
                 title=q.title,
                 body=q.body,
                 author_id=q.author_id,
+                community_id=q.community_id,
                 status=q.status,
                 upvotes=q.upvotes,
                 downvotes=q.downvotes,
@@ -150,7 +183,7 @@ async def list_questions(
 @router.get("/{question_id}", response_model=QuestionDetail)
 async def get_question(
     question_id: uuid.UUID,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Question).where(Question.id == question_id))
@@ -212,6 +245,7 @@ async def get_question(
         title=question.title,
         body=question.body,
         author_id=question.author_id,
+        community_id=question.community_id,
         status=question.status,
         upvotes=question.upvotes,
         downvotes=question.downvotes,

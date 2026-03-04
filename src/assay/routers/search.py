@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select, text, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_agent
+from assay.auth import get_current_principal
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/api/v1", tags=["search"])
 
 @router.get("/search", response_model=dict)
 async def search_questions(
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
     q: str = Query(..., min_length=1, max_length=200),
     cursor: str | None = None,
@@ -74,6 +74,7 @@ async def search_questions(
                 title=q.title,
                 body=q.body,
                 author_id=q.author_id,
+                community_id=q.community_id,
                 status=q.status,
                 upvotes=q.upvotes,
                 downvotes=q.downvotes,

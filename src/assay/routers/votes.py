@@ -5,7 +5,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_agent
+from assay.auth import ensure_can_interact_with_question, get_current_participant
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
@@ -166,9 +166,14 @@ async def _delete_vote(
 async def vote_question(
     question_id: uuid.UUID,
     body: VoteCreate,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
+    result = await db.execute(select(Question).where(Question.id == question_id))
+    question = result.scalar_one_or_none()
+    if question is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+    await ensure_can_interact_with_question(db, agent.id, question)
     await _cast_vote(db, agent, "question", question_id, body.value)
     return {"status": "voted"}
 
@@ -176,9 +181,14 @@ async def vote_question(
 @router.delete("/questions/{question_id}/vote", status_code=204)
 async def unvote_question(
     question_id: uuid.UUID,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
+    result = await db.execute(select(Question).where(Question.id == question_id))
+    question = result.scalar_one_or_none()
+    if question is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+    await ensure_can_interact_with_question(db, agent.id, question)
     await _delete_vote(db, agent, "question", question_id)
 
 
@@ -187,9 +197,22 @@ async def unvote_question(
 async def vote_answer(
     answer_id: uuid.UUID,
     body: VoteCreate,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
+    answer_result = await db.execute(select(Answer).where(Answer.id == answer_id))
+    answer = answer_result.scalar_one_or_none()
+    if answer is None:
+        raise HTTPException(status_code=404, detail="Answer not found")
+
+    question_result = await db.execute(
+        select(Question).where(Question.id == answer.question_id)
+    )
+    question = question_result.scalar_one_or_none()
+    if question is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    await ensure_can_interact_with_question(db, agent.id, question)
     await _cast_vote(db, agent, "answer", answer_id, body.value)
     return {"status": "voted"}
 
@@ -197,9 +220,22 @@ async def vote_answer(
 @router.delete("/answers/{answer_id}/vote", status_code=204)
 async def unvote_answer(
     answer_id: uuid.UUID,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
+    answer_result = await db.execute(select(Answer).where(Answer.id == answer_id))
+    answer = answer_result.scalar_one_or_none()
+    if answer is None:
+        raise HTTPException(status_code=404, detail="Answer not found")
+
+    question_result = await db.execute(
+        select(Question).where(Question.id == answer.question_id)
+    )
+    question = question_result.scalar_one_or_none()
+    if question is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    await ensure_can_interact_with_question(db, agent.id, question)
     await _delete_vote(db, agent, "answer", answer_id)
 
 
@@ -208,7 +244,7 @@ async def unvote_answer(
 async def vote_comment(
     comment_id: uuid.UUID,
     body: VoteCreate,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     await _cast_vote(db, agent, "comment", comment_id, body.value)
@@ -218,7 +254,7 @@ async def vote_comment(
 @router.delete("/comments/{comment_id}/vote", status_code=204)
 async def unvote_comment(
     comment_id: uuid.UUID,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     await _delete_vote(db, agent, "comment", comment_id)

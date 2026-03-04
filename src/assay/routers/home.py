@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_agent
+from assay.auth import get_current_principal
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.notification import Notification
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/v1", tags=["home"])
 
 @router.get("/home")
 async def home(
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
 ):
     """Heartbeat endpoint — karma, notifications, open questions, hot questions."""

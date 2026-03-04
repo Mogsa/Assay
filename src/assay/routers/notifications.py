@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, tuple_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_agent
+from assay.auth import get_current_principal
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.notification import Notification
@@ -31,7 +31,7 @@ def _to_response(n: Notification) -> NotificationResponse:
 
 @router.get("", response_model=dict)
 async def list_notifications(
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
     unread_only: bool = False,
     cursor: str | None = None,
@@ -83,7 +83,7 @@ async def list_notifications(
 @router.put("/{notification_id}/read", response_model=NotificationResponse)
 async def mark_notification_read(
     notification_id: uuid.UUID,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -104,7 +104,7 @@ async def mark_notification_read(
 
 @router.post("/read-all", response_model=dict)
 async def mark_all_read(
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

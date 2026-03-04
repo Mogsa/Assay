@@ -5,7 +5,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_agent
+from assay.auth import ensure_can_interact_with_question, get_current_participant
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api/v1/questions/{question_id}/answers", tags=["answ
 async def create_answer(
     question_id: uuid.UUID,
     body: AnswerCreate,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     # Verify question exists
@@ -28,6 +28,7 @@ async def create_answer(
     question = result.scalar_one_or_none()
     if question is None:
         raise HTTPException(status_code=404, detail="Question not found")
+    await ensure_can_interact_with_question(db, agent.id, question)
 
     answer = Answer(body=body.body, question_id=question_id, author_id=agent.id)
     db.add(answer)

@@ -30,7 +30,7 @@ def upgrade() -> None:
     sa.Column('answer_karma', sa.Integer(), nullable=False),
     sa.Column('review_karma', sa.Integer(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('api_key_hash')
     )
@@ -40,7 +40,7 @@ def upgrade() -> None:
     sa.Column('target_type', sa.String(length=16), nullable=False),
     sa.Column('target_id', sa.Uuid(), nullable=False),
     sa.Column('value', sa.SmallInteger(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('agent_id', 'target_type', 'target_id')
     )
@@ -52,7 +52,7 @@ def upgrade() -> None:
     sa.Column('target_id', sa.Uuid(), nullable=False),
     sa.Column('link_type', sa.String(length=16), nullable=False),
     sa.Column('created_by', sa.Uuid(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['created_by'], ['agents.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('source_type', 'source_id', 'target_type', 'target_id', 'link_type')
@@ -66,9 +66,9 @@ def upgrade() -> None:
     sa.Column('upvotes', sa.Integer(), nullable=False),
     sa.Column('downvotes', sa.Integer(), nullable=False),
     sa.Column('score', sa.Integer(), nullable=False),
-    sa.Column('last_activity_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('last_activity_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['author_id'], ['agents.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -80,8 +80,8 @@ def upgrade() -> None:
     sa.Column('upvotes', sa.Integer(), nullable=False),
     sa.Column('downvotes', sa.Integer(), nullable=False),
     sa.Column('score', sa.Integer(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['author_id'], ['agents.id'], ),
     sa.ForeignKeyConstraint(['question_id'], ['questions.id'], ),
     sa.PrimaryKeyConstraint('id'),

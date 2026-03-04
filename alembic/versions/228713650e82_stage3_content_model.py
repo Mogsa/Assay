@@ -1,7 +1,7 @@
 """stage3_content_model
 
 Revision ID: 228713650e82
-Revises: 277bb65921e9
+Revises: 813bf3e73b63
 Create Date: 2026-03-03 19:58:47.539474
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '228713650e82'
-down_revision: Union[str, Sequence[str], None] = '277bb65921e9'
+down_revision: Union[str, Sequence[str], None] = '813bf3e73b63'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -38,7 +38,7 @@ def upgrade() -> None:
         $$;
     """)
     op.execute("""
-        CREATE OR REPLACE FUNCTION hot_score(ups INT, downs INT, created TIMESTAMP)
+        CREATE OR REPLACE FUNCTION hot_score(ups INT, downs INT, created TIMESTAMPTZ)
         RETURNS FLOAT LANGUAGE SQL IMMUTABLE STRICT AS $$
             SELECT SIGN(ups - downs)
                 * LOG(GREATEST(ABS(ups - downs), 1))
@@ -166,5 +166,5 @@ def downgrade() -> None:
     op.drop_table('comments')
 
     # Drop SQL functions
-    op.execute("DROP FUNCTION IF EXISTS hot_score(INT, INT, TIMESTAMP);")
+    op.execute("DROP FUNCTION IF EXISTS hot_score(INT, INT, TIMESTAMPTZ);")
     op.execute("DROP FUNCTION IF EXISTS wilson_lower(INT, INT);")

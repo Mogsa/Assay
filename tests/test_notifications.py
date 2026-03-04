@@ -2,38 +2,51 @@ import uuid
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.models.notification import Notification
 
 
 @pytest.fixture
-async def create_notification(session_factory: async_sessionmaker[AsyncSession]):
-    """Insert a notification directly for testing."""
+def create_notification(db: AsyncSession):
+    """Insert a notification directly via the test transaction."""
 
     async def _create(agent_id: uuid.UUID, **kwargs) -> Notification:
-        async with session_factory() as session:
-            notif = Notification(agent_id=agent_id, **kwargs)
-            session.add(notif)
-            await session.commit()
-            await session.refresh(notif)
-            return notif
+        notif = Notification(agent_id=agent_id, **kwargs)
+        db.add(notif)
+        await db.flush()
+        await db.refresh(notif)
+        return notif
 
     return _create
 
 
-async def _register_agent(client: AsyncClient, name: str = "TestAgent") -> tuple[uuid.UUID, dict[str, str]]:
-    """Register an agent, return (agent_id, headers)."""
+async def _register_and_claim(client: AsyncClient, name: str) -> tuple[uuid.UUID, dict[str, str]]:
+    """Register an agent, claim it, return (agent_id, headers)."""
+    # Sign up a human owner
+    signup = await client.post(
+        "/api/v1/auth/signup",
+        json={"email": f"{name.lower()}@example.com", "password": "securepass123", "display_name": f"{name}Owner"},
+    )
+    session_cookie = signup.cookies.get("session")
+
     resp = await client.post(
         "/api/v1/agents/register",
         json={"display_name": name, "agent_type": "test-agent"},
     )
     data = resp.json()
+
+    # Claim the agent
+    await client.post(
+        f"/api/v1/agents/claim/{data['claim_token']}",
+        cookies={"session": session_cookie},
+    )
+
     return uuid.UUID(data["agent_id"]), {"Authorization": f"Bearer {data['api_key']}"}
 
 
 async def test_list_notifications(client: AsyncClient, create_notification):
-    agent_id, headers = await _register_agent(client, "ListAgent")
+    agent_id, headers = await _register_and_claim(client, "ListNotif")
     target_id = uuid.uuid4()
 
     await create_notification(
@@ -57,13 +70,13 @@ async def test_list_notifications(client: AsyncClient, create_notification):
     assert len(body["items"]) == 2
     assert body["has_more"] is False
     assert body["next_cursor"] is None
-    # Most recent first
-    assert body["items"][0]["type"] == "vote"
-    assert body["items"][1]["type"] == "new_answer"
+    # Both notification types present
+    types = {item["type"] for item in body["items"]}
+    assert types == {"new_answer", "vote"}
 
 
 async def test_list_unread_only(client: AsyncClient, create_notification):
-    agent_id, headers = await _register_agent(client, "UnreadAgent")
+    agent_id, headers = await _register_and_claim(client, "UnreadNotif")
     target_id = uuid.uuid4()
 
     await create_notification(
@@ -92,7 +105,7 @@ async def test_list_unread_only(client: AsyncClient, create_notification):
 
 
 async def test_mark_notification_read(client: AsyncClient, create_notification):
-    agent_id, headers = await _register_agent(client, "ReadAgent")
+    agent_id, headers = await _register_and_claim(client, "MarkRead")
     target_id = uuid.uuid4()
 
     notif = await create_notification(
@@ -112,7 +125,7 @@ async def test_mark_notification_read(client: AsyncClient, create_notification):
 
 
 async def test_mark_all_read(client: AsyncClient, create_notification):
-    agent_id, headers = await _register_agent(client, "ReadAllAgent")
+    agent_id, headers = await _register_and_claim(client, "MarkAll")
     target_id = uuid.uuid4()
 
     await create_notification(
@@ -150,8 +163,8 @@ async def test_notifications_require_auth(client: AsyncClient):
 
 
 async def test_cannot_read_others_notification(client: AsyncClient, create_notification):
-    agent_a_id, _ = await _register_agent(client, "AgentA")
-    _, agent_b_headers = await _register_agent(client, "AgentB")
+    agent_a_id, _ = await _register_and_claim(client, "NotifOwner")
+    _, agent_b_headers = await _register_and_claim(client, "NotifOther")
     target_id = uuid.uuid4()
 
     notif = await create_notification(

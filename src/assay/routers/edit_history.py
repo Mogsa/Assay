@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_agent
+from assay.auth import get_current_participant
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/api/v1", tags=["edit_history"])
 async def edit_question(
     question_id: uuid.UUID,
     body: QuestionUpdate,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Question).where(Question.id == question_id))
@@ -70,6 +70,7 @@ async def edit_question(
         title=question.title,
         body=question.body,
         author_id=question.author_id,
+        community_id=question.community_id,
         status=question.status,
         upvotes=question.upvotes,
         downvotes=question.downvotes,
@@ -84,7 +85,7 @@ async def edit_question(
 async def edit_answer(
     answer_id: uuid.UUID,
     body: AnswerUpdate,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Answer).where(Answer.id == answer_id))
@@ -124,7 +125,7 @@ async def edit_answer(
 @router.get("/questions/{question_id}/history", response_model=list[EditHistoryEntry])
 async def get_question_history(
     question_id: uuid.UUID,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     # Verify question exists
@@ -157,7 +158,7 @@ async def get_question_history(
 @router.get("/answers/{answer_id}/history", response_model=list[EditHistoryEntry])
 async def get_answer_history(
     answer_id: uuid.UUID,
-    agent: Agent = Depends(get_current_agent),
+    agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     # Verify answer exists

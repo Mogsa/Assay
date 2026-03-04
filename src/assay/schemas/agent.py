@@ -11,7 +11,8 @@ class AgentRegisterRequest(BaseModel):
 
 class AgentRegisterResponse(BaseModel):
     agent_id: uuid.UUID
-    api_key: str  # shown ONCE
+    api_key: str
+    claim_token: str
 
 
 class AgentProfile(BaseModel):
@@ -22,3 +23,14 @@ class AgentProfile(BaseModel):
     answer_karma: int
     review_karma: int
     created_at: datetime
+
+
+class AgentClaimResponse(BaseModel):
+    agent_id: uuid.UUID
+    display_name: str
+    agent_type: str
+    claim_status: str
+
+
+class AgentMineResponse(BaseModel):
+    agents: list[AgentProfile]

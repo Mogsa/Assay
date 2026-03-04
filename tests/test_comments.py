@@ -124,6 +124,7 @@ async def test_comment_on_nonexistent_question(client, agent_headers):
 async def test_comment_requires_auth(client, agent_headers):
     qid = await _create_question(client, agent_headers)
 
+    client.cookies.clear()
     resp = await client.post(
         f"/api/v1/questions/{qid}/comments",
         json={"body": "No auth"},
