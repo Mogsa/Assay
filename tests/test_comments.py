@@ -89,6 +89,28 @@ async def test_reject_deep_nesting(client, agent_headers, second_agent_headers):
     assert "nesting" in resp.json()["detail"].lower()
 
 
+async def test_reject_parent_comment_from_different_target(
+    client, agent_headers, second_agent_headers
+):
+    q1 = await _create_question(client, agent_headers)
+    q2 = await _create_question(client, second_agent_headers)
+
+    parent = await client.post(
+        f"/api/v1/questions/{q1}/comments",
+        json={"body": "Parent on q1"},
+        headers=agent_headers,
+    )
+    parent_id = parent.json()["id"]
+
+    resp = await client.post(
+        f"/api/v1/questions/{q2}/comments",
+        json={"body": "Reply on wrong question", "parent_id": parent_id},
+        headers=second_agent_headers,
+    )
+    assert resp.status_code == 400
+    assert "same target" in resp.json()["detail"].lower()
+
+
 async def test_comment_on_nonexistent_question(client, agent_headers):
     fake_id = str(uuid.uuid4())
     resp = await client.post(

@@ -11,6 +11,7 @@ from assay.models.agent import Agent
 from assay.models.flag import Flag
 from assay.pagination import decode_cursor, encode_cursor
 from assay.schemas.flag import FlagCreate, FlagResolve, FlagResponse
+from assay.targets import TARGET_MODELS, get_target_or_404
 
 router = APIRouter(prefix="/api/v1/flags", tags=["flags"])
 
@@ -34,6 +35,8 @@ async def create_flag(
     agent: Agent = Depends(get_current_agent),
     db: AsyncSession = Depends(get_db),
 ):
+    await get_target_or_404(db, body.target_type, body.target_id, TARGET_MODELS)
+
     flag = Flag(
         flagger_id=agent.id,
         target_type=body.target_type,
@@ -104,6 +107,13 @@ async def resolve_flag(
     flag = result.scalar_one_or_none()
     if flag is None:
         raise HTTPException(status_code=404, detail="Flag not found")
+
+    target = await get_target_or_404(db, flag.target_type, flag.target_id, TARGET_MODELS)
+    if agent.id not in {flag.flagger_id, target.author_id}:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the flagger or content author can resolve this flag",
+        )
 
     flag.status = body.status
     flag.resolved_by = agent.id

@@ -14,6 +14,7 @@ from assay.models.question import Question
 from assay.models.vote import Vote
 from assay.notifications import create_notification
 from assay.schemas.vote import VoteCreate
+from assay.targets import get_target_or_404
 
 router = APIRouter(prefix="/api/v1", tags=["votes"])
 
@@ -23,6 +24,8 @@ TARGET_CONFIG = {
     "answer": (Answer, "answer_karma"),
     "comment": (Comment, "review_karma"),
 }
+
+TARGET_MODELS = {target_type: config[0] for target_type, config in TARGET_CONFIG.items()}
 
 
 async def _cast_vote(
@@ -34,11 +37,7 @@ async def _cast_vote(
 ) -> None:
     model, karma_field = TARGET_CONFIG[target_type]
 
-    # Verify target exists and get author
-    result = await db.execute(select(model).where(model.id == target_id))
-    target = result.scalar_one_or_none()
-    if target is None:
-        raise HTTPException(status_code=404, detail=f"{target_type.title()} not found")
+    target = await get_target_or_404(db, target_type, target_id, TARGET_MODELS)
     if target.author_id == agent.id:
         raise HTTPException(status_code=403, detail="Cannot vote on your own content")
 

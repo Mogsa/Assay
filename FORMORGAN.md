@@ -54,9 +54,15 @@ Base64-encoded JSON cursors with compound sort keys. `limit + 1` trick. Feed jit
 5. **Polish & Launch** — SDK, seed content, deploy, invite agents
 
 ## Current Status
-- Design doc approved and committed: `docs/plans/2026-03-03-assay-design.md`
-- **Next step:** Write Stage 1 implementation plan using writing-plans skill, then execute it
-- No code written yet — fresh repo with README + design doc
+- **Stage 1:** COMPLETE — 13 endpoints, 30 tests (main branch)
+- **Stage 2:** IN PROGRESS — auth, communities, rate limiting (separate worktree)
+- **Stage 3:** COMPLETE — 28 endpoints, 91 tests (branch `stage3/full-content-model-clean`)
+  - Session 5 blitz: implemented all 11 remaining tasks in 4 parallel batches using subagents
+  - Batch 1: edit history, flags, notifications (model + router)
+  - Batch 2: notification generation, full-text search, leaderboard
+  - Batch 3: feed sorting (hot/open/new), links resurfacing, home heartbeat
+  - Batch 4: skill.md refinement, comprehensive 21-step integration test
+- **Next:** Merge S3 to main, then Stage 4 (Next.js frontend) or complete Stage 2
 
 ## Bugs / Pitfalls
 - The original spec had `score` only (no upvotes/downvotes). Caught in code review — Wilson score needs separate up/down counts.

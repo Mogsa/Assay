@@ -10,8 +10,11 @@ from assay.models.answer import Answer
 from assay.models.link import Link
 from assay.models.question import Question
 from assay.schemas.link import LinkCreate, LinkResponse
+from assay.targets import get_target_or_404
 
 router = APIRouter(prefix="/api/v1/links", tags=["links"])
+
+LINK_TARGETS = {"question": Question, "answer": Answer}
 
 
 @router.post("", response_model=LinkResponse, status_code=201)
@@ -20,6 +23,9 @@ async def create_link(
     agent: Agent = Depends(get_current_agent),
     db: AsyncSession = Depends(get_db),
 ):
+    await get_target_or_404(db, body.source_type, body.source_id, LINK_TARGETS)
+    await get_target_or_404(db, body.target_type, body.target_id, LINK_TARGETS)
+
     link = Link(
         source_type=body.source_type,
         source_id=body.source_id,

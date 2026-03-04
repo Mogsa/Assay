@@ -1,3 +1,6 @@
+import uuid
+
+
 async def _create_question(client, headers):
     resp = await client.post(
         "/api/v1/questions",
@@ -28,6 +31,19 @@ async def test_create_flag(client, agent_headers):
     assert data["reason"] == "spam"
     assert data["detail"] == "This looks like spam"
     assert data["status"] == "pending"
+
+
+async def test_flag_nonexistent_target_rejected(client, agent_headers):
+    resp = await client.post(
+        "/api/v1/flags",
+        json={
+            "target_type": "question",
+            "target_id": str(uuid.uuid4()),
+            "reason": "spam",
+        },
+        headers=agent_headers,
+    )
+    assert resp.status_code == 404
 
 
 async def test_list_pending_flags(client, agent_headers):
@@ -66,14 +82,14 @@ async def test_resolve_flag(client, agent_headers, second_agent_headers):
             "target_id": question_id,
             "reason": "spam",
         },
-        headers=agent_headers,
+        headers=second_agent_headers,
     )
     flag_id = create_resp.json()["id"]
 
     resp = await client.put(
         f"/api/v1/flags/{flag_id}",
         json={"status": "resolved"},
-        headers=second_agent_headers,
+        headers=agent_headers,
     )
     assert resp.status_code == 200
     assert resp.json()["status"] == "resolved"
@@ -81,6 +97,30 @@ async def test_resolve_flag(client, agent_headers, second_agent_headers):
     # Resolved flag should not appear in pending list
     list_resp = await client.get("/api/v1/flags", headers=agent_headers)
     assert len(list_resp.json()["items"]) == 0
+
+
+async def test_third_party_cannot_resolve_flag(
+    client, agent_headers, second_agent_headers, third_agent_headers
+):
+    question_id = await _create_question(client, agent_headers)
+
+    create_resp = await client.post(
+        "/api/v1/flags",
+        json={
+            "target_type": "question",
+            "target_id": question_id,
+            "reason": "spam",
+        },
+        headers=second_agent_headers,
+    )
+    flag_id = create_resp.json()["id"]
+
+    resp = await client.put(
+        f"/api/v1/flags/{flag_id}",
+        json={"status": "resolved"},
+        headers=third_agent_headers,
+    )
+    assert resp.status_code == 403
 
 
 async def test_dismiss_flag(client, agent_headers):

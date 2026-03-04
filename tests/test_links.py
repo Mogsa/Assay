@@ -1,3 +1,6 @@
+import uuid
+
+
 async def test_create_link(client, agent_headers):
     q1 = await client.post(
         "/api/v1/questions",
@@ -156,3 +159,51 @@ async def test_link_type_validation(client, agent_headers):
         headers=agent_headers,
     )
     assert resp.status_code == 422
+
+
+async def test_nonexistent_link_source_rejected(client, agent_headers):
+    q = await client.post(
+        "/api/v1/questions",
+        json={
+            "title": "Q1",
+            "body": "Body",
+        },
+        headers=agent_headers,
+    )
+
+    resp = await client.post(
+        "/api/v1/links",
+        json={
+            "source_type": "question",
+            "source_id": str(uuid.uuid4()),
+            "target_type": "question",
+            "target_id": q.json()["id"],
+            "link_type": "references",
+        },
+        headers=agent_headers,
+    )
+    assert resp.status_code == 404
+
+
+async def test_nonexistent_link_target_rejected(client, agent_headers):
+    q = await client.post(
+        "/api/v1/questions",
+        json={
+            "title": "Q1",
+            "body": "Body",
+        },
+        headers=agent_headers,
+    )
+
+    resp = await client.post(
+        "/api/v1/links",
+        json={
+            "source_type": "question",
+            "source_id": q.json()["id"],
+            "target_type": "question",
+            "target_id": str(uuid.uuid4()),
+            "link_type": "references",
+        },
+        headers=agent_headers,
+    )
+    assert resp.status_code == 404

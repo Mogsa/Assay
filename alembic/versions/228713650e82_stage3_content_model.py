@@ -20,6 +20,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
+    op.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
+
     # --- SQL functions ---
     op.execute("""
         CREATE OR REPLACE FUNCTION wilson_lower(up INT, down INT)
@@ -57,8 +59,8 @@ def upgrade() -> None:
         sa.Column('upvotes', sa.Integer(), server_default=sa.text('0'), nullable=False),
         sa.Column('downvotes', sa.Integer(), server_default=sa.text('0'), nullable=False),
         sa.Column('score', sa.Integer(), server_default=sa.text('0'), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
         sa.ForeignKeyConstraint(['author_id'], ['agents.id']),
         sa.ForeignKeyConstraint(['parent_id'], ['comments.id']),
         sa.PrimaryKeyConstraint('id'),
@@ -70,14 +72,14 @@ def upgrade() -> None:
         sa.Column('id', sa.Uuid(), server_default=sa.text('gen_random_uuid()'), nullable=False),
         sa.Column('agent_id', sa.Uuid(), nullable=False),
         sa.Column('type', sa.String(length=32), nullable=False),
+        sa.Column('source_agent_id', sa.Uuid(), nullable=True),
         sa.Column('target_type', sa.String(length=16), nullable=False),
         sa.Column('target_id', sa.Uuid(), nullable=False),
-        sa.Column('actor_id', sa.Uuid(), nullable=False),
         sa.Column('preview', sa.String(length=200), nullable=True),
         sa.Column('is_read', sa.Boolean(), server_default=sa.text('false'), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
         sa.ForeignKeyConstraint(['agent_id'], ['agents.id']),
-        sa.ForeignKeyConstraint(['actor_id'], ['agents.id']),
+        sa.ForeignKeyConstraint(['source_agent_id'], ['agents.id']),
         sa.PrimaryKeyConstraint('id'),
     )
     op.create_index(
@@ -91,9 +93,10 @@ def upgrade() -> None:
         sa.Column('target_type', sa.String(length=16), nullable=False),
         sa.Column('target_id', sa.Uuid(), nullable=False),
         sa.Column('editor_id', sa.Uuid(), nullable=False),
-        sa.Column('old_title', sa.String(length=300), nullable=True),
-        sa.Column('old_body', sa.Text(), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+        sa.Column('field_name', sa.String(length=32), nullable=False),
+        sa.Column('old_value', sa.Text(), nullable=True),
+        sa.Column('new_value', sa.Text(), nullable=False),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
         sa.ForeignKeyConstraint(['editor_id'], ['agents.id']),
         sa.PrimaryKeyConstraint('id'),
     )
@@ -102,19 +105,18 @@ def upgrade() -> None:
     op.create_table(
         'flags',
         sa.Column('id', sa.Uuid(), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('reporter_id', sa.Uuid(), nullable=False),
+        sa.Column('flagger_id', sa.Uuid(), nullable=False),
         sa.Column('target_type', sa.String(length=16), nullable=False),
         sa.Column('target_id', sa.Uuid(), nullable=False),
         sa.Column('reason', sa.String(length=32), nullable=False),
-        sa.Column('details', sa.Text(), nullable=True),
+        sa.Column('detail', sa.Text(), nullable=True),
         sa.Column('status', sa.String(length=16), server_default=sa.text("'pending'"), nullable=False),
         sa.Column('resolved_by', sa.Uuid(), nullable=True),
-        sa.Column('resolved_at', sa.DateTime(timezone=True), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.ForeignKeyConstraint(['reporter_id'], ['agents.id']),
+        sa.Column('resolved_at', sa.DateTime(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+        sa.ForeignKeyConstraint(['flagger_id'], ['agents.id']),
         sa.ForeignKeyConstraint(['resolved_by'], ['agents.id']),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('reporter_id', 'target_type', 'target_id'),
     )
     op.create_index('idx_flags_status', 'flags', ['status', 'created_at'])
 

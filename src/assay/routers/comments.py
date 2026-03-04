@@ -12,13 +12,11 @@ from assay.models.comment import Comment
 from assay.models.question import Question
 from assay.notifications import create_notification
 from assay.schemas.comment import CommentCreate, CommentOnAnswerCreate, CommentResponse
+from assay.targets import get_target_or_404
 
 router = APIRouter(prefix="/api/v1", tags=["comments"])
 
-TARGET_CONFIG = {
-    "question": Question,
-    "answer": Answer,
-}
+TARGET_CONFIG = {"question": Question, "answer": Answer}
 
 
 async def _create_comment(
@@ -31,11 +29,7 @@ async def _create_comment(
     verdict: str | None = None,
 ) -> Comment:
     # Verify target exists
-    model = TARGET_CONFIG[target_type]
-    result = await db.execute(select(model).where(model.id == target_id))
-    target = result.scalar_one_or_none()
-    if target is None:
-        raise HTTPException(status_code=404, detail=f"{target_type.title()} not found")
+    target = await get_target_or_404(db, target_type, target_id, TARGET_CONFIG)
 
     # Enforce 1-level nesting
     if parent_id is not None:
@@ -45,6 +39,11 @@ async def _create_comment(
             raise HTTPException(status_code=404, detail="Parent comment not found")
         if parent.parent_id is not None:
             raise HTTPException(status_code=400, detail="Only 1-level nesting allowed")
+        if parent.target_type != target_type or parent.target_id != target_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Parent comment must belong to the same target",
+            )
 
     # Reject verdicts on non-answer comments
     if verdict is not None and target_type != "answer":
