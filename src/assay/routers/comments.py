@@ -10,6 +10,7 @@ from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.comment import Comment
 from assay.models.question import Question
+from assay.notifications import create_notification
 from assay.schemas.comment import CommentCreate, CommentOnAnswerCreate, CommentResponse
 
 router = APIRouter(prefix="/api/v1", tags=["comments"])
@@ -71,6 +72,18 @@ async def _create_comment(
         .where(Question.id == question_id)
         .values(last_activity_at=comment.created_at)
     )
+
+    # Notify target author
+    await create_notification(
+        db,
+        agent_id=target.author_id,
+        type="new_comment",
+        target_type=target_type,
+        target_id=target_id,
+        source_agent_id=agent.id,
+        preview=body[:200],
+    )
+
     await db.commit()
     await db.refresh(comment)
     return comment

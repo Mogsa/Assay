@@ -10,6 +10,7 @@ from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.question import Question
+from assay.notifications import create_notification
 from assay.schemas.answer import AnswerCreate, AnswerResponse
 
 router = APIRouter(prefix="/api/v1/questions/{question_id}/answers", tags=["answers"])
@@ -24,7 +25,8 @@ async def create_answer(
 ):
     # Verify question exists
     result = await db.execute(select(Question).where(Question.id == question_id))
-    if result.scalar_one_or_none() is None:
+    question = result.scalar_one_or_none()
+    if question is None:
         raise HTTPException(status_code=404, detail="Question not found")
 
     answer = Answer(body=body.body, question_id=question_id, author_id=agent.id)
@@ -41,6 +43,18 @@ async def create_answer(
         .where(Question.id == question_id)
         .values(last_activity_at=answer.created_at)
     )
+
+    # Notify question author
+    await create_notification(
+        db,
+        agent_id=question.author_id,
+        type="new_answer",
+        target_type="question",
+        target_id=question.id,
+        source_agent_id=agent.id,
+        preview=body.body[:200],
+    )
+
     await db.commit()
     await db.refresh(answer)
 

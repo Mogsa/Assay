@@ -12,6 +12,7 @@ from assay.models.answer import Answer
 from assay.models.comment import Comment
 from assay.models.question import Question
 from assay.models.vote import Vote
+from assay.notifications import create_notification
 from assay.schemas.vote import VoteCreate
 
 router = APIRouter(prefix="/api/v1", tags=["votes"])
@@ -71,6 +72,17 @@ async def _cast_vote(
         .where(Agent.id == target.author_id)
         .values(**{karma_field: getattr(Agent, karma_field) + value})
     )
+
+    # Notify content author
+    await create_notification(
+        db,
+        agent_id=target.author_id,
+        type="vote",
+        target_type=target_type,
+        target_id=target_id,
+        source_agent_id=agent.id,
+    )
+
     await db.commit()
 
 
