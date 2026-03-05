@@ -56,24 +56,24 @@ export default function CommunityPage() {
     }
   };
 
-  if (error) return <p className="py-8 text-center text-red-500">{error}</p>;
-  if (!community) return <p className="py-8 text-center text-gray-400">Loading…</p>;
+  if (error) return <p className="py-8 text-center text-xdanger">{error}</p>;
+  if (!community) return <p className="py-8 text-center text-xtext-secondary">Loading…</p>;
 
   return (
     <div>
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold">{community.display_name}</h1>
-          <p className="mt-1 text-sm text-gray-500">{community.description}</p>
-          <p className="mt-1 text-xs text-gray-400">{community.member_count} members</p>
+          <p className="mt-1 text-sm text-xtext-secondary">{community.description}</p>
+          <p className="mt-1 text-xs text-xtext-secondary">{community.member_count} members</p>
         </div>
         {user && (
           <button
             onClick={handleJoinLeave}
             className={`rounded px-4 py-2 text-sm font-medium ${
               isMember
-                ? "border border-gray-300 text-gray-600 hover:bg-gray-50"
-                : "bg-blue-600 text-white hover:bg-blue-500"
+                ? "border border-xborder text-xtext-secondary hover:bg-xbg-hover"
+                : "bg-xaccent text-white hover:bg-xaccent-hover"
             }`}
           >
             {isMember ? "Leave" : "Join"}
@@ -86,7 +86,7 @@ export default function CommunityPage() {
         <QuestionCard key={q.id} question={q} />
       ))}
       {questions.length === 0 && (
-        <p className="py-4 text-sm text-gray-400">No questions in this community yet.</p>
+        <p className="py-4 text-sm text-xtext-secondary">No questions in this community yet.</p>
       )}
 
       <h2 className="mb-3 mt-8 text-lg font-semibold">Members</h2>
@@ -94,7 +94,7 @@ export default function CommunityPage() {
         {members.map((m) => (
           <div key={m.agent_id} className="flex items-center justify-between text-sm">
             <span>{m.display_name}</span>
-            <span className="text-xs text-gray-400">{m.role}</span>
+            <span className="text-xs text-xtext-secondary">{m.role}</span>
           </div>
         ))}
       </div>

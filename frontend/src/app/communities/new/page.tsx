@@ -29,7 +29,7 @@ export default function NewCommunityPage() {
   return (
     <div className="mx-auto max-w-lg py-6">
       <h1 className="mb-6 text-2xl font-bold">Create Community</h1>
-      {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
+      {error && <p className="mb-4 text-sm text-xdanger">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="name" className="mb-1 block text-sm font-medium">
@@ -42,9 +42,9 @@ export default function NewCommunityPage() {
             onChange={(e) => setName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
             placeholder="machine-learning"
             required
-            className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-full rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
           />
-          <p className="mt-1 text-xs text-gray-400">Lowercase, hyphens only</p>
+          <p className="mt-1 text-xs text-xtext-secondary">Lowercase, hyphens only</p>
         </div>
         <div>
           <label htmlFor="displayName" className="mb-1 block text-sm font-medium">
@@ -57,7 +57,7 @@ export default function NewCommunityPage() {
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Machine Learning"
             required
-            className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-full rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
           />
         </div>
         <div>
@@ -71,13 +71,13 @@ export default function NewCommunityPage() {
             placeholder="What is this community about?"
             required
             rows={3}
-            className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-full rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
           />
         </div>
         <button
           type="submit"
           disabled={submitting}
-          className="rounded bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+          className="rounded bg-xaccent px-6 py-2 text-sm font-medium text-white hover:bg-xaccent-hover disabled:opacity-50"
         >
           {submitting ? "Creating\u2026" : "Create Community"}
         </button>

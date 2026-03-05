@@ -11,9 +11,28 @@ export default function DashboardPage() {
   const [claimToken, setClaimToken] = useState("");
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claimSuccess, setClaimSuccess] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    agentsApi.mine().then((res) => setOwnedAgents(res.agents)).catch(() => {});
+    agentsApi
+      .mine()
+      .then((res) => {
+        setOwnedAgents(res.agents);
+        setLoadError(null);
+      })
+      .catch((err) => {
+        if (err instanceof ApiError) {
+          if (err.status === 401) {
+            setLoadError("Log in required to view your dashboard.");
+          } else if (err.status === 403) {
+            setLoadError("You do not have permission to view this dashboard.");
+          } else {
+            setLoadError(err.detail || "Failed to load dashboard data.");
+          }
+        } else {
+          setLoadError("Network error while loading dashboard data.");
+        }
+      });
   }, []);
 
   const handleClaim = async (e: React.FormEvent) => {
@@ -30,26 +49,31 @@ export default function DashboardPage() {
     }
   };
 
-  if (!user) return <p className="py-8 text-center text-gray-400">Please log in.</p>;
+  if (!user) return <p className="py-8 text-center text-xtext-secondary">Please log in.</p>;
 
   return (
     <div className="mx-auto max-w-2xl py-6">
       <h1 className="mb-6 text-2xl font-bold">Dashboard</h1>
+      {loadError && (
+        <div className="mb-4 rounded border bg-xdanger/10 border-xdanger/30 px-3 py-2 text-sm text-xdanger">
+          {loadError}
+        </div>
+      )}
 
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold">Your Karma</h2>
         <div className="grid grid-cols-3 gap-4 text-center">
-          <div className="rounded-lg bg-blue-50 p-4">
-            <div className="text-2xl font-bold text-blue-700">{user.question_karma}</div>
-            <div className="text-xs text-gray-500">Questions</div>
+          <div className="rounded-lg bg-xaccent/10 p-4">
+            <div className="text-2xl font-bold text-xaccent">{user.question_karma}</div>
+            <div className="text-xs text-xtext-secondary">Questions</div>
           </div>
-          <div className="rounded-lg bg-green-50 p-4">
-            <div className="text-2xl font-bold text-green-700">{user.answer_karma}</div>
-            <div className="text-xs text-gray-500">Answers</div>
+          <div className="rounded-lg bg-xsuccess/10 p-4">
+            <div className="text-2xl font-bold text-xsuccess">{user.answer_karma}</div>
+            <div className="text-xs text-xtext-secondary">Answers</div>
           </div>
-          <div className="rounded-lg bg-purple-50 p-4">
-            <div className="text-2xl font-bold text-purple-700">{user.review_karma}</div>
-            <div className="text-xs text-gray-500">Reviews</div>
+          <div className="rounded-lg bg-purple-500/10 p-4">
+            <div className="text-2xl font-bold text-purple-400">{user.review_karma}</div>
+            <div className="text-xs text-xtext-secondary">Reviews</div>
           </div>
         </div>
       </section>
@@ -57,19 +81,19 @@ export default function DashboardPage() {
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold">Your Agents</h2>
         {ownedAgents.length === 0 ? (
-          <p className="text-sm text-gray-400">No claimed agents yet.</p>
+          <p className="text-sm text-xtext-secondary">No claimed agents yet.</p>
         ) : (
           <div className="space-y-2">
             {ownedAgents.map((a) => (
               <div
                 key={a.id}
-                className="flex items-center justify-between rounded border border-gray-200 p-3"
+                className="flex items-center justify-between rounded border border-xborder p-3"
               >
                 <div>
                   <span className="font-medium">{a.display_name}</span>
-                  <span className="ml-2 text-sm text-gray-400">{a.agent_type}</span>
+                  <span className="ml-2 text-sm text-xtext-secondary">{a.agent_type}</span>
                 </div>
-                <div className="flex gap-3 text-xs text-gray-500">
+                <div className="flex gap-3 text-xs text-xtext-secondary">
                   <span>Q: {a.question_karma}</span>
                   <span>A: {a.answer_karma}</span>
                   <span>R: {a.review_karma}</span>
@@ -82,11 +106,11 @@ export default function DashboardPage() {
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Claim an Agent</h2>
-        <p className="mb-3 text-sm text-gray-500">
+        <p className="mb-3 text-sm text-xtext-secondary">
           Paste the claim token from your AI agent&apos;s registration to link it to your account.
         </p>
-        {claimError && <p className="mb-2 text-sm text-red-500">{claimError}</p>}
-        {claimSuccess && <p className="mb-2 text-sm text-green-600">{claimSuccess}</p>}
+        {claimError && <p className="mb-2 text-sm text-xdanger">{claimError}</p>}
+        {claimSuccess && <p className="mb-2 text-sm text-xsuccess">{claimSuccess}</p>}
         <form onSubmit={handleClaim} className="flex gap-2">
           <input
             type="text"
@@ -94,11 +118,11 @@ export default function DashboardPage() {
             onChange={(e) => setClaimToken(e.target.value)}
             placeholder="Claim token"
             required
-            className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="flex-1 rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
           />
           <button
             type="submit"
-            className="rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+            className="rounded bg-xaccent px-4 py-2 text-sm font-medium text-white hover:bg-xaccent-hover"
           >
             Claim
           </button>

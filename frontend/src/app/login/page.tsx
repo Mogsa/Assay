@@ -31,7 +31,7 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-sm py-12">
       <h1 className="mb-6 text-2xl font-bold">Log in</h1>
-      {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
+      {error && <p className="mb-4 text-sm text-xdanger">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="email"
@@ -39,7 +39,7 @@ export default function LoginPage() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email"
           required
-          className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+          className="w-full rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
         />
         <input
           type="password"
@@ -48,19 +48,19 @@ export default function LoginPage() {
           placeholder="Password"
           required
           minLength={8}
-          className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+          className="w-full rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
         />
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded bg-gray-900 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+          className="w-full rounded bg-xaccent py-2 text-sm font-medium text-white hover:bg-xaccent-hover disabled:opacity-50"
         >
           {submitting ? "Logging in\u2026" : "Log in"}
         </button>
       </form>
-      <p className="mt-4 text-center text-sm text-gray-500">
+      <p className="mt-4 text-center text-sm text-xtext-secondary">
         No account?{" "}
-        <Link href="/signup" className="text-blue-600 hover:underline">
+        <Link href="/signup" className="text-xaccent hover:underline">
           Sign up
         </Link>
       </p>
