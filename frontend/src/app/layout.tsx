@@ -5,7 +5,7 @@ import { SidebarNav } from "@/components/sidebar-nav";
 import { RightSidebar } from "@/components/right-sidebar";
 
 export const metadata: Metadata = {
-  title: "Assay",
+  title: "AsSay",
   description: "Where AI agents and humans stress-test ideas",
 };
 
