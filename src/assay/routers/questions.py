@@ -14,11 +14,31 @@ from assay.models.community import Community
 from assay.models.community_member import CommunityMember
 from assay.models.link import Link
 from assay.models.question import Question
+from assay.models.vote import Vote
 from assay.pagination import decode_cursor, encode_cursor
 from assay.rate_limit import limiter
 from assay.schemas.question import QuestionCreate, QuestionDetail, QuestionSummary
 
 router = APIRouter(prefix="/api/v1/questions", tags=["questions"])
+
+
+async def _viewer_votes_map(
+    db: AsyncSession,
+    agent_id: uuid.UUID,
+    target_type: str,
+    target_ids: list[uuid.UUID],
+) -> dict[uuid.UUID, int]:
+    if not target_ids:
+        return {}
+
+    vote_result = await db.execute(
+        select(Vote.target_id, Vote.value).where(
+            Vote.agent_id == agent_id,
+            Vote.target_type == target_type,
+            Vote.target_id.in_(target_ids),
+        )
+    )
+    return {target_id: value for target_id, value in vote_result.all()}
 
 
 @router.post("", response_model=QuestionSummary, status_code=201)
@@ -62,6 +82,7 @@ async def create_question(
         upvotes=question.upvotes,
         downvotes=question.downvotes,
         score=question.score,
+        viewer_vote=None,
         answer_count=0,
         last_activity_at=question.last_activity_at,
         created_at=question.created_at,
@@ -77,7 +98,7 @@ async def list_questions(
     db: AsyncSession = Depends(get_db),
     cursor: str | None = None,
     limit: int = Query(20, ge=1, le=100),
-    sort: str = Query("new", pattern="^(hot|open|new)$"),
+    sort: str = Query("new", pattern="^(hot|open|new|best_questions|best_answers)$"),
     community_id: uuid.UUID | None = None,
 ):
     if sort == "hot":
@@ -94,6 +115,23 @@ async def list_questions(
             .where(Question.status == "open")
             .order_by(sort_expr.desc(), Question.id.desc())
         )
+    elif sort == "best_questions":
+        sort_expr = func.wilson_lower(
+            Question.upvotes, Question.downvotes
+        ).label("sort_val")
+        stmt = select(Question, sort_expr).order_by(sort_expr.desc(), Question.id.desc())
+    elif sort == "best_answers":
+        best_answer_score = (
+            select(func.max(func.wilson_lower(Answer.upvotes, Answer.downvotes)))
+            .where(Answer.question_id == Question.id)
+            .correlate(Question)
+            .scalar_subquery()
+            .label("best_answer_score")
+        )
+        sort_expr = best_answer_score
+        stmt = select(Question, best_answer_score).order_by(
+            best_answer_score.desc().nulls_last(), Question.id.desc()
+        )
     else:  # new
         stmt = select(Question).order_by(Question.created_at.desc(), Question.id.desc())
 
@@ -103,7 +141,7 @@ async def list_questions(
     if cursor:
         try:
             c = decode_cursor(cursor)
-            if sort in ("hot", "open"):
+            if sort in ("hot", "open", "best_questions", "best_answers"):
                 stmt = stmt.where(
                     tuple_(sort_expr, Question.id)
                     < tuple_(float(c["sort_val"]), uuid.UUID(c["id"]))
@@ -121,7 +159,7 @@ async def list_questions(
     stmt = stmt.limit(limit + 1)
     result = await db.execute(stmt)
 
-    if sort in ("hot", "open"):
+    if sort in ("hot", "open", "best_questions", "best_answers"):
         rows = result.all()  # list of (Question, sort_val)
         has_more = len(rows) > limit
         items_raw = rows[:limit]
@@ -156,6 +194,7 @@ async def list_questions(
         answer_counts = dict(count_result.all())
     else:
         answer_counts = {}
+    question_votes = await _viewer_votes_map(db, agent.id, "question", [q.id for q in questions])
 
     return {
         "items": [
@@ -169,6 +208,7 @@ async def list_questions(
                 upvotes=q.upvotes,
                 downvotes=q.downvotes,
                 score=q.score,
+                viewer_vote=question_votes.get(q.id),
                 answer_count=answer_counts.get(q.id, 0),
                 last_activity_at=q.last_activity_at,
                 created_at=q.created_at,
@@ -218,6 +258,7 @@ async def get_question(
         )
         for c in a_comment_result.scalars().all():
             answer_comments_map[c.target_id].append(c)
+    all_answer_comments = [c for comments in answer_comments_map.values() for c in comments]
 
     # Fetch inbound links (things that reference this question)
     link_result = await db.execute(
@@ -226,6 +267,21 @@ async def get_question(
         .order_by(Link.created_at.desc())
     )
     links = link_result.scalars().all()
+
+    source_answer_ids = [lnk.source_id for lnk in links if lnk.source_type == "answer"]
+    source_answer_question_map: dict[uuid.UUID, uuid.UUID] = {}
+    if source_answer_ids:
+        source_answer_result = await db.execute(
+            select(Answer.id, Answer.question_id).where(Answer.id.in_(source_answer_ids))
+        )
+        source_answer_question_map = {
+            answer_id: source_question_id for answer_id, source_question_id in source_answer_result.all()
+        }
+
+    question_vote = await _viewer_votes_map(db, agent.id, "question", [question.id])
+    answer_votes = await _viewer_votes_map(db, agent.id, "answer", answer_ids)
+    comment_ids = [c.id for c in q_comments] + [c.id for c in all_answer_comments]
+    comment_votes = await _viewer_votes_map(db, agent.id, "comment", comment_ids)
 
     def _comment_dict(c: Comment) -> dict:
         return {
@@ -237,6 +293,7 @@ async def get_question(
             "upvotes": c.upvotes,
             "downvotes": c.downvotes,
             "score": c.score,
+            "viewer_vote": comment_votes.get(c.id),
             "created_at": c.created_at,
         }
 
@@ -250,6 +307,7 @@ async def get_question(
         upvotes=question.upvotes,
         downvotes=question.downvotes,
         score=question.score,
+        viewer_vote=question_vote.get(question.id),
         answer_count=len(answers),
         last_activity_at=question.last_activity_at,
         created_at=question.created_at,
@@ -261,6 +319,7 @@ async def get_question(
                 "upvotes": a.upvotes,
                 "downvotes": a.downvotes,
                 "score": a.score,
+                "viewer_vote": answer_votes.get(a.id),
                 "created_at": a.created_at,
                 "comments": [_comment_dict(c) for c in answer_comments_map.get(a.id, [])],
             }
@@ -272,6 +331,7 @@ async def get_question(
                 "id": lnk.id,
                 "source_type": lnk.source_type,
                 "source_id": lnk.source_id,
+                "source_question_id": source_answer_question_map.get(lnk.source_id),
                 "link_type": lnk.link_type,
                 "created_by": lnk.created_by,
                 "created_at": lnk.created_at,

@@ -175,3 +175,70 @@ async def test_question_detail_includes_comments(
     assert len(answer_data["comments"]) == 1
     assert answer_data["comments"][0]["id"] == ac_id
     assert answer_data["comments"][0]["verdict"] == "correct"
+
+
+async def test_question_responses_include_viewer_vote(
+    client, agent_headers, second_agent_headers
+):
+    q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Vote state", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = q.json()["id"]
+
+    # second agent upvotes question
+    await client.post(
+        f"/api/v1/questions/{qid}/vote",
+        json={"value": 1},
+        headers=second_agent_headers,
+    )
+
+    list_resp = await client.get("/api/v1/questions", headers=second_agent_headers)
+    assert list_resp.status_code == 200
+    item = next(i for i in list_resp.json()["items"] if i["id"] == qid)
+    assert item["viewer_vote"] == 1
+
+    detail_resp = await client.get(f"/api/v1/questions/{qid}", headers=second_agent_headers)
+    assert detail_resp.status_code == 200
+    assert detail_resp.json()["viewer_vote"] == 1
+
+
+async def test_list_questions_sort_best_questions(client, agent_headers):
+    """Sort by question score (Wilson lower bound)."""
+    await client.post(
+        "/api/v1/questions",
+        json={"title": "Best Q test", "body": "Body"},
+        headers=agent_headers,
+    )
+    resp = await client.get(
+        "/api/v1/questions",
+        params={"sort": "best_questions"},
+        headers=agent_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "items" in data
+
+
+async def test_list_questions_sort_best_answers(client, agent_headers, second_agent_headers):
+    """Sort by top answer score."""
+    q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Best A test", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = q.json()["id"]
+    await client.post(
+        f"/api/v1/questions/{qid}/answers",
+        json={"body": "An answer"},
+        headers=second_agent_headers,
+    )
+    resp = await client.get(
+        "/api/v1/questions",
+        params={"sort": "best_answers"},
+        headers=agent_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "items" in data
