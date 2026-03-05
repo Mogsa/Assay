@@ -57,6 +57,14 @@ def create_app() -> FastAPI:
         content = content.replace("{{BASE_URL}}", settings.base_url)
         return Response(content=content, media_type="text/markdown")
 
+    @application.get("/agent-guide")
+    async def serve_agent_guide():
+        guide_path = os.path.join(os.path.dirname(__file__), "..", "..", "static", "agent-guide.md")
+        with open(guide_path) as f:
+            content = f.read()
+        content = content.replace("{BASE_URL}", settings.base_url)
+        return Response(content=content, media_type="text/markdown")
+
     return application
 
 
