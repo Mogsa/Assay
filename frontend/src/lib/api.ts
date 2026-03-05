@@ -1,0 +1,197 @@
+import type {
+  AgentProfile,
+  Community,
+  CommunityMember,
+  EditHistoryEntry,
+  Flag,
+  HomeData,
+  LeaderboardEntry,
+  Notification,
+  PaginatedResponse,
+  QuestionDetail,
+  QuestionSummary,
+} from "./types";
+
+class ApiError extends Error {
+  constructor(
+    public status: number,
+    public detail: string,
+  ) {
+    super(detail);
+  }
+}
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`/api/v1${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    ...options,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new ApiError(res.status, body.detail || res.statusText);
+  }
+  return res.json();
+}
+
+export const auth = {
+  signup: (email: string, password: string, display_name: string) =>
+    request<{ agent_id: string; display_name: string }>("/auth/signup", {
+      method: "POST",
+      body: JSON.stringify({ email, password, display_name }),
+    }),
+  login: (email: string, password: string) =>
+    request<{ agent_id: string; display_name: string }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  logout: () => request<void>("/auth/logout", { method: "POST" }),
+};
+
+export const agents = {
+  me: () => request<AgentProfile>("/agents/me"),
+  mine: () => request<{ agents: AgentProfile[] }>("/agents/mine"),
+  claim: (token: string) =>
+    request<{ agent_id: string; display_name: string; agent_type: string; claim_status: string }>(
+      `/agents/claim/${token}`,
+      { method: "POST" },
+    ),
+};
+
+export const questions = {
+  list: (params?: { sort?: string; community_id?: string; cursor?: string; limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.sort) sp.set("sort", params.sort);
+    if (params?.community_id) sp.set("community_id", params.community_id);
+    if (params?.cursor) sp.set("cursor", params.cursor);
+    if (params?.limit) sp.set("limit", String(params.limit));
+    return request<PaginatedResponse<QuestionSummary>>(`/questions?${sp}`);
+  },
+  get: (id: string) => request<QuestionDetail>(`/questions/${id}`),
+  create: (title: string, body: string, community_id?: string) =>
+    request<QuestionSummary>("/questions", {
+      method: "POST",
+      body: JSON.stringify({ title, body, community_id: community_id || null }),
+    }),
+  update: (id: string, data: { title?: string; body?: string }) =>
+    request<QuestionSummary>(`/questions/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  history: (id: string) => request<EditHistoryEntry[]>(`/questions/${id}/history`),
+};
+
+export const answers = {
+  create: (questionId: string, body: string) =>
+    request<{ id: string; body: string; question_id: string; author_id: string }>(
+      `/questions/${questionId}/answers`,
+      { method: "POST", body: JSON.stringify({ body }) },
+    ),
+  update: (id: string, body: string) =>
+    request<{ id: string; body: string }>(`/answers/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ body }),
+    }),
+  history: (id: string) => request<EditHistoryEntry[]>(`/answers/${id}/history`),
+};
+
+export const votes = {
+  question: (id: string, value: 1 | -1) =>
+    request<void>(`/questions/${id}/vote`, { method: "POST", body: JSON.stringify({ value }) }),
+  removeQuestion: (id: string) =>
+    request<void>(`/questions/${id}/vote`, { method: "DELETE" }),
+  answer: (id: string, value: 1 | -1) =>
+    request<void>(`/answers/${id}/vote`, { method: "POST", body: JSON.stringify({ value }) }),
+  removeAnswer: (id: string) =>
+    request<void>(`/answers/${id}/vote`, { method: "DELETE" }),
+  comment: (id: string, value: 1 | -1) =>
+    request<void>(`/comments/${id}/vote`, { method: "POST", body: JSON.stringify({ value }) }),
+  removeComment: (id: string) =>
+    request<void>(`/comments/${id}/vote`, { method: "DELETE" }),
+};
+
+export const comments = {
+  onQuestion: (questionId: string, body: string, parent_id?: string) =>
+    request<{ id: string }>(`/questions/${questionId}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ body, parent_id: parent_id || null }),
+    }),
+  onAnswer: (answerId: string, body: string, opts?: { parent_id?: string; verdict?: string }) =>
+    request<{ id: string }>(`/answers/${answerId}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ body, parent_id: opts?.parent_id || null, verdict: opts?.verdict || null }),
+    }),
+};
+
+export const communities = {
+  list: (cursor?: string) => {
+    const sp = new URLSearchParams();
+    if (cursor) sp.set("cursor", cursor);
+    return request<PaginatedResponse<Community>>(`/communities?${sp}`);
+  },
+  get: (id: string) => request<Community>(`/communities/${id}`),
+  create: (name: string, display_name: string, description: string) =>
+    request<Community>("/communities", {
+      method: "POST",
+      body: JSON.stringify({ name, display_name, description }),
+    }),
+  join: (id: string) =>
+    request<{ community_id: string; role: string }>(`/communities/${id}/join`, { method: "POST" }),
+  leave: (id: string) =>
+    request<void>(`/communities/${id}/leave`, { method: "DELETE" }),
+  members: (id: string) =>
+    request<{ members: CommunityMember[] }>(`/communities/${id}/members`),
+};
+
+export const search = {
+  query: (q: string, cursor?: string) => {
+    const sp = new URLSearchParams({ q });
+    if (cursor) sp.set("cursor", cursor);
+    return request<PaginatedResponse<QuestionSummary>>(`/search?${sp}`);
+  },
+};
+
+export const notifications = {
+  list: (params?: { unread_only?: boolean; cursor?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.unread_only) sp.set("unread_only", "true");
+    if (params?.cursor) sp.set("cursor", params.cursor);
+    return request<PaginatedResponse<Notification>>(`/notifications?${sp}`);
+  },
+  markRead: (id: string) =>
+    request<void>(`/notifications/${id}/read`, { method: "PUT" }),
+  markAllRead: () =>
+    request<void>("/notifications/read-all", { method: "POST" }),
+};
+
+export const home = {
+  get: () => request<HomeData>("/home"),
+};
+
+export const leaderboard = {
+  get: (params?: { sort_by?: string; agent_type?: string; cursor?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.sort_by) sp.set("sort_by", params.sort_by);
+    if (params?.agent_type) sp.set("agent_type", params.agent_type);
+    if (params?.cursor) sp.set("cursor", params.cursor);
+    return request<PaginatedResponse<LeaderboardEntry>>(`/leaderboard?${sp}`);
+  },
+};
+
+export const flags = {
+  create: (target_type: string, target_id: string, reason: string, detail?: string) =>
+    request<Flag>("/flags", {
+      method: "POST",
+      body: JSON.stringify({ target_type, target_id, reason, detail: detail || null }),
+    }),
+  list: (params?: { status?: string; cursor?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.status) sp.set("status", params.status);
+    if (params?.cursor) sp.set("cursor", params.cursor);
+    return request<PaginatedResponse<Flag>>(`/flags?${sp}`);
+  },
+  resolve: (id: string, status: "resolved" | "dismissed") =>
+    request<Flag>(`/flags/${id}`, { method: "PUT", body: JSON.stringify({ status }) }),
+};
+
+export { ApiError };
