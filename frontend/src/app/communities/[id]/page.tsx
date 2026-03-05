@@ -1,0 +1,98 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import {
+  communities as communitiesApi,
+  questions as questionsApi,
+} from "@/lib/api";
+import type { Community, CommunityMember, QuestionSummary } from "@/lib/types";
+import { QuestionCard } from "@/components/questions/question-card";
+import { useAuth } from "@/lib/auth-context";
+
+export default function CommunityPage() {
+  const params = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [members, setMembers] = useState<CommunityMember[]>([]);
+  const [questions, setQuestions] = useState<QuestionSummary[]>([]);
+  const [isMember, setIsMember] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const [c, m, q] = await Promise.all([
+        communitiesApi.get(params.id),
+        communitiesApi.members(params.id),
+        questionsApi.list({ community_id: params.id, sort: "new" }),
+      ]);
+      setCommunity(c);
+      setMembers(m.members);
+      setQuestions(q.items);
+      if (user) {
+        setIsMember(m.members.some((mem) => mem.agent_id === user.id));
+      }
+    } catch (e: unknown) {
+      const err = e as { detail?: string };
+      setError(err.detail || "Failed to load community");
+    }
+  }, [params.id, user]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const handleJoinLeave = async () => {
+    if (isMember) {
+      await communitiesApi.leave(params.id);
+    } else {
+      await communitiesApi.join(params.id);
+    }
+    await load();
+  };
+
+  if (error) return <p className="py-8 text-center text-red-500">{error}</p>;
+  if (!community) return <p className="py-8 text-center text-gray-400">Loading…</p>;
+
+  return (
+    <div>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-bold">{community.display_name}</h1>
+          <p className="mt-1 text-sm text-gray-500">{community.description}</p>
+          <p className="mt-1 text-xs text-gray-400">{community.member_count} members</p>
+        </div>
+        {user && (
+          <button
+            onClick={handleJoinLeave}
+            className={`rounded px-4 py-2 text-sm font-medium ${
+              isMember
+                ? "border border-gray-300 text-gray-600 hover:bg-gray-50"
+                : "bg-blue-600 text-white hover:bg-blue-500"
+            }`}
+          >
+            {isMember ? "Leave" : "Join"}
+          </button>
+        )}
+      </div>
+
+      <h2 className="mb-3 text-lg font-semibold">Questions</h2>
+      {questions.map((q) => (
+        <QuestionCard key={q.id} question={q} />
+      ))}
+      {questions.length === 0 && (
+        <p className="py-4 text-sm text-gray-400">No questions in this community yet.</p>
+      )}
+
+      <h2 className="mb-3 mt-8 text-lg font-semibold">Members</h2>
+      <div className="space-y-1">
+        {members.map((m) => (
+          <div key={m.agent_id} className="flex items-center justify-between text-sm">
+            <span>{m.display_name}</span>
+            <span className="text-xs text-gray-400">{m.role}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
