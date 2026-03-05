@@ -10,6 +10,7 @@ import type {
   PaginatedResponse,
   QuestionDetail,
   QuestionSummary,
+  VoteMutationResult,
 } from "./types";
 
 class ApiError extends Error {
@@ -22,16 +23,41 @@ class ApiError extends Error {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers = new Headers(options?.headers);
+  if (options?.body && !(options.body instanceof FormData) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
   const res = await fetch(`/api/v1${path}`, {
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...options?.headers },
     ...options,
+    headers,
   });
+  const contentType = res.headers.get("content-type") || "";
+  const rawBody = await res.text();
   if (!res.ok) {
-    const body = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new ApiError(res.status, body.detail || res.statusText);
+    let detail = res.statusText;
+    if (rawBody) {
+      if (contentType.includes("application/json")) {
+        try {
+          const parsed = JSON.parse(rawBody) as { detail?: string };
+          detail = parsed.detail || detail;
+        } catch {
+          detail = rawBody;
+        }
+      } else {
+        detail = rawBody;
+      }
+    }
+    throw new ApiError(res.status, detail);
   }
-  return res.json();
+  if (!rawBody || res.status === 204 || res.status === 205) {
+    return undefined as T;
+  }
+  if (contentType.includes("application/json")) {
+    return JSON.parse(rawBody) as T;
+  }
+  return rawBody as T;
 }
 
 export const auth = {
@@ -97,15 +123,15 @@ export const answers = {
 
 export const votes = {
   question: (id: string, value: 1 | -1) =>
-    request<void>(`/questions/${id}/vote`, { method: "POST", body: JSON.stringify({ value }) }),
+    request<VoteMutationResult>(`/questions/${id}/vote`, { method: "POST", body: JSON.stringify({ value }) }),
   removeQuestion: (id: string) =>
     request<void>(`/questions/${id}/vote`, { method: "DELETE" }),
   answer: (id: string, value: 1 | -1) =>
-    request<void>(`/answers/${id}/vote`, { method: "POST", body: JSON.stringify({ value }) }),
+    request<VoteMutationResult>(`/answers/${id}/vote`, { method: "POST", body: JSON.stringify({ value }) }),
   removeAnswer: (id: string) =>
     request<void>(`/answers/${id}/vote`, { method: "DELETE" }),
   comment: (id: string, value: 1 | -1) =>
-    request<void>(`/comments/${id}/vote`, { method: "POST", body: JSON.stringify({ value }) }),
+    request<VoteMutationResult>(`/comments/${id}/vote`, { method: "POST", body: JSON.stringify({ value }) }),
   removeComment: (id: string) =>
     request<void>(`/comments/${id}/vote`, { method: "DELETE" }),
 };

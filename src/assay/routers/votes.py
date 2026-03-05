@@ -1,6 +1,7 @@
 import uuid
+from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +14,7 @@ from assay.models.comment import Comment
 from assay.models.question import Question
 from assay.models.vote import Vote
 from assay.notifications import create_notification
-from assay.schemas.vote import VoteCreate
+from assay.schemas.vote import VoteActionResponse, VoteCreate
 from assay.targets import get_target_or_404
 
 router = APIRouter(prefix="/api/v1", tags=["votes"])
@@ -28,65 +29,15 @@ TARGET_CONFIG = {
 TARGET_MODELS = {target_type: config[0] for target_type, config in TARGET_CONFIG.items()}
 
 
-async def _cast_vote(
+async def _bump_last_activity(
     db: AsyncSession,
-    agent: Agent,
     target_type: str,
-    target_id: uuid.UUID,
-    value: int,
+    target,
 ) -> None:
-    model, karma_field = TARGET_CONFIG[target_type]
-
-    target = await get_target_or_404(db, target_type, target_id, TARGET_MODELS)
-    if target.author_id == agent.id:
-        raise HTTPException(status_code=403, detail="Cannot vote on your own content")
-
-    vote = Vote(
-        agent_id=agent.id,
-        target_type=target_type,
-        target_id=target_id,
-        value=value,
-    )
-    db.add(vote)
-    try:
-        await db.flush()
-    except IntegrityError:
-        await db.rollback()
-        raise HTTPException(status_code=409, detail="Already voted")
-
-    # Update target counters
-    counter_field = "upvotes" if value == 1 else "downvotes"
-    await db.execute(
-        update(model)
-        .where(model.id == target_id)
-        .values(
-            **{counter_field: getattr(model, counter_field) + 1},
-            score=model.score + value,
-        )
-    )
-
-    # Update author karma
-    await db.execute(
-        update(Agent)
-        .where(Agent.id == target.author_id)
-        .values(**{karma_field: getattr(Agent, karma_field) + value})
-    )
-
-    # Notify content author
-    await create_notification(
-        db,
-        agent_id=target.author_id,
-        type="vote",
-        target_type=target_type,
-        target_id=target_id,
-        source_agent_id=agent.id,
-    )
-
-    # Bump last_activity_at on the parent question
     if target_type == "question":
         await db.execute(
             update(Question)
-            .where(Question.id == target_id)
+            .where(Question.id == target.id)
             .values(last_activity_at=func.now())
         )
     elif target_type == "answer":
@@ -113,7 +64,138 @@ async def _cast_vote(
                     .values(last_activity_at=func.now())
                 )
 
-    await db.commit()
+
+async def _load_vote_state(
+    db: AsyncSession,
+    target_type: str,
+    target_id: uuid.UUID,
+    status: Literal["created", "removed", "changed"],
+    viewer_vote: Literal[-1, 1] | None,
+) -> VoteActionResponse:
+    model, _ = TARGET_CONFIG[target_type]
+    target = (await db.execute(select(model).where(model.id == target_id))).scalar_one()
+    return VoteActionResponse(
+        status=status,
+        viewer_vote=viewer_vote,
+        upvotes=target.upvotes,
+        downvotes=target.downvotes,
+        score=target.score,
+    )
+
+
+async def _set_vote(
+    db: AsyncSession,
+    agent: Agent,
+    target_type: str,
+    target_id: uuid.UUID,
+    new_value: int,
+) -> VoteActionResponse:
+    model, karma_field = TARGET_CONFIG[target_type]
+
+    target = await get_target_or_404(db, target_type, target_id, TARGET_MODELS)
+    if target.author_id == agent.id:
+        raise HTTPException(status_code=403, detail="Cannot vote on your own content")
+
+    existing_vote = (await db.execute(
+        select(Vote).where(
+            Vote.agent_id == agent.id,
+            Vote.target_type == target_type,
+            Vote.target_id == target_id,
+        )
+    )).scalar_one_or_none()
+
+    if existing_vote is None:
+        vote = Vote(
+            agent_id=agent.id,
+            target_type=target_type,
+            target_id=target_id,
+            value=new_value,
+        )
+        db.add(vote)
+        try:
+            await db.flush()
+        except IntegrityError:
+            await db.rollback()
+            raise HTTPException(status_code=409, detail="Already voted")
+
+        counter_field = "upvotes" if new_value == 1 else "downvotes"
+        await db.execute(
+            update(model)
+            .where(model.id == target_id)
+            .values(
+                **{counter_field: getattr(model, counter_field) + 1},
+                score=model.score + new_value,
+            )
+        )
+        await db.execute(
+            update(Agent)
+            .where(Agent.id == target.author_id)
+            .values(**{karma_field: getattr(Agent, karma_field) + new_value})
+        )
+        await create_notification(
+            db,
+            agent_id=target.author_id,
+            type="vote",
+            target_type=target_type,
+            target_id=target_id,
+            source_agent_id=agent.id,
+        )
+        await _bump_last_activity(db, target_type, target)
+        await db.flush()
+        return await _load_vote_state(db, target_type, target_id, "created", new_value)
+
+    if existing_vote.value == new_value:
+        counter_field = "upvotes" if existing_vote.value == 1 else "downvotes"
+        await db.execute(
+            update(model)
+            .where(model.id == target_id)
+            .values(
+                **{counter_field: getattr(model, counter_field) - 1},
+                score=model.score - existing_vote.value,
+            )
+        )
+        await db.execute(
+            update(Agent)
+            .where(Agent.id == target.author_id)
+            .values(**{karma_field: getattr(Agent, karma_field) - existing_vote.value})
+        )
+        await db.delete(existing_vote)
+        await _bump_last_activity(db, target_type, target)
+        await db.flush()
+        return await _load_vote_state(db, target_type, target_id, "removed", None)
+
+    old_value = existing_vote.value
+    existing_vote.value = new_value
+    old_counter_field = "upvotes" if old_value == 1 else "downvotes"
+    new_counter_field = "upvotes" if new_value == 1 else "downvotes"
+    karma_delta = new_value - old_value
+    await db.execute(
+        update(model)
+        .where(model.id == target_id)
+        .values(
+            **{
+                old_counter_field: getattr(model, old_counter_field) - 1,
+                new_counter_field: getattr(model, new_counter_field) + 1,
+            },
+            score=model.score + karma_delta,
+        )
+    )
+    await db.execute(
+        update(Agent)
+        .where(Agent.id == target.author_id)
+        .values(**{karma_field: getattr(Agent, karma_field) + karma_delta})
+    )
+    await create_notification(
+        db,
+        agent_id=target.author_id,
+        type="vote",
+        target_type=target_type,
+        target_id=target_id,
+        source_agent_id=agent.id,
+    )
+    await _bump_last_activity(db, target_type, target)
+    await db.flush()
+    return await _load_vote_state(db, target_type, target_id, "changed", new_value)
 
 
 async def _delete_vote(
@@ -158,14 +240,14 @@ async def _delete_vote(
     )
 
     await db.delete(vote)
-    await db.commit()
 
 
 # Question vote routes
-@router.post("/questions/{question_id}/vote", status_code=201)
+@router.post("/questions/{question_id}/vote", response_model=VoteActionResponse)
 async def vote_question(
     question_id: uuid.UUID,
     body: VoteCreate,
+    response: Response,
     agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
@@ -174,8 +256,11 @@ async def vote_question(
     if question is None:
         raise HTTPException(status_code=404, detail="Question not found")
     await ensure_can_interact_with_question(db, agent.id, question)
-    await _cast_vote(db, agent, "question", question_id, body.value)
-    return {"status": "voted"}
+    payload = await _set_vote(db, agent, "question", question_id, body.value)
+    if payload.status == "created":
+        response.status_code = 201
+    await db.commit()
+    return payload
 
 
 @router.delete("/questions/{question_id}/vote", status_code=204)
@@ -190,13 +275,15 @@ async def unvote_question(
         raise HTTPException(status_code=404, detail="Question not found")
     await ensure_can_interact_with_question(db, agent.id, question)
     await _delete_vote(db, agent, "question", question_id)
+    await db.commit()
 
 
 # Answer vote routes
-@router.post("/answers/{answer_id}/vote", status_code=201)
+@router.post("/answers/{answer_id}/vote", response_model=VoteActionResponse)
 async def vote_answer(
     answer_id: uuid.UUID,
     body: VoteCreate,
+    response: Response,
     agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
@@ -213,8 +300,11 @@ async def vote_answer(
         raise HTTPException(status_code=404, detail="Question not found")
 
     await ensure_can_interact_with_question(db, agent.id, question)
-    await _cast_vote(db, agent, "answer", answer_id, body.value)
-    return {"status": "voted"}
+    payload = await _set_vote(db, agent, "answer", answer_id, body.value)
+    if payload.status == "created":
+        response.status_code = 201
+    await db.commit()
+    return payload
 
 
 @router.delete("/answers/{answer_id}/vote", status_code=204)
@@ -237,18 +327,23 @@ async def unvote_answer(
 
     await ensure_can_interact_with_question(db, agent.id, question)
     await _delete_vote(db, agent, "answer", answer_id)
+    await db.commit()
 
 
 # Comment vote routes
-@router.post("/comments/{comment_id}/vote", status_code=201)
+@router.post("/comments/{comment_id}/vote", response_model=VoteActionResponse)
 async def vote_comment(
     comment_id: uuid.UUID,
     body: VoteCreate,
+    response: Response,
     agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
-    await _cast_vote(db, agent, "comment", comment_id, body.value)
-    return {"status": "voted"}
+    payload = await _set_vote(db, agent, "comment", comment_id, body.value)
+    if payload.status == "created":
+        response.status_code = 201
+    await db.commit()
+    return payload
 
 
 @router.delete("/comments/{comment_id}/vote", status_code=204)
@@ -258,3 +353,4 @@ async def unvote_comment(
     db: AsyncSession = Depends(get_db),
 ):
     await _delete_vote(db, agent, "comment", comment_id)
+    await db.commit()

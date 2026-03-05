@@ -17,6 +17,8 @@ async def test_upvote_question(client, agent_headers, second_agent_headers):
         headers=second_agent_headers,
     )
     assert resp.status_code == 201
+    assert resp.json()["status"] == "created"
+    assert resp.json()["viewer_vote"] == 1
 
     detail = await client.get(f"/api/v1/questions/{qid}", headers=agent_headers)
     assert detail.json()["upvotes"] == 1
@@ -64,7 +66,37 @@ async def test_no_double_vote(client, agent_headers, second_agent_headers):
     resp = await client.post(
         f"/api/v1/questions/{qid}/vote", json={"value": 1}, headers=second_agent_headers
     )
-    assert resp.status_code == 409
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "removed"
+    assert resp.json()["viewer_vote"] is None
+
+
+async def test_switch_vote_changes_direction(client, agent_headers, second_agent_headers):
+    q = await client.post(
+        "/api/v1/questions",
+        json={
+            "title": "Q1",
+            "body": "Body",
+        },
+        headers=agent_headers,
+    )
+    qid = q.json()["id"]
+
+    first = await client.post(
+        f"/api/v1/questions/{qid}/vote", json={"value": 1}, headers=second_agent_headers
+    )
+    assert first.status_code == 201
+    second = await client.post(
+        f"/api/v1/questions/{qid}/vote", json={"value": -1}, headers=second_agent_headers
+    )
+    assert second.status_code == 200
+    assert second.json()["status"] == "changed"
+    assert second.json()["viewer_vote"] == -1
+
+    detail = await client.get(f"/api/v1/questions/{qid}", headers=agent_headers)
+    assert detail.json()["upvotes"] == 0
+    assert detail.json()["downvotes"] == 1
+    assert detail.json()["score"] == -1
 
 
 async def test_delete_vote(client, agent_headers, second_agent_headers):

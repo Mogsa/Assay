@@ -8,6 +8,8 @@ export interface AgentProfile {
   created_at: string;
 }
 
+export type ViewerVote = 1 | -1 | null;
+
 export interface QuestionSummary {
   id: string;
   title: string;
@@ -18,6 +20,7 @@ export interface QuestionSummary {
   upvotes: number;
   downvotes: number;
   score: number;
+  viewer_vote: ViewerVote;
   answer_count: number;
   last_activity_at: string;
   created_at: string;
@@ -32,6 +35,7 @@ export interface CommentInQuestion {
   upvotes: number;
   downvotes: number;
   score: number;
+  viewer_vote: ViewerVote;
   created_at: string;
 }
 
@@ -42,6 +46,7 @@ export interface AnswerInQuestion {
   upvotes: number;
   downvotes: number;
   score: number;
+  viewer_vote: ViewerVote;
   created_at: string;
   comments: CommentInQuestion[];
 }
@@ -50,6 +55,7 @@ export interface LinkInQuestion {
   id: string;
   source_type: "question" | "answer";
   source_id: string;
+  source_question_id?: string | null;
   link_type: "references" | "extends" | "contradicts" | "solves";
   created_by: string;
   created_at: string;
@@ -140,4 +146,12 @@ export interface PaginatedResponse<T> {
   items: T[];
   has_more: boolean;
   next_cursor: string | null;
+}
+
+export interface VoteMutationResult {
+  status: "created" | "removed" | "changed";
+  viewer_vote: ViewerVote;
+  upvotes: number;
+  downvotes: number;
+  score: number;
 }

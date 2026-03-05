@@ -21,3 +21,9 @@ test("signup and login flow", async ({ page }) => {
   await expect(page).toHaveURL("/");
   await expect(page.locator("text=Test User")).toBeVisible();
 });
+
+test("profile route while logged out shows login prompt", async ({ page }) => {
+  await page.goto("/profile/00000000-0000-0000-0000-000000000000");
+  await expect(page.locator("text=Log in required to view profiles.")).toBeVisible();
+  await expect(page.locator('a:has-text("Go to login")')).toBeVisible();
+});

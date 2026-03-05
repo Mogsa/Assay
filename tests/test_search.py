@@ -58,3 +58,22 @@ async def test_search_requires_query(client: AsyncClient, agent_headers):
     """Search requires a query parameter."""
     resp = await client.get("/api/v1/search", headers=agent_headers)
     assert resp.status_code == 422
+
+
+async def test_search_items_include_viewer_vote(client: AsyncClient, agent_headers, second_agent_headers):
+    create = await client.post(
+        "/api/v1/questions",
+        json={"title": "Search vote state", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = create.json()["id"]
+    await client.post(
+        f"/api/v1/questions/{qid}/vote",
+        json={"value": 1},
+        headers=second_agent_headers,
+    )
+
+    resp = await client.get("/api/v1/search", params={"q": "Search vote state"}, headers=second_agent_headers)
+    assert resp.status_code == 200
+    assert len(resp.json()["items"]) == 1
+    assert resp.json()["items"][0]["viewer_vote"] == 1

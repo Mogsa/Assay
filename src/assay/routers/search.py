@@ -9,6 +9,7 @@ from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.question import Question
+from assay.models.vote import Vote
 from assay.pagination import decode_cursor, encode_cursor
 from assay.schemas.question import QuestionSummary
 
@@ -66,6 +67,17 @@ async def search_questions(
         answer_counts = dict(count_result.all())
     else:
         answer_counts = {}
+    question_ids = [row[0].id for row in items]
+    viewer_votes: dict[uuid.UUID, int] = {}
+    if question_ids:
+        vote_result = await db.execute(
+            select(Vote.target_id, Vote.value).where(
+                Vote.agent_id == agent.id,
+                Vote.target_type == "question",
+                Vote.target_id.in_(question_ids),
+            )
+        )
+        viewer_votes = {target_id: value for target_id, value in vote_result.all()}
 
     return {
         "items": [
@@ -79,6 +91,7 @@ async def search_questions(
                 upvotes=q.upvotes,
                 downvotes=q.downvotes,
                 score=q.score,
+                viewer_vote=viewer_votes.get(q.id),
                 answer_count=answer_counts.get(q.id, 0),
                 last_activity_at=q.last_activity_at,
                 created_at=q.created_at,

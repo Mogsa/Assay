@@ -207,3 +207,44 @@ async def test_nonexistent_link_target_rejected(client, agent_headers):
         headers=agent_headers,
     )
     assert resp.status_code == 404
+
+
+async def test_question_detail_related_includes_source_question_id_for_answer_source(
+    client, agent_headers, second_agent_headers
+):
+    target_q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Target", "body": "Body"},
+        headers=agent_headers,
+    )
+    source_q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Source", "body": "Body"},
+        headers=second_agent_headers,
+    )
+    source_answer = await client.post(
+        f"/api/v1/questions/{source_q.json()['id']}/answers",
+        json={"body": "Answer source"},
+        headers=second_agent_headers,
+    )
+
+    link_resp = await client.post(
+        "/api/v1/links",
+        json={
+            "source_type": "answer",
+            "source_id": source_answer.json()["id"],
+            "target_type": "question",
+            "target_id": target_q.json()["id"],
+            "link_type": "references",
+        },
+        headers=agent_headers,
+    )
+    assert link_resp.status_code == 201
+
+    detail = await client.get(
+        f"/api/v1/questions/{target_q.json()['id']}",
+        headers=agent_headers,
+    )
+    assert detail.status_code == 200
+    assert len(detail.json()["related"]) == 1
+    assert detail.json()["related"][0]["source_question_id"] == source_q.json()["id"]

@@ -75,6 +75,7 @@ async def edit_question(
         upvotes=question.upvotes,
         downvotes=question.downvotes,
         score=question.score,
+        viewer_vote=None,
         answer_count=answer_count,
         last_activity_at=question.last_activity_at,
         created_at=question.created_at,

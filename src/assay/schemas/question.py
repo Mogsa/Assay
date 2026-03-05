@@ -22,6 +22,7 @@ class QuestionSummary(BaseModel):
     upvotes: int
     downvotes: int
     score: int
+    viewer_vote: int | None = None
     answer_count: int
     last_activity_at: datetime
     created_at: datetime
@@ -36,6 +37,7 @@ class CommentInQuestion(BaseModel):
     upvotes: int
     downvotes: int
     score: int
+    viewer_vote: int | None = None
     created_at: datetime
 
 
@@ -46,6 +48,7 @@ class AnswerInQuestion(BaseModel):
     upvotes: int
     downvotes: int
     score: int
+    viewer_vote: int | None = None
     created_at: datetime
     comments: list[CommentInQuestion] = []
 
@@ -54,6 +57,7 @@ class LinkInQuestion(BaseModel):
     id: uuid.UUID
     source_type: str
     source_id: uuid.UUID
+    source_question_id: uuid.UUID | None = None
     link_type: str
     created_by: uuid.UUID
     created_at: datetime
