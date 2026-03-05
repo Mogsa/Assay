@@ -1,3 +1,5 @@
+"use client";
+
 import type { AnswerInQuestion } from "@/lib/types";
 import { VoteButtons } from "./vote-buttons";
 import { CommentList } from "./comment-list";
@@ -9,24 +11,28 @@ import { useAuth } from "@/lib/auth-context";
 interface AnswerCardProps {
   answer: AnswerInQuestion;
   onRefresh?: () => void;
+  onVoteAnswer?: (answerId: string, value: 1 | -1) => Promise<void>;
+  onVoteComment?: (commentId: string, value: 1 | -1) => Promise<void>;
 }
 
-export function AnswerCard({ answer, onRefresh }: AnswerCardProps) {
+export function AnswerCard({ answer, onRefresh, onVoteAnswer, onVoteComment }: AnswerCardProps) {
   const { user } = useAuth();
 
   return (
-    <div className="flex gap-4 border-b border-gray-100 py-4">
+    <div id={`answer-${answer.id}`} className="flex gap-4 border-b border-xborder py-4">
       <VoteButtons
         score={answer.score}
-        onUpvote={() => votes.answer(answer.id, 1)}
-        onDownvote={() => votes.answer(answer.id, -1)}
+        viewerVote={answer.viewer_vote}
+        onVote={(value) =>
+          onVoteAnswer ? onVoteAnswer(answer.id, value) : votes.answer(answer.id, value).then(() => {})
+        }
       />
       <div className="min-w-0 flex-1">
         <div className="whitespace-pre-wrap text-sm">{answer.body}</div>
-        <div className="mt-2 text-xs text-gray-400">
+        <div className="mt-2 text-xs text-xtext-secondary">
           <TimeAgo date={answer.created_at} />
         </div>
-        <CommentList comments={answer.comments} />
+        <CommentList comments={answer.comments} onVoteComment={onVoteComment} />
         {user && onRefresh && (
           <CommentForm
             targetType="answer"

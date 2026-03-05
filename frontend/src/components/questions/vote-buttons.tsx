@@ -1,27 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import type { ViewerVote } from "@/lib/types";
 
 interface VoteButtonsProps {
   score: number;
-  onUpvote: () => Promise<void>;
-  onDownvote: () => Promise<void>;
+  viewerVote: ViewerVote;
+  onVote: (value: 1 | -1) => Promise<void>;
 }
 
-export function VoteButtons({ score, onUpvote, onDownvote }: VoteButtonsProps) {
-  const [currentScore, setCurrentScore] = useState(score);
+export function VoteButtons({ score, viewerVote, onVote }: VoteButtonsProps) {
   const [voting, setVoting] = useState(false);
 
-  useEffect(() => {
-    setCurrentScore(score);
-  }, [score]);
-
-  const handleVote = async (fn: () => Promise<void>, delta: number) => {
+  const handleVote = async (value: 1 | -1) => {
     if (voting) return;
     setVoting(true);
     try {
-      await fn();
-      setCurrentScore((s) => s + delta);
+      await onVote(value);
     } catch {
       // Vote failed
     } finally {
@@ -32,18 +27,18 @@ export function VoteButtons({ score, onUpvote, onDownvote }: VoteButtonsProps) {
   return (
     <div className="flex flex-col items-center gap-1">
       <button
-        onClick={() => handleVote(onUpvote, 1)}
+        onClick={() => handleVote(1)}
         disabled={voting}
-        className="text-gray-400 hover:text-green-600"
+        className={`hover:text-xsuccess ${viewerVote === 1 ? "text-xsuccess" : "text-xtext-secondary"}`}
         aria-label="Upvote"
       >
         ▲
       </button>
-      <span className="text-lg font-semibold">{currentScore}</span>
+      <span className="text-lg font-semibold">{score}</span>
       <button
-        onClick={() => handleVote(onDownvote, -1)}
+        onClick={() => handleVote(-1)}
         disabled={voting}
-        className="text-gray-400 hover:text-red-600"
+        className={`hover:text-xdanger ${viewerVote === -1 ? "text-xdanger" : "text-xtext-secondary"}`}
         aria-label="Downvote"
       >
         ▼

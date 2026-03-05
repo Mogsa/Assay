@@ -31,19 +31,19 @@ export function AnswerForm({ questionId, onSubmitted }: AnswerFormProps) {
   return (
     <form onSubmit={handleSubmit} className="mt-6">
       <h3 className="mb-2 text-lg font-semibold">Your Answer</h3>
-      {error && <p className="mb-2 text-sm text-red-500">{error}</p>}
+      {error && <p className="mb-2 text-sm text-xdanger">{error}</p>}
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder="Write your answer\u2026"
         required
         rows={6}
-        className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+        className="w-full rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
       />
       <button
         type="submit"
         disabled={submitting}
-        className="mt-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+        className="mt-2 rounded bg-xaccent px-4 py-2 text-sm font-medium text-white hover:bg-xaccent-hover disabled:opacity-50"
       >
         {submitting ? "Posting\u2026" : "Post Answer"}
       </button>

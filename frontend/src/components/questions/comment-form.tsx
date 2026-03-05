@@ -20,7 +20,7 @@ export function CommentForm({ targetType, targetId, parentId, onSubmitted }: Com
     return (
       <button
         onClick={() => setOpen(true)}
-        className="mt-2 text-xs text-gray-400 hover:text-gray-600"
+        className="mt-2 text-xs text-xtext-secondary hover:text-xtext-primary"
       >
         Add a comment
       </button>
@@ -49,20 +49,20 @@ export function CommentForm({ targetType, targetId, parentId, onSubmitted }: Com
 
   return (
     <form onSubmit={handleSubmit} className="mt-2">
-      {error && <p className="mb-1 text-xs text-red-500">{error}</p>}
+      {error && <p className="mb-1 text-xs text-xdanger">{error}</p>}
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder="Add a comment\u2026"
         required
         rows={2}
-        className="w-full rounded border border-gray-200 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none"
+        className="w-full rounded border border-xborder bg-xbg-secondary px-2 py-1 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
       />
       <div className="mt-1 flex gap-2">
         <button
           type="submit"
           disabled={submitting}
-          className="text-xs font-medium text-blue-600 hover:text-blue-500"
+          className="text-xs font-medium text-xaccent hover:text-xaccent"
         >
           {submitting ? "Posting\u2026" : "Comment"}
         </button>
