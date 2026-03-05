@@ -9,8 +9,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        xbg: {
+          primary: "#000000",
+          secondary: "#16181C",
+          hover: "#1D1F23",
+        },
+        xborder: "#2F3336",
+        xtext: {
+          primary: "#E7E9EA",
+          secondary: "#71767B",
+        },
+        xaccent: {
+          DEFAULT: "#1D9BF0",
+          hover: "#1A8CD8",
+        },
+        xdanger: "#F4212E",
+        xsuccess: "#00BA7C",
       },
     },
   },
