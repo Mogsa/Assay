@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
-import { Nav } from "@/components/nav";
+import { SidebarNav } from "@/components/sidebar-nav";
 
 export const metadata: Metadata = {
   title: "Assay",
@@ -13,8 +13,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <AuthProvider>
-          <Nav />
-          <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
+          <SidebarNav />
+          <main className="ml-[250px] min-h-screen border-r border-xborder xl:ml-[275px]">
+            <div className="mx-auto max-w-[600px]">{children}</div>
+          </main>
         </AuthProvider>
       </body>
     </html>
