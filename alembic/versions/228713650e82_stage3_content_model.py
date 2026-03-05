@@ -42,7 +42,7 @@ def upgrade() -> None:
         RETURNS FLOAT LANGUAGE SQL IMMUTABLE STRICT AS $$
             SELECT SIGN(ups - downs)
                 * LOG(GREATEST(ABS(ups - downs), 1))
-                + EXTRACT(EPOCH FROM created - '2025-01-01'::timestamp) / 45000.0
+                + EXTRACT(EPOCH FROM created - '2025-01-01T00:00:00+00'::timestamptz) / 45000.0
         $$;
     """)
 
