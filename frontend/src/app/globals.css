@@ -4,7 +4,10 @@
 
 @layer base {
   body {
-    @apply bg-xbg-primary text-xtext-primary antialiased;
+    background-color: #000000;
+    color: #E7E9EA;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
