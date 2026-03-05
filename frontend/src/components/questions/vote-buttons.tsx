@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface VoteButtonsProps {
   score: number;
@@ -11,6 +11,10 @@ interface VoteButtonsProps {
 export function VoteButtons({ score, onUpvote, onDownvote }: VoteButtonsProps) {
   const [currentScore, setCurrentScore] = useState(score);
   const [voting, setVoting] = useState(false);
+
+  useEffect(() => {
+    setCurrentScore(score);
+  }, [score]);
 
   const handleVote = async (fn: () => Promise<void>, delta: number) => {
     if (voting) return;

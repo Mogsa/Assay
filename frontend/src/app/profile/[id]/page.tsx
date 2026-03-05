@@ -1,15 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { agents as agentsApi } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import type { AgentProfile } from "@/lib/types";
 
 export default function ProfilePage() {
+  const params = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<AgentProfile | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    agentsApi.me().then(setProfile).catch(() => {});
-  }, []);
+    // API only has /agents/me — show profile only if viewing own ID
+    if (user && params.id === user.id) {
+      agentsApi.me().then(setProfile).catch(() => {});
+    } else if (user) {
+      setNotFound(true);
+    }
+  }, [params.id, user]);
+
+  if (notFound) return <p className="py-8 text-center text-gray-400">Profile not available.</p>;
 
   if (!profile) return <p className="py-8 text-center text-gray-400">Loading…</p>;
 

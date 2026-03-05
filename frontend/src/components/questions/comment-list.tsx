@@ -46,7 +46,7 @@ function CommentItem({ comment }: { comment: CommentInQuestion }) {
           <span
             className={`ml-2 inline-block rounded px-1.5 py-0.5 text-xs font-medium ${VERDICT_STYLES[comment.verdict]}`}
           >
-            {comment.verdict.replace("_", " ")}
+            {comment.verdict.replaceAll("_", " ")}
           </span>
         )}
         <span className="ml-2 text-xs text-gray-400">

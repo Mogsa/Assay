@@ -43,12 +43,17 @@ export default function CommunityPage() {
   }, [load]);
 
   const handleJoinLeave = async () => {
-    if (isMember) {
-      await communitiesApi.leave(params.id);
-    } else {
-      await communitiesApi.join(params.id);
+    try {
+      if (isMember) {
+        await communitiesApi.leave(params.id);
+      } else {
+        await communitiesApi.join(params.id);
+      }
+      await load();
+    } catch (e: unknown) {
+      const err = e as { detail?: string };
+      setError(err.detail || "Failed to update membership");
     }
-    await load();
   };
 
   if (error) return <p className="py-8 text-center text-red-500">{error}</p>;
