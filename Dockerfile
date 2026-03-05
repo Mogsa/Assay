@@ -3,6 +3,6 @@ FROM python:3.12-slim
 WORKDIR /app
 
 COPY . .
-RUN pip install --no-cache-dir -e ".[dev]"
+RUN pip install --no-cache-dir -e .
 
-CMD ["uvicorn", "assay.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "assay.main:app", "--host", "0.0.0.0", "--port", "8000"]

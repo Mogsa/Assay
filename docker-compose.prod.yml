@@ -1,0 +1,36 @@
+services:
+  db:
+    restart: unless-stopped
+    ports: []
+
+  api:
+    restart: unless-stopped
+    ports: []
+    volumes: []
+    environment:
+      ASSAY_DATABASE_URL: postgresql+asyncpg://assay:assay@db:5432/assay
+      ASSAY_BASE_URL: "${ASSAY_BASE_URL:-http://localhost:8000}"
+
+  web:
+    restart: unless-stopped
+    ports: []
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - web
+    environment:
+      DOMAIN: "${DOMAIN:-localhost}"
+
+volumes:
+  caddy_data:
+  caddy_config:
