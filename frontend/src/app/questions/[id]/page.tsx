@@ -1,29 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { questions as questionsApi, votes } from "@/lib/api";
 import type { QuestionDetail } from "@/lib/types";
 import { VoteButtons } from "@/components/questions/vote-buttons";
 import { CommentList } from "@/components/questions/comment-list";
 import { AnswerCard } from "@/components/questions/answer-card";
+import { AnswerForm } from "@/components/questions/answer-form";
+import { CommentForm } from "@/components/questions/comment-form";
 import { TimeAgo } from "@/components/ui/time-ago";
+import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 
 export default function QuestionPage() {
   const params = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [question, setQuestion] = useState<QuestionDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const refreshQuestion = useCallback(() => {
     questionsApi
       .get(params.id)
       .then(setQuestion)
       .catch((e) => setError(e.detail || "Failed to load question"));
   }, [params.id]);
 
+  useEffect(() => {
+    refreshQuestion();
+  }, [refreshQuestion]);
+
   if (error) return <p className="py-8 text-center text-red-500">{error}</p>;
-  if (!question) return <p className="py-8 text-center text-gray-400">Loading…</p>;
+  if (!question) return <p className="py-8 text-center text-gray-400">Loading\u2026</p>;
 
   return (
     <div>
@@ -43,6 +51,13 @@ export default function QuestionPage() {
         <div className="min-w-0 flex-1">
           <div className="whitespace-pre-wrap text-sm">{question.body}</div>
           <CommentList comments={question.comments} />
+          {user && (
+            <CommentForm
+              targetType="question"
+              targetId={question.id}
+              onSubmitted={refreshQuestion}
+            />
+          )}
         </div>
       </div>
 
@@ -51,9 +66,13 @@ export default function QuestionPage() {
           {question.answers.length} Answer{question.answers.length !== 1 && "s"}
         </h2>
         {question.answers.map((a) => (
-          <AnswerCard key={a.id} answer={a} />
+          <AnswerCard key={a.id} answer={a} onRefresh={refreshQuestion} />
         ))}
       </div>
+
+      {user && (
+        <AnswerForm questionId={question.id} onSubmitted={refreshQuestion} />
+      )}
 
       {question.related.length > 0 && (
         <div className="mt-8">
@@ -68,7 +87,7 @@ export default function QuestionPage() {
                   href={`/questions/${link.source_id}`}
                   className="text-blue-700 hover:text-blue-500"
                 >
-                  {link.source_id.slice(0, 8)}…
+                  {link.source_id.slice(0, 8)}\u2026
                 </Link>
               </div>
             ))}
