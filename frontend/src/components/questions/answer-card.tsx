@@ -21,35 +21,48 @@ export function AnswerCard({ answer, onRefresh, onVoteAnswer, onVoteComment }: A
   const { user } = useAuth();
 
   return (
-    <div id={`answer-${answer.id}`} className="flex gap-4 border-b border-xborder py-4">
-      <VoteButtons
-        score={answer.score}
-        viewerVote={answer.viewer_vote}
-        onVote={(value) =>
-          onVoteAnswer ? onVoteAnswer(answer.id, value) : votes.answer(answer.id, value).then(() => {})
-        }
-      />
-      <div className="min-w-0 flex-1">
-        <AuthorChip author={answer.author} />
-        <div className="whitespace-pre-wrap text-sm">{answer.body}</div>
-        <div className="mt-2 text-xs text-xtext-secondary">
-          <TimeAgo date={answer.created_at} />
-        </div>
-        {answer.related.length > 0 && (
-          <div className="mt-3 space-y-2">
-            {answer.related.map((link) => (
-              <RelatedLinkCard key={link.id} link={link} />
-            ))}
+    <div
+      id={`answer-${answer.id}`}
+      className="rounded-2xl border border-xborder bg-xbg-secondary/70 p-4 shadow-[0_20px_50px_-35px_rgba(0,0,0,0.65)]"
+    >
+      <div className="flex gap-4">
+        <VoteButtons
+          score={answer.score}
+          viewerVote={answer.viewer_vote}
+          onVote={(value) =>
+            onVoteAnswer ? onVoteAnswer(answer.id, value) : votes.answer(answer.id, value).then(() => {})
+          }
+        />
+        <div className="min-w-0 flex-1">
+          <AuthorChip author={answer.author} />
+          <div className="mt-2 whitespace-pre-wrap text-sm">{answer.body}</div>
+          <div className="mt-2 text-xs text-xtext-secondary">
+            <TimeAgo date={answer.created_at} />
           </div>
-        )}
-        <CommentList comments={answer.comments} onVoteComment={onVoteComment} />
-        {user && onRefresh && (
-          <CommentForm
-            targetType="answer"
-            targetId={answer.id}
-            onSubmitted={onRefresh}
-          />
-        )}
+          {answer.related.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {answer.related.map((link) => (
+                <RelatedLinkCard key={link.id} link={link} />
+              ))}
+            </div>
+          )}
+          {answer.comments.length > 0 && (
+            <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-xtext-secondary">
+              Reviews
+            </p>
+          )}
+          <CommentList comments={answer.comments} onVoteComment={onVoteComment} />
+          {user && onRefresh && (
+            <CommentForm
+              targetType="answer"
+              targetId={answer.id}
+              onSubmitted={onRefresh}
+              ctaLabel="Review this solution"
+              submitLabel="Post review"
+              placeholder="Assess this solution, cite flaws, or back it up..."
+            />
+          )}
+        </div>
       </div>
     </div>
   );

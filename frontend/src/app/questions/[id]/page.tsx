@@ -121,7 +121,7 @@ export default function QuestionPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">{question.title}</h1>
+      <h1 className="text-3xl font-bold tracking-tight">{question.title}</h1>
       <div className="mt-3">
         <AuthorChip author={question.author} />
       </div>
@@ -148,54 +148,93 @@ export default function QuestionPage() {
         </div>
       )}
 
-      <div className="mt-4 flex gap-4">
-        <VoteButtons
-          score={question.score}
-          viewerVote={question.viewer_vote}
-          onVote={handleQuestionVote}
-        />
-        <div className="min-w-0 flex-1">
-          <div className="whitespace-pre-wrap text-sm">{question.body}</div>
-          <CommentList comments={question.comments} onVoteComment={handleCommentVote} />
-          {user && (
-            <CommentForm
-              targetType="question"
-              targetId={question.id}
-              onSubmitted={refreshQuestion}
+      <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+        <section className="rounded-3xl border border-xborder bg-xbg-secondary/60 p-5 shadow-[0_30px_80px_-55px_rgba(0,0,0,0.8)]">
+          <div className="flex gap-4">
+            <VoteButtons
+              score={question.score}
+              viewerVote={question.viewer_vote}
+              onVote={handleQuestionVote}
             />
-          )}
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold">
-          {question.answers.length} Answer{question.answers.length !== 1 && "s"}
-        </h2>
-        {question.answers.map((a) => (
-          <AnswerCard
-            key={a.id}
-            answer={a}
-            onRefresh={refreshQuestion}
-            onVoteAnswer={handleAnswerVote}
-            onVoteComment={handleCommentVote}
-          />
-        ))}
-      </div>
-
-      {user && (
-        <AnswerForm questionId={question.id} onSubmitted={refreshQuestion} />
-      )}
-
-      {question.related.length > 0 && (
-        <div className="mt-8">
-          <h3 className="text-sm font-semibold text-xtext-secondary">References and Reposts</h3>
-          <div className="mt-2 space-y-2">
-            {question.related.map((link) => (
-              <RelatedLinkCard key={link.id} link={link} />
-            ))}
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-xtext-secondary">
+                Problem
+              </p>
+              <div className="mt-3 whitespace-pre-wrap text-sm leading-7">{question.body}</div>
+              {question.related.length > 0 && (
+                <div className="mt-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-xtext-secondary">
+                    References and reposts
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    {question.related.map((link) => (
+                      <RelatedLinkCard key={link.id} link={link} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {question.comments.length > 0 && (
+                <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-xtext-secondary">
+                  Problem reviews
+                </p>
+              )}
+              <CommentList comments={question.comments} onVoteComment={handleCommentVote} />
+              {user && (
+                <CommentForm
+                  targetType="question"
+                  targetId={question.id}
+                  onSubmitted={refreshQuestion}
+                  ctaLabel="Review this problem"
+                  submitLabel="Post review"
+                  placeholder="Challenge the problem, refine it, or back up the framing…"
+                />
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        </section>
+
+        <section className="rounded-3xl border border-xborder bg-xbg-secondary/40 p-5 shadow-[0_30px_80px_-55px_rgba(0,0,0,0.8)]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-xtext-secondary">
+                Solutions
+              </p>
+              <h2 className="mt-1 text-xl font-semibold">
+                {question.answers.length} Answer{question.answers.length !== 1 && "s"}
+              </h2>
+              <p className="mt-1 text-sm text-xtext-secondary">
+                Reviews stay attached to the solution they evaluate.
+              </p>
+            </div>
+          </div>
+
+          {user && (
+            <div className="mt-5 rounded-2xl border border-dashed border-xborder bg-xbg/40 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-xtext-secondary">
+                Propose a solution
+              </p>
+              <AnswerForm questionId={question.id} onSubmitted={refreshQuestion} />
+            </div>
+          )}
+
+          <div className="mt-5 space-y-4">
+            {question.answers.map((a) => (
+              <AnswerCard
+                key={a.id}
+                answer={a}
+                onRefresh={refreshQuestion}
+                onVoteAnswer={handleAnswerVote}
+                onVoteComment={handleCommentVote}
+              />
+            ))}
+            {question.answers.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-xborder px-4 py-6 text-sm text-xtext-secondary">
+                No solutions yet. The first answer sets the baseline for review karma on this thread.
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

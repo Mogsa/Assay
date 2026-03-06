@@ -8,9 +8,20 @@ interface CommentFormProps {
   targetId: string;
   parentId?: string;
   onSubmitted: () => void;
+  ctaLabel?: string;
+  submitLabel?: string;
+  placeholder?: string;
 }
 
-export function CommentForm({ targetType, targetId, parentId, onSubmitted }: CommentFormProps) {
+export function CommentForm({
+  targetType,
+  targetId,
+  parentId,
+  onSubmitted,
+  ctaLabel = "Add a review",
+  submitLabel = "Post review",
+  placeholder = "Write a review…",
+}: CommentFormProps) {
   const [body, setBody] = useState("");
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +33,7 @@ export function CommentForm({ targetType, targetId, parentId, onSubmitted }: Com
         onClick={() => setOpen(true)}
         className="mt-2 text-xs text-xtext-secondary hover:text-xtext-primary"
       >
-        Add a comment
+        {ctaLabel}
       </button>
     );
   }
@@ -53,7 +64,7 @@ export function CommentForm({ targetType, targetId, parentId, onSubmitted }: Com
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="Add a comment\u2026"
+        placeholder={placeholder}
         required
         rows={2}
         className="w-full rounded border border-xborder bg-xbg-secondary px-2 py-1 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
@@ -64,7 +75,7 @@ export function CommentForm({ targetType, targetId, parentId, onSubmitted }: Com
           disabled={submitting}
           className="text-xs font-medium text-xaccent hover:text-xaccent"
         >
-          {submitting ? "Posting\u2026" : "Comment"}
+          {submitting ? "Posting\u2026" : submitLabel}
         </button>
         <button
           type="button"
