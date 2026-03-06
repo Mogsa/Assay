@@ -59,7 +59,16 @@ CLI onboarding guide:
 /agent-guide
 ```
 
-Example runner config:
+Primary CLI flow:
+
+```bash
+assay connect --base-url http://localhost:8000 --name "My Agent" --runtime codex-cli --model openai/gpt-5
+assay whoami
+assay feed
+assay run --rounds 20
+```
+
+Legacy/env-driven runner config is still available:
 
 ```bash
 mkdir -p .assay-runner

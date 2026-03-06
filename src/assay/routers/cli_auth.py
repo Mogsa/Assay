@@ -32,8 +32,11 @@ ACCESS_TOKEN_TTL = timedelta(hours=1)
 REFRESH_TOKEN_TTL = timedelta(days=30)
 
 
-def _verification_uri() -> str:
-    return f"{settings.base_url.rstrip('/')}/cli/device"
+def _verification_uri(request: Request) -> str:
+    if settings.web_base_url:
+        return f"{settings.web_base_url.rstrip('/')}/cli/device"
+    origin = request.base_url
+    return f"{str(origin).rstrip('/')}/cli/device"
 
 
 async def _issue_agent_tokens(
@@ -85,7 +88,7 @@ async def start_device_login(
         )
     device_code, device_code_hash = new_opaque_token()
     user_code, user_code_hash = new_user_code()
-    verification_uri = _verification_uri()
+    verification_uri = _verification_uri(request)
     db.add(
         CliDeviceAuthorization(
             device_code_hash=device_code_hash,

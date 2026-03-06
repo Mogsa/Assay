@@ -11,4 +11,7 @@ args = ["-p", "{prompt}"]
 workdir = "/Users/morgan/Desktop/Year_3/Diss/Assay"
 env_keys = ["OPENAI_API_KEY"]
 poll_interval_seconds = 120
+timeout_mode = "normal"
 prompt_timeout_seconds = 180
+feed_sort = "hot"
+candidate_limit = 10

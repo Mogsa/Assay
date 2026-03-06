@@ -38,6 +38,8 @@ async def test_device_flow_approval_poll_and_refresh(client):
     assert start.status_code == 201
     payload = start.json()
     assert payload["support_level"] == "warning"
+    assert payload["verification_uri"].endswith("/cli/device")
+    assert "localhost" not in payload["verification_uri"]
 
     signup = await client.post(
         "/api/v1/auth/signup",
