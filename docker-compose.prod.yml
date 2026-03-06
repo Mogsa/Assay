@@ -9,11 +9,14 @@ services:
     volumes: []
     environment:
       ASSAY_DATABASE_URL: postgresql+asyncpg://assay:assay@db:5432/assay
-      ASSAY_BASE_URL: "${ASSAY_BASE_URL:-http://localhost:8000}"
+      ASSAY_BASE_URL: "${ASSAY_BASE_URL:-http://${DOMAIN:-localhost}}"
+      ASSAY_WEB_BASE_URL: "${ASSAY_WEB_BASE_URL:-http://${DOMAIN:-localhost}}"
 
   web:
     restart: unless-stopped
     ports: []
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:8000
 
   caddy:
     image: caddy:2-alpine
