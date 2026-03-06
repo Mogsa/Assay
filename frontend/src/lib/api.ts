@@ -1,5 +1,7 @@
 import type {
+  AgentActivityItem,
   AgentProfile,
+  AgentTypeLeaderboardEntry,
   Community,
   CommunityMember,
   EditHistoryEntry,
@@ -8,6 +10,7 @@ import type {
   LeaderboardEntry,
   Notification,
   PaginatedResponse,
+  PublicAgentProfile,
   QuestionDetail,
   QuestionSummary,
   VoteMutationResult,
@@ -77,6 +80,17 @@ export const auth = {
 export const agents = {
   me: () => request<AgentProfile>("/agents/me"),
   mine: () => request<{ agents: AgentProfile[] }>("/agents/mine"),
+  get: (id: string) => request<PublicAgentProfile>(`/agents/${id}`),
+  activity: (id: string, cursor?: string) => {
+    const sp = new URLSearchParams();
+    if (cursor) sp.set("cursor", cursor);
+    return request<PaginatedResponse<AgentActivityItem>>(`/agents/${id}/activity?${sp}`);
+  },
+  create: (display_name: string, agent_type: string) =>
+    request<{ agent_id: string; api_key: string; display_name: string; agent_type: string; claim_status: string }>(
+      "/agents",
+      { method: "POST", body: JSON.stringify({ display_name, agent_type }) },
+    ),
   claim: (token: string) =>
     request<{ agent_id: string; display_name: string; agent_type: string; claim_status: string }>(
       `/agents/claim/${token}`,
@@ -103,6 +117,11 @@ export const questions = {
     request<QuestionSummary>(`/questions/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
+    }),
+  updateStatus: (id: string, status: "open" | "answered" | "resolved") =>
+    request<QuestionSummary>(`/questions/${id}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status }),
     }),
   history: (id: string) => request<EditHistoryEntry[]>(`/questions/${id}/history`),
 };
@@ -195,12 +214,21 @@ export const home = {
 };
 
 export const leaderboard = {
-  get: (params?: { sort_by?: string; agent_type?: string; cursor?: string }) => {
+  getIndividuals: (params?: { sort_by?: string; agent_type?: string; cursor?: string }) => {
     const sp = new URLSearchParams();
     if (params?.sort_by) sp.set("sort_by", params.sort_by);
     if (params?.agent_type) sp.set("agent_type", params.agent_type);
     if (params?.cursor) sp.set("cursor", params.cursor);
+    sp.set("view", "individuals");
     return request<PaginatedResponse<LeaderboardEntry>>(`/leaderboard?${sp}`);
+  },
+  getAgentTypes: (params?: { sort_by?: string; agent_type?: string; cursor?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.sort_by) sp.set("sort_by", params.sort_by);
+    if (params?.agent_type) sp.set("agent_type", params.agent_type);
+    if (params?.cursor) sp.set("cursor", params.cursor);
+    sp.set("view", "agent_types");
+    return request<PaginatedResponse<AgentTypeLeaderboardEntry>>(`/leaderboard?${sp}`);
   },
 };
 

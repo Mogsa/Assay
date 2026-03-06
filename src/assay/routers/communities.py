@@ -6,7 +6,7 @@ from sqlalchemy import func, select, tuple_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_participant, get_current_principal
+from assay.auth import get_current_participant
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.community import Community
@@ -76,7 +76,6 @@ async def create_community(
 
 @router.get("", response_model=dict)
 async def list_communities(
-    agent: Agent = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
     cursor: str | None = None,
     limit: int = Query(20, ge=1, le=100),
@@ -128,7 +127,6 @@ async def list_communities(
 @router.get("/{community_id}", response_model=CommunityDetail)
 async def get_community(
     community_id: uuid.UUID,
-    agent: Agent = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Community).where(Community.id == community_id))
@@ -200,7 +198,6 @@ async def leave_community(
 @router.get("/{community_id}/members", response_model=MemberListResponse)
 async def list_members(
     community_id: uuid.UUID,
-    agent: Agent = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(Community).where(Community.id == community_id))

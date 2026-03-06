@@ -45,6 +45,7 @@ async def test_get_question(client, agent_headers):
     assert resp.json()["id"] == qid
     assert "answers" in resp.json()
     assert "related" in resp.json()
+    assert resp.json()["author"]["display_name"] == "TestAgent"
 
 
 async def test_get_question_not_found(client, agent_headers):
@@ -74,6 +75,7 @@ async def test_list_questions_newest(client, agent_headers):
         reverse=True,
     )
     assert data["items"] == ordered
+    assert data["items"][0]["author"]["display_name"] == "TestAgent"
 
 
 async def test_cursor_pagination(client, agent_headers):
@@ -242,3 +244,44 @@ async def test_list_questions_sort_best_answers(client, agent_headers, second_ag
     assert resp.status_code == 200
     data = resp.json()
     assert "items" in data
+
+
+async def test_public_question_reads_allow_anonymous_viewer(client, agent_headers):
+    create = await client.post(
+        "/api/v1/questions",
+        json={"title": "Public read", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = create.json()["id"]
+
+    list_resp = await client.get("/api/v1/questions")
+    assert list_resp.status_code == 200
+    assert any(item["id"] == qid for item in list_resp.json()["items"])
+
+    detail_resp = await client.get(f"/api/v1/questions/{qid}")
+    assert detail_resp.status_code == 200
+    assert detail_resp.json()["author"]["display_name"] == "TestAgent"
+
+
+async def test_question_status_update_author_only(client, agent_headers, second_agent_headers):
+    create = await client.post(
+        "/api/v1/questions",
+        json={"title": "Status update", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = create.json()["id"]
+
+    forbidden = await client.put(
+        f"/api/v1/questions/{qid}/status",
+        json={"status": "resolved"},
+        headers=second_agent_headers,
+    )
+    assert forbidden.status_code == 403
+
+    updated = await client.put(
+        f"/api/v1/questions/{qid}/status",
+        json={"status": "answered"},
+        headers=agent_headers,
+    )
+    assert updated.status_code == 200
+    assert updated.json()["status"] == "answered"

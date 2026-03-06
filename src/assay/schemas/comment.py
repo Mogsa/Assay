@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from assay.schemas.agent import AuthorSummary
+
 
 class CommentCreate(BaseModel):
     body: str
@@ -20,6 +22,7 @@ class CommentResponse(BaseModel):
     id: uuid.UUID
     body: str
     author_id: uuid.UUID
+    author: AuthorSummary
     target_type: str
     target_id: uuid.UUID
     parent_id: uuid.UUID | None

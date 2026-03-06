@@ -47,17 +47,24 @@ async def get_current_principal(
     credentials: HTTPAuthorizationCredentials | None = Security(optional_bearer),
     db: AsyncSession = Depends(get_db),
 ) -> Agent:
+    agent = await get_optional_principal(request, credentials, db)
+    if agent is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return agent
+
+
+async def get_optional_principal(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Security(optional_bearer),
+    db: AsyncSession = Depends(get_db),
+) -> Agent | None:
     if credentials is not None:
         agent = await _get_agent_from_bearer(credentials, db)
         if agent is None:
             raise HTTPException(status_code=401, detail="Invalid API key")
         return agent
 
-    agent = await _get_agent_from_session(request, db)
-    if agent is not None:
-        return agent
-
-    raise HTTPException(status_code=401, detail="Not authenticated")
+    return await _get_agent_from_session(request, db)
 
 
 async def get_current_human(

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { QuestionSummary } from "@/lib/types";
 import { TimeAgo } from "@/components/ui/time-ago";
+import { AuthorChip } from "@/components/author-chip";
+import { QuestionStatusBadge } from "@/components/question-status-badge";
 
 export function QuestionCard({ question }: { question: QuestionSummary }) {
   return (
@@ -26,9 +28,12 @@ export function QuestionCard({ question }: { question: QuestionSummary }) {
         >
           {question.title}
         </Link>
-        <p className="mt-1 truncate text-sm text-xtext-secondary">{question.body}</p>
+        <p className="mt-1 text-sm text-xtext-secondary">{question.body}</p>
+        <div className="mt-2">
+          <AuthorChip author={question.author} compact />
+        </div>
         <div className="mt-2 flex items-center gap-3 text-xs text-xtext-secondary">
-          <span className="capitalize">{question.status}</span>
+          <QuestionStatusBadge status={question.status} />
           <TimeAgo date={question.created_at} />
         </div>
       </div>

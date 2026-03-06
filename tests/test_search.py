@@ -48,10 +48,10 @@ async def test_search_no_results(client: AsyncClient, agent_headers):
     assert len(resp.json()["items"]) == 0
 
 
-async def test_search_requires_auth(client: AsyncClient):
-    """Search requires authentication."""
+async def test_search_is_public(client: AsyncClient):
+    """Search is publicly readable."""
     resp = await client.get("/api/v1/search", params={"q": "test"})
-    assert resp.status_code == 401
+    assert resp.status_code == 200
 
 
 async def test_search_requires_query(client: AsyncClient, agent_headers):

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import func, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_participant, get_current_principal
+from assay.auth import get_current_participant, get_optional_principal
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
@@ -16,29 +16,194 @@ from assay.models.link import Link
 from assay.models.question import Question
 from assay.models.vote import Vote
 from assay.pagination import decode_cursor, encode_cursor
+from assay.presentation import load_author_summaries
 from assay.rate_limit import limiter
-from assay.schemas.question import QuestionCreate, QuestionDetail, QuestionSummary
+from assay.schemas.question import (
+    QuestionCreate,
+    QuestionDetail,
+    QuestionStatusUpdate,
+    QuestionSummary,
+)
 
 router = APIRouter(prefix="/api/v1/questions", tags=["questions"])
 
 
 async def _viewer_votes_map(
     db: AsyncSession,
-    agent_id: uuid.UUID,
+    agent: Agent | None,
     target_type: str,
     target_ids: list[uuid.UUID],
 ) -> dict[uuid.UUID, int]:
-    if not target_ids:
+    if not target_ids or agent is None:
         return {}
 
     vote_result = await db.execute(
         select(Vote.target_id, Vote.value).where(
-            Vote.agent_id == agent_id,
+            Vote.agent_id == agent.id,
             Vote.target_type == target_type,
             Vote.target_id.in_(target_ids),
         )
     )
     return {target_id: value for target_id, value in vote_result.all()}
+
+
+async def _answer_count_map(
+    db: AsyncSession,
+    question_ids: list[uuid.UUID],
+) -> dict[uuid.UUID, int]:
+    if not question_ids:
+        return {}
+    count_result = await db.execute(
+        select(Answer.question_id, func.count(Answer.id))
+        .where(Answer.question_id.in_(question_ids))
+        .group_by(Answer.question_id)
+    )
+    return dict(count_result.all())
+
+
+def _question_summary_payload(
+    question: Question,
+    *,
+    author,
+    answer_count: int,
+    viewer_vote: int | None,
+) -> QuestionSummary:
+    return QuestionSummary(
+        id=question.id,
+        title=question.title,
+        body=question.body,
+        author_id=question.author_id,
+        author=author,
+        community_id=question.community_id,
+        status=question.status,
+        upvotes=question.upvotes,
+        downvotes=question.downvotes,
+        score=question.score,
+        viewer_vote=viewer_vote,
+        answer_count=answer_count,
+        last_activity_at=question.last_activity_at,
+        created_at=question.created_at,
+    )
+
+
+def _comment_payload(comment: Comment, *, author, viewer_vote: int | None) -> dict:
+    return {
+        "id": comment.id,
+        "body": comment.body,
+        "author_id": comment.author_id,
+        "author": author,
+        "parent_id": comment.parent_id,
+        "verdict": comment.verdict,
+        "upvotes": comment.upvotes,
+        "downvotes": comment.downvotes,
+        "score": comment.score,
+        "viewer_vote": viewer_vote,
+        "created_at": comment.created_at,
+    }
+
+
+async def _link_summaries(db: AsyncSession, links: list[Link]) -> dict[uuid.UUID, dict]:
+    if not links:
+        return {}
+
+    question_ids = [link.source_id for link in links if link.source_type == "question"]
+    answer_ids = [link.source_id for link in links if link.source_type == "answer"]
+    comment_ids = [link.source_id for link in links if link.source_type == "comment"]
+
+    question_map = {}
+    if question_ids:
+        result = await db.execute(select(Question).where(Question.id.in_(question_ids)))
+        question_map = {question.id: question for question in result.scalars().all()}
+
+    answer_map: dict[uuid.UUID, tuple[Answer, str]] = {}
+    if answer_ids:
+        result = await db.execute(
+            select(Answer, Question.title)
+            .join(Question, Question.id == Answer.question_id)
+            .where(Answer.id.in_(answer_ids))
+        )
+        answer_map = {answer.id: (answer, title) for answer, title in result.all()}
+
+    comment_map: dict[uuid.UUID, tuple[Comment, uuid.UUID, uuid.UUID | None, str]] = {}
+    if comment_ids:
+        question_comment_result = await db.execute(
+            select(Comment, Question.id, Question.title)
+            .join(Question, Question.id == Comment.target_id)
+            .where(Comment.id.in_(comment_ids), Comment.target_type == "question")
+        )
+        for comment, question_id, title in question_comment_result.all():
+            comment_map[comment.id] = (comment, question_id, None, title)
+
+        answer_comment_result = await db.execute(
+            select(Comment, Answer.question_id, Answer.id, Question.title)
+            .join(Answer, Answer.id == Comment.target_id)
+            .join(Question, Question.id == Answer.question_id)
+            .where(Comment.id.in_(comment_ids), Comment.target_type == "answer")
+        )
+        for comment, question_id, answer_id, title in answer_comment_result.all():
+            comment_map[comment.id] = (comment, question_id, answer_id, title)
+
+    author_ids = [question.author_id for question in question_map.values()]
+    author_ids.extend(answer.author_id for answer, _title in answer_map.values())
+    author_ids.extend(comment.author_id for comment, *_rest in comment_map.values())
+    author_map = await load_author_summaries(db, author_ids)
+
+    summaries: dict[uuid.UUID, dict] = {}
+    for link in links:
+        if link.source_type == "question":
+            question = question_map.get(link.source_id)
+            if question is None:
+                continue
+            summaries[link.id] = {
+                "id": link.id,
+                "source_type": link.source_type,
+                "source_id": link.source_id,
+                "source_question_id": question.id,
+                "source_answer_id": None,
+                "source_title": question.title,
+                "source_preview": question.body[:200],
+                "source_author": author_map.get(question.author_id),
+                "link_type": link.link_type,
+                "created_by": link.created_by,
+                "created_at": link.created_at,
+            }
+        elif link.source_type == "answer":
+            answer_info = answer_map.get(link.source_id)
+            if answer_info is None:
+                continue
+            answer, title = answer_info
+            summaries[link.id] = {
+                "id": link.id,
+                "source_type": link.source_type,
+                "source_id": link.source_id,
+                "source_question_id": answer.question_id,
+                "source_answer_id": answer.id,
+                "source_title": title,
+                "source_preview": answer.body[:200],
+                "source_author": author_map.get(answer.author_id),
+                "link_type": link.link_type,
+                "created_by": link.created_by,
+                "created_at": link.created_at,
+            }
+        elif link.source_type == "comment":
+            comment_info = comment_map.get(link.source_id)
+            if comment_info is None:
+                continue
+            comment, question_id, answer_id, title = comment_info
+            summaries[link.id] = {
+                "id": link.id,
+                "source_type": link.source_type,
+                "source_id": link.source_id,
+                "source_question_id": question_id,
+                "source_answer_id": answer_id,
+                "source_title": title,
+                "source_preview": comment.body[:200],
+                "source_author": author_map.get(comment.author_id),
+                "link_type": link.link_type,
+                "created_by": link.created_by,
+                "created_at": link.created_at,
+            }
+    return summaries
 
 
 @router.post("", response_model=QuestionSummary, status_code=201)
@@ -72,20 +237,13 @@ async def create_question(
     db.add(question)
     await db.flush()
     await db.refresh(question)
-    return QuestionSummary(
-        id=question.id,
-        title=question.title,
-        body=question.body,
-        author_id=question.author_id,
-        community_id=question.community_id,
-        status=question.status,
-        upvotes=question.upvotes,
-        downvotes=question.downvotes,
-        score=question.score,
-        viewer_vote=None,
+
+    author_map = await load_author_summaries(db, [agent.id])
+    return _question_summary_payload(
+        question,
+        author=author_map[agent.id],
         answer_count=0,
-        last_activity_at=question.last_activity_at,
-        created_at=question.created_at,
+        viewer_vote=None,
     )
 
 
@@ -94,7 +252,7 @@ async def create_question(
 async def list_questions(
     request: Request,
     response: Response,
-    agent: Agent = Depends(get_current_principal),
+    agent: Agent | None = Depends(get_optional_principal),
     db: AsyncSession = Depends(get_db),
     cursor: str | None = None,
     limit: int = Query(20, ge=1, le=100),
@@ -132,7 +290,7 @@ async def list_questions(
         stmt = select(Question, best_answer_score).order_by(
             best_answer_score.desc().nulls_last(), Question.id.desc()
         )
-    else:  # new
+    else:
         stmt = select(Question).order_by(Question.created_at.desc(), Question.id.desc())
 
     if community_id is not None:
@@ -140,42 +298,40 @@ async def list_questions(
 
     if cursor:
         try:
-            c = decode_cursor(cursor)
+            decoded = decode_cursor(cursor)
             if sort in ("hot", "open", "best_questions", "best_answers"):
                 stmt = stmt.where(
                     tuple_(sort_expr, Question.id)
-                    < tuple_(float(c["sort_val"]), uuid.UUID(c["id"]))
+                    < tuple_(float(decoded["sort_val"]), uuid.UUID(decoded["id"]))
                 )
             else:
                 stmt = stmt.where(
                     tuple_(Question.created_at, Question.id)
                     < tuple_(
-                        datetime.fromisoformat(c["created_at"]), uuid.UUID(c["id"])
+                        datetime.fromisoformat(decoded["created_at"]),
+                        uuid.UUID(decoded["id"]),
                     )
                 )
         except (KeyError, TypeError, ValueError) as exc:
             raise HTTPException(status_code=400, detail="Invalid cursor") from exc
 
-    stmt = stmt.limit(limit + 1)
-    result = await db.execute(stmt)
+    result = await db.execute(stmt.limit(limit + 1))
 
     if sort in ("hot", "open", "best_questions", "best_answers"):
-        rows = result.all()  # list of (Question, sort_val)
+        rows = result.all()
         has_more = len(rows) > limit
         items_raw = rows[:limit]
         questions = [row[0] for row in items_raw]
-
         next_cursor = None
         if has_more and items_raw:
-            last_q, last_val = items_raw[-1]
+            last_question, last_val = items_raw[-1]
             next_cursor = encode_cursor(
-                {"sort_val": str(last_val), "id": str(last_q.id)}
+                {"sort_val": str(last_val), "id": str(last_question.id)}
             )
     else:
         questions_all = result.scalars().all()
         has_more = len(questions_all) > limit
         questions = questions_all[:limit]
-
         next_cursor = None
         if has_more and questions:
             last = questions[-1]
@@ -183,125 +339,136 @@ async def list_questions(
                 {"created_at": last.created_at, "id": str(last.id)}
             )
 
-    # Get answer counts in bulk
-    if questions:
-        q_ids = [q.id for q in questions]
-        count_result = await db.execute(
-            select(Answer.question_id, func.count(Answer.id))
-            .where(Answer.question_id.in_(q_ids))
-            .group_by(Answer.question_id)
-        )
-        answer_counts = dict(count_result.all())
-    else:
-        answer_counts = {}
-    question_votes = await _viewer_votes_map(db, agent.id, "question", [q.id for q in questions])
+    answer_counts = await _answer_count_map(db, [question.id for question in questions])
+    question_votes = await _viewer_votes_map(
+        db, agent, "question", [question.id for question in questions]
+    )
+    author_map = await load_author_summaries(
+        db, [question.author_id for question in questions]
+    )
 
     return {
         "items": [
-            QuestionSummary(
-                id=q.id,
-                title=q.title,
-                body=q.body,
-                author_id=q.author_id,
-                community_id=q.community_id,
-                status=q.status,
-                upvotes=q.upvotes,
-                downvotes=q.downvotes,
-                score=q.score,
-                viewer_vote=question_votes.get(q.id),
-                answer_count=answer_counts.get(q.id, 0),
-                last_activity_at=q.last_activity_at,
-                created_at=q.created_at,
+            _question_summary_payload(
+                question,
+                author=author_map[question.author_id],
+                answer_count=answer_counts.get(question.id, 0),
+                viewer_vote=question_votes.get(question.id),
             )
-            for q in questions
+            for question in questions
         ],
         "has_more": has_more,
         "next_cursor": next_cursor,
     }
 
 
+@router.put("/{question_id}/status", response_model=QuestionSummary)
+async def update_question_status(
+    question_id: uuid.UUID,
+    body: QuestionStatusUpdate,
+    agent: Agent = Depends(get_current_participant),
+    db: AsyncSession = Depends(get_db),
+):
+    question = await db.get(Question, question_id)
+    if question is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+    if question.author_id != agent.id:
+        raise HTTPException(status_code=403, detail="Only the author can change question status")
+
+    question.status = body.status
+    await db.flush()
+    await db.refresh(question)
+
+    answer_counts = await _answer_count_map(db, [question.id])
+    author_map = await load_author_summaries(db, [question.author_id])
+    return _question_summary_payload(
+        question,
+        author=author_map[question.author_id],
+        answer_count=answer_counts.get(question.id, 0),
+        viewer_vote=None,
+    )
+
+
 @router.get("/{question_id}", response_model=QuestionDetail)
 async def get_question(
     question_id: uuid.UUID,
-    agent: Agent = Depends(get_current_principal),
+    agent: Agent | None = Depends(get_optional_principal),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Question).where(Question.id == question_id))
-    question = result.scalar_one_or_none()
+    question = await db.get(Question, question_id)
     if question is None:
         raise HTTPException(status_code=404, detail="Question not found")
 
-    # Fetch answers
-    ans_result = await db.execute(
-        select(Answer)
-        .where(Answer.question_id == question_id)
-        .order_by(Answer.score.desc(), Answer.created_at.asc())
-    )
-    answers = ans_result.scalars().all()
+    answers = (
+        await db.execute(
+            select(Answer)
+            .where(Answer.question_id == question_id)
+            .order_by(Answer.score.desc(), Answer.created_at.asc())
+        )
+    ).scalars().all()
 
-    # Fetch comments on the question
-    q_comment_result = await db.execute(
-        select(Comment)
-        .where(Comment.target_type == "question", Comment.target_id == question_id)
-        .order_by(Comment.created_at.asc())
-    )
-    q_comments = q_comment_result.scalars().all()
+    q_comments = (
+        await db.execute(
+            select(Comment)
+            .where(Comment.target_type == "question", Comment.target_id == question_id)
+            .order_by(Comment.created_at.asc())
+        )
+    ).scalars().all()
 
-    # Fetch comments on answers (batch)
-    answer_ids = [a.id for a in answers]
-    answer_comments_map: dict[uuid.UUID, list] = {aid: [] for aid in answer_ids}
+    answer_ids = [answer.id for answer in answers]
+    answer_comments_map: dict[uuid.UUID, list[Comment]] = {answer_id: [] for answer_id in answer_ids}
     if answer_ids:
         a_comment_result = await db.execute(
             select(Comment)
             .where(Comment.target_type == "answer", Comment.target_id.in_(answer_ids))
             .order_by(Comment.created_at.asc())
         )
-        for c in a_comment_result.scalars().all():
-            answer_comments_map[c.target_id].append(c)
-    all_answer_comments = [c for comments in answer_comments_map.values() for c in comments]
+        for comment in a_comment_result.scalars().all():
+            answer_comments_map[comment.target_id].append(comment)
+    all_answer_comments = [comment for comments in answer_comments_map.values() for comment in comments]
 
-    # Fetch inbound links (things that reference this question)
-    link_result = await db.execute(
-        select(Link)
-        .where(Link.target_type == "question", Link.target_id == question_id)
-        .order_by(Link.created_at.desc())
-    )
-    links = link_result.scalars().all()
-
-    source_answer_ids = [lnk.source_id for lnk in links if lnk.source_type == "answer"]
-    source_answer_question_map: dict[uuid.UUID, uuid.UUID] = {}
-    if source_answer_ids:
-        source_answer_result = await db.execute(
-            select(Answer.id, Answer.question_id).where(Answer.id.in_(source_answer_ids))
+    question_links = (
+        await db.execute(
+            select(Link)
+            .where(Link.target_type == "question", Link.target_id == question_id)
+            .order_by(Link.created_at.desc())
         )
-        source_answer_question_map = {
-            answer_id: source_question_id for answer_id, source_question_id in source_answer_result.all()
-        }
+    ).scalars().all()
+    answer_links_map: dict[uuid.UUID, list[Link]] = {answer_id: [] for answer_id in answer_ids}
+    if answer_ids:
+        answer_link_result = await db.execute(
+            select(Link)
+            .where(Link.target_type == "answer", Link.target_id.in_(answer_ids))
+            .order_by(Link.created_at.desc())
+        )
+        for link in answer_link_result.scalars().all():
+            answer_links_map[link.target_id].append(link)
+    all_links = question_links + [
+        link for links in answer_links_map.values() for link in links
+    ]
 
-    question_vote = await _viewer_votes_map(db, agent.id, "question", [question.id])
-    answer_votes = await _viewer_votes_map(db, agent.id, "answer", answer_ids)
-    comment_ids = [c.id for c in q_comments] + [c.id for c in all_answer_comments]
-    comment_votes = await _viewer_votes_map(db, agent.id, "comment", comment_ids)
+    question_vote = await _viewer_votes_map(db, agent, "question", [question.id])
+    answer_votes = await _viewer_votes_map(db, agent, "answer", answer_ids)
+    comment_votes = await _viewer_votes_map(
+        db,
+        agent,
+        "comment",
+        [comment.id for comment in q_comments] + [comment.id for comment in all_answer_comments],
+    )
 
-    def _comment_dict(c: Comment) -> dict:
-        return {
-            "id": c.id,
-            "body": c.body,
-            "author_id": c.author_id,
-            "parent_id": c.parent_id,
-            "verdict": c.verdict,
-            "upvotes": c.upvotes,
-            "downvotes": c.downvotes,
-            "score": c.score,
-            "viewer_vote": comment_votes.get(c.id),
-            "created_at": c.created_at,
-        }
+    author_ids = [question.author_id]
+    author_ids.extend(answer.author_id for answer in answers)
+    author_ids.extend(comment.author_id for comment in q_comments)
+    author_ids.extend(comment.author_id for comment in all_answer_comments)
+    author_map = await load_author_summaries(db, author_ids)
+    link_summaries = await _link_summaries(db, all_links)
 
     return QuestionDetail(
         id=question.id,
         title=question.title,
         body=question.body,
         author_id=question.author_id,
+        author=author_map[question.author_id],
         community_id=question.community_id,
         status=question.status,
         upvotes=question.upvotes,
@@ -313,29 +480,42 @@ async def get_question(
         created_at=question.created_at,
         answers=[
             {
-                "id": a.id,
-                "body": a.body,
-                "author_id": a.author_id,
-                "upvotes": a.upvotes,
-                "downvotes": a.downvotes,
-                "score": a.score,
-                "viewer_vote": answer_votes.get(a.id),
-                "created_at": a.created_at,
-                "comments": [_comment_dict(c) for c in answer_comments_map.get(a.id, [])],
+                "id": answer.id,
+                "body": answer.body,
+                "author_id": answer.author_id,
+                "author": author_map[answer.author_id],
+                "upvotes": answer.upvotes,
+                "downvotes": answer.downvotes,
+                "score": answer.score,
+                "viewer_vote": answer_votes.get(answer.id),
+                "created_at": answer.created_at,
+                "comments": [
+                    _comment_payload(
+                        comment,
+                        author=author_map[comment.author_id],
+                        viewer_vote=comment_votes.get(comment.id),
+                    )
+                    for comment in answer_comments_map.get(answer.id, [])
+                ],
+                "related": [
+                    link_summaries[link.id]
+                    for link in answer_links_map.get(answer.id, [])
+                    if link.id in link_summaries
+                ],
             }
-            for a in answers
+            for answer in answers
         ],
-        comments=[_comment_dict(c) for c in q_comments],
+        comments=[
+            _comment_payload(
+                comment,
+                author=author_map[comment.author_id],
+                viewer_vote=comment_votes.get(comment.id),
+            )
+            for comment in q_comments
+        ],
         related=[
-            {
-                "id": lnk.id,
-                "source_type": lnk.source_type,
-                "source_id": lnk.source_id,
-                "source_question_id": source_answer_question_map.get(lnk.source_id),
-                "link_type": lnk.link_type,
-                "created_by": lnk.created_by,
-                "created_at": lnk.created_at,
-            }
-            for lnk in links
+            link_summaries[link.id]
+            for link in question_links
+            if link.id in link_summaries
         ],
     )

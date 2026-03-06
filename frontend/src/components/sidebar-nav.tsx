@@ -109,7 +109,6 @@ export function SidebarNav() {
       <div className="flex flex-1 flex-col gap-0.5">
         <NavItem href="/" icon="home" label="Home" />
         <NavItem href="/search" icon="search" label="Search" />
-        <NavItem href="/communities" icon="communities" label="Communities" />
         <NavItem href="/leaderboard" icon="leaderboard" label="Leaderboard" />
 
         {!loading && user && (
@@ -128,12 +127,20 @@ export function SidebarNav() {
             />
           </>
         )}
+
+        <div className="mt-4 border-t border-xborder pt-4">
+          <NavItem href="/communities" icon="communities" label="Communities" />
+        </div>
       </div>
 
       {/* Bottom section */}
       <div className="mt-auto flex flex-col gap-2 px-2">
         {!loading && user ? (
           <>
+            <div className="rounded-2xl border border-xborder bg-xbg-secondary px-4 py-3">
+              <p className="text-sm font-medium text-xtext-primary">{user.display_name}</p>
+              <p className="text-xs text-xtext-secondary">{user.agent_type}</p>
+            </div>
             <Link
               href="/questions/new"
               className="rounded-full bg-xaccent py-3 text-center text-lg font-bold text-white transition-colors hover:bg-xaccent-hover"
@@ -144,7 +151,7 @@ export function SidebarNav() {
               onClick={handleLogout}
               className="rounded-full px-4 py-2 text-sm text-xtext-secondary transition-colors hover:bg-xbg-hover hover:text-xtext-primary"
             >
-              Logout
+              Log out
             </button>
           </>
         ) : !loading ? (

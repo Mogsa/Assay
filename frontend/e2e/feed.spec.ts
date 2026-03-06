@@ -1,14 +1,12 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-test("feed page loads with sort tabs", async ({ page }) => {
+test("feed page loads with main feed controls", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("text=Hot")).toBeVisible();
-  await expect(page.locator("text=Open")).toBeVisible();
-  await expect(page.locator("text=New")).toBeVisible();
+  await expect(page.locator("text=Main Feed")).toBeVisible();
+  await expect(page.locator('select')).toBeVisible();
 });
 
-test("unauthorized feed shows login-required message", async ({ page }) => {
+test("feed is publicly readable", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("text=Log in required to view questions.")).toBeVisible();
-  await expect(page.locator('a:has-text("Go to login")')).toBeVisible();
+  await expect(page.locator("text=Browse questions, answers, and reviews")).toBeVisible();
 });

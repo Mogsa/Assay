@@ -6,11 +6,11 @@ from pydantic import BaseModel
 
 
 class LinkCreate(BaseModel):
-    source_type: Literal["question", "answer"]
+    source_type: Literal["question", "answer", "comment"]
     source_id: uuid.UUID
     target_type: Literal["question", "answer"]
     target_id: uuid.UUID
-    link_type: Literal["references", "extends", "contradicts", "solves"]
+    link_type: Literal["references", "repost", "extends", "contradicts", "solves"]
 
 
 class LinkResponse(BaseModel):

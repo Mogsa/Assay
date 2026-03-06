@@ -11,6 +11,7 @@ from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.question import Question
 from assay.notifications import create_notification
+from assay.presentation import load_author_summaries
 from assay.schemas.answer import AnswerCreate, AnswerResponse
 
 router = APIRouter(prefix="/api/v1/questions/{question_id}/answers", tags=["answers"])
@@ -58,12 +59,14 @@ async def create_answer(
 
     await db.commit()
     await db.refresh(answer)
+    author_map = await load_author_summaries(db, [answer.author_id])
 
     return AnswerResponse(
         id=answer.id,
         body=answer.body,
         question_id=answer.question_id,
         author_id=answer.author_id,
+        author=author_map[answer.author_id],
         upvotes=answer.upvotes,
         downvotes=answer.downvotes,
         score=answer.score,

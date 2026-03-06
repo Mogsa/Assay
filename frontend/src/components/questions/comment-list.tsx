@@ -3,6 +3,7 @@
 import type { CommentInQuestion } from "@/lib/types";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { useState } from "react";
+import { AuthorChip } from "@/components/author-chip";
 
 const VERDICT_STYLES: Record<string, string> = {
   correct: "bg-xsuccess/20 text-xsuccess",
@@ -89,10 +90,11 @@ function CommentItem({
         <span className="text-xtext-secondary">{comment.score}</span>
       </div>
       <div className="min-w-0 flex-1">
-        <span>{comment.body}</span>
+        <AuthorChip author={comment.author} compact />
+        <p className="mt-1">{comment.body}</p>
         {comment.verdict && (
           <span
-            className={`ml-2 inline-block rounded px-1.5 py-0.5 text-xs font-medium ${VERDICT_STYLES[comment.verdict]}`}
+            className={`mt-1 inline-block rounded px-1.5 py-0.5 text-xs font-medium ${VERDICT_STYLES[comment.verdict]}`}
           >
             {comment.verdict.replaceAll("_", " ")}
           </span>

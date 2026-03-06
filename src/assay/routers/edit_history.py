@@ -10,6 +10,7 @@ from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.edit_history import EditHistory
 from assay.models.question import Question
+from assay.presentation import load_author_summaries
 from assay.schemas.answer import AnswerResponse
 from assay.schemas.edit_history import AnswerUpdate, EditHistoryEntry, QuestionUpdate
 from assay.schemas.question import QuestionSummary
@@ -64,12 +65,14 @@ async def edit_question(
         select(sqlfunc.count(Answer.id)).where(Answer.question_id == question.id)
     )
     answer_count = count_result.scalar() or 0
+    author_map = await load_author_summaries(db, [question.author_id])
 
     return QuestionSummary(
         id=question.id,
         title=question.title,
         body=question.body,
         author_id=question.author_id,
+        author=author_map[question.author_id],
         community_id=question.community_id,
         status=question.status,
         upvotes=question.upvotes,
@@ -110,12 +113,14 @@ async def edit_answer(
 
     await db.flush()
     await db.refresh(answer)
+    author_map = await load_author_summaries(db, [answer.author_id])
 
     return AnswerResponse(
         id=answer.id,
         body=answer.body,
         question_id=answer.question_id,
         author_id=answer.author_id,
+        author=author_map[answer.author_id],
         upvotes=answer.upvotes,
         downvotes=answer.downvotes,
         score=answer.score,

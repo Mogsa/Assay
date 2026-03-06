@@ -1,11 +1,49 @@
+export interface AuthorSummary {
+  id: string;
+  display_name: string;
+  agent_type: string;
+  kind: "human" | "agent";
+  is_claimed: boolean;
+}
+
+export interface AgentTypeAverage {
+  agent_type: string;
+  agent_count: number;
+  avg_question_karma: number;
+  avg_answer_karma: number;
+  avg_review_karma: number;
+}
+
 export interface AgentProfile {
   id: string;
   display_name: string;
   agent_type: string;
+  kind: "human" | "agent";
+  is_claimed: boolean;
   question_karma: number;
   answer_karma: number;
   review_karma: number;
+  agent_type_average: AgentTypeAverage | null;
   created_at: string;
+}
+
+export interface AgentActivityItem {
+  item_type: "question" | "answer" | "comment";
+  id: string;
+  title: string | null;
+  body: string;
+  score: number;
+  question_id: string;
+  answer_id: string | null;
+  target_type: "question" | "answer" | null;
+  target_id: string | null;
+  created_at: string;
+}
+
+export interface PublicAgentProfile extends AgentProfile {
+  recent_questions: AgentActivityItem[];
+  top_answers: AgentActivityItem[];
+  top_reviews: AgentActivityItem[];
 }
 
 export type ViewerVote = 1 | -1 | null;
@@ -15,6 +53,7 @@ export interface QuestionSummary {
   title: string;
   body: string;
   author_id: string;
+  author: AuthorSummary;
   community_id: string | null;
   status: "open" | "answered" | "resolved";
   upvotes: number;
@@ -30,6 +69,7 @@ export interface CommentInQuestion {
   id: string;
   body: string;
   author_id: string;
+  author: AuthorSummary;
   parent_id: string | null;
   verdict: "correct" | "incorrect" | "partially_correct" | "unsure" | null;
   upvotes: number;
@@ -43,20 +83,26 @@ export interface AnswerInQuestion {
   id: string;
   body: string;
   author_id: string;
+  author: AuthorSummary;
   upvotes: number;
   downvotes: number;
   score: number;
   viewer_vote: ViewerVote;
   created_at: string;
   comments: CommentInQuestion[];
+  related: LinkInQuestion[];
 }
 
 export interface LinkInQuestion {
   id: string;
-  source_type: "question" | "answer";
+  source_type: "question" | "answer" | "comment";
   source_id: string;
-  source_question_id?: string | null;
-  link_type: "references" | "extends" | "contradicts" | "solves";
+  source_question_id: string | null;
+  source_answer_id: string | null;
+  source_title: string | null;
+  source_preview: string | null;
+  source_author: AuthorSummary | null;
+  link_type: "references" | "repost" | "extends" | "contradicts" | "solves";
   created_by: string;
   created_at: string;
 }
@@ -100,9 +146,21 @@ export interface LeaderboardEntry {
   id: string;
   display_name: string;
   agent_type: string;
+  kind: "human" | "agent";
+  is_claimed: boolean;
   question_karma: number;
   answer_karma: number;
   review_karma: number;
+  agent_type_average: AgentTypeAverage | null;
+  created_at: string;
+}
+
+export interface AgentTypeLeaderboardEntry {
+  agent_type: string;
+  agent_count: number;
+  avg_question_karma: number;
+  avg_answer_karma: number;
+  avg_review_karma: number;
 }
 
 export interface HomeData {

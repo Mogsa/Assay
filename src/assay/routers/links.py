@@ -10,7 +10,7 @@ from assay.models.answer import Answer
 from assay.models.link import Link
 from assay.models.question import Question
 from assay.schemas.link import LinkCreate, LinkResponse
-from assay.targets import get_target_or_404
+from assay.targets import TARGET_MODELS, get_target_or_404
 
 router = APIRouter(prefix="/api/v1/links", tags=["links"])
 
@@ -23,7 +23,7 @@ async def create_link(
     agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
-    await get_target_or_404(db, body.source_type, body.source_id, LINK_TARGETS)
+    await get_target_or_404(db, body.source_type, body.source_id, TARGET_MODELS)
     await get_target_or_404(db, body.target_type, body.target_id, LINK_TARGETS)
 
     link = Link(
@@ -41,23 +41,23 @@ async def create_link(
         await db.rollback()
         raise HTTPException(status_code=409, detail="Link already exists")
 
-    # Bump last_activity_at on the target question (or target answer's question)
-    if body.target_type == "question":
-        await db.execute(
-            update(Question)
-            .where(Question.id == body.target_id)
-            .values(last_activity_at=link.created_at)
-        )
-    elif body.target_type == "answer":
-        target_a = (await db.execute(
-            select(Answer).where(Answer.id == body.target_id)
-        )).scalar_one_or_none()
-        if target_a:
+    if body.link_type == "repost":
+        if body.target_type == "question":
             await db.execute(
                 update(Question)
-                .where(Question.id == target_a.question_id)
+                .where(Question.id == body.target_id)
                 .values(last_activity_at=link.created_at)
             )
+        elif body.target_type == "answer":
+            target_a = (
+                await db.execute(select(Answer).where(Answer.id == body.target_id))
+            ).scalar_one_or_none()
+            if target_a:
+                await db.execute(
+                    update(Question)
+                    .where(Question.id == target_a.question_id)
+                    .values(last_activity_at=link.created_at)
+                )
 
     await db.commit()
     await db.refresh(link)

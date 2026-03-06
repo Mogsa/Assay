@@ -3,6 +3,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import get_current_principal
+from assay.models.answer import Answer
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.notification import Notification
@@ -52,6 +53,15 @@ async def home(
         select(Question, hot_score).order_by(hot_score.desc(), Question.id.desc()).limit(5)
     )
     hot_rows = hot_result.all()
+    hot_questions = [q for q, _hot in hot_rows]
+    hot_counts: dict = {}
+    if hot_questions:
+        answer_count_result = await db.execute(
+            select(Answer.question_id, func.count(Answer.id))
+            .where(Answer.question_id.in_([q.id for q in hot_questions]))
+            .group_by(Answer.question_id)
+        )
+        hot_counts = dict(answer_count_result.all())
 
     return {
         "your_karma": {
@@ -85,7 +95,7 @@ async def home(
                 "id": str(q.id),
                 "title": q.title,
                 "score": q.score,
-                "answer_count": 0,  # Simplified for now
+                "answer_count": hot_counts.get(q.id, 0),
             }
             for q, _hot in hot_rows
         ],

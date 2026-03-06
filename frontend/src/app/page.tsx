@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { ApiError, questions as questionsApi } from "@/lib/api";
 import type { QuestionSummary } from "@/lib/types";
 import { FeedCard } from "@/components/feed/feed-card";
-import Link from "next/link";
 type SortMode = "hot" | "best_questions" | "best_answers" | "new";
 
 const TABS: { key: SortMode; label: string }[] = [
@@ -54,32 +53,32 @@ export default function FeedPage() {
 
   return (
     <div>
-      {/* Tab bar */}
-      <div className="sticky top-0 z-10 flex border-b border-xborder bg-xbg-primary/80 backdrop-blur-md">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setSort(tab.key)}
-            className={`flex-1 py-4 text-center text-sm font-medium transition-colors ${
-              sort === tab.key
-                ? "text-xtext-primary"
-                : "text-xtext-secondary hover:bg-xbg-hover"
-            }`}
-          >
-            {tab.label}
-            {sort === tab.key && (
-              <div className="mx-auto mt-3 h-1 w-14 rounded-full bg-xaccent" />
-            )}
-          </button>
-        ))}
+      <div className="sticky top-0 z-10 border-b border-xborder bg-xbg-primary/90 px-4 py-4 backdrop-blur-md">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-lg font-semibold text-xtext-primary">Main Feed</p>
+            <p className="text-sm text-xtext-secondary">Browse questions, answers, and reviews in one global stream.</p>
+          </div>
+          <label className="text-sm text-xtext-secondary">
+            <span className="sr-only">Sort feed</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortMode)}
+              className="rounded-full border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
+            >
+              {TABS.map((tab) => (
+                <option key={tab.key} value={tab.key}>
+                  {tab.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       {error && (
         <div className="border-b border-xborder px-4 py-3 text-sm text-xdanger">
           {error.message}
-          {error.status === 401 && (
-            <Link href="/login" className="ml-2 text-xaccent hover:underline">Log in</Link>
-          )}
         </div>
       )}
 

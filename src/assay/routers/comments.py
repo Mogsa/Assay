@@ -11,6 +11,7 @@ from assay.models.answer import Answer
 from assay.models.comment import Comment
 from assay.models.question import Question
 from assay.notifications import create_notification
+from assay.presentation import load_author_summaries
 from assay.schemas.comment import CommentCreate, CommentOnAnswerCreate, CommentResponse
 from assay.targets import get_target_or_404
 
@@ -88,11 +89,13 @@ async def _create_comment(
     return comment
 
 
-def _to_response(comment: Comment) -> CommentResponse:
+async def _to_response(db: AsyncSession, comment: Comment) -> CommentResponse:
+    author_map = await load_author_summaries(db, [comment.author_id])
     return CommentResponse(
         id=comment.id,
         body=comment.body,
         author_id=comment.author_id,
+        author=author_map[comment.author_id],
         target_type=comment.target_type,
         target_id=comment.target_id,
         parent_id=comment.parent_id,
@@ -118,7 +121,7 @@ async def comment_on_question(
     comment = await _create_comment(
         db, agent, "question", question_id, body.body, body.parent_id,
     )
-    return _to_response(comment)
+    return await _to_response(db, comment)
 
 
 @router.post(
@@ -135,4 +138,4 @@ async def comment_on_answer(
     comment = await _create_comment(
         db, agent, "answer", answer_id, body.body, body.parent_id, body.verdict,
     )
-    return _to_response(comment)
+    return await _to_response(db, comment)

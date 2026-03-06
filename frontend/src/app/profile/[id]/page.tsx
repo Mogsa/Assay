@@ -1,100 +1,223 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ApiError, agents as agentsApi } from "@/lib/api";
-import { useAuth } from "@/lib/auth-context";
-import type { AgentProfile } from "@/lib/types";
+import { agents as agentsApi, ApiError } from "@/lib/api";
+import type { AgentActivityItem, PublicAgentProfile } from "@/lib/types";
+import { AuthorChip } from "@/components/author-chip";
+import { TimeAgo } from "@/components/ui/time-ago";
 
 export default function ProfilePage() {
   const params = useParams<{ id: string }>();
-  const { user, loading } = useAuth();
-  const [profile, setProfile] = useState<AgentProfile | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const [profile, setProfile] = useState<PublicAgentProfile | null>(null);
+  const [activity, setActivity] = useState<AgentActivityItem[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const loadProfile = useCallback(async () => {
+    try {
+      const data = await agentsApi.get(params.id);
+      setProfile(data);
+      setError(null);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.detail || "Failed to load profile.");
+      } else {
+        setError("Network error while loading profile.");
+      }
+    }
+  }, [params.id]);
+
+  const loadActivity = useCallback(async (cursor?: string) => {
+    try {
+      const data = await agentsApi.activity(params.id, cursor);
+      if (cursor) {
+        setActivity((prev) => [...prev, ...data.items]);
+      } else {
+        setActivity(data.items);
+      }
+      setNextCursor(data.next_cursor);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.detail || "Failed to load activity.");
+      } else {
+        setError("Network error while loading activity.");
+      }
+    }
+  }, [params.id]);
+
   useEffect(() => {
-    if (loading) return;
-    setNotFound(false);
-    setError(null);
-    setProfile(null);
+    loadProfile();
+    loadActivity();
+  }, [loadActivity, loadProfile]);
 
-    if (!user) {
-      setError("Log in required to view profiles.");
-      return;
-    }
-
-    if (params.id !== user.id) {
-      setNotFound(true);
-      return;
-    }
-
-    agentsApi
-      .me()
-      .then((data) => {
-        setProfile(data);
-        setError(null);
-      })
-      .catch((err) => {
-        if (err instanceof ApiError) {
-          setError(err.detail || "Failed to load profile.");
-        } else {
-          setError("Network error while loading profile.");
-        }
-      });
-  }, [loading, params.id, user]);
-
-  if (loading) return <p className="py-8 text-center text-xtext-secondary">Loading session…</p>;
-
-  if (!user) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-xtext-secondary">Log in required to view profiles.</p>
-        <Link href="/login" className="mt-2 inline-block text-xaccent hover:underline">
-          Go to login
-        </Link>
-      </div>
-    );
-  }
-
-  if (notFound) return <p className="py-8 text-center text-xtext-secondary">Profile not available.</p>;
   if (error) return <p className="py-8 text-center text-xdanger">{error}</p>;
-
   if (!profile) return <p className="py-8 text-center text-xtext-secondary">Loading…</p>;
 
   return (
-    <div className="mx-auto max-w-lg py-6">
-      <h1 className="text-2xl font-bold">{profile.display_name}</h1>
-      <p className="mt-1 text-sm text-xtext-secondary">{profile.agent_type}</p>
-      <p className="text-xs text-xtext-secondary">
-        Member since {new Date(profile.created_at).toLocaleDateString()}
-      </p>
+    <div className="mx-auto max-w-3xl py-6">
+      <div className="rounded-2xl border border-xborder bg-xbg-secondary p-6">
+        <AuthorChip
+          author={{
+            id: profile.id,
+            display_name: profile.display_name,
+            agent_type: profile.agent_type,
+            kind: profile.kind,
+            is_claimed: profile.is_claimed,
+          }}
+        />
+        <p className="mt-2 text-sm text-xtext-secondary">
+          Member since {new Date(profile.created_at).toLocaleDateString()}
+        </p>
 
-      <div className="mt-6 grid grid-cols-3 gap-4">
-        <KarmaStat label="Questions" value={profile.question_karma} color="blue" />
-        <KarmaStat label="Answers" value={profile.answer_karma} color="green" />
-        <KarmaStat label="Reviews" value={profile.review_karma} color="purple" />
+        <div className="mt-6 grid grid-cols-3 gap-4">
+          <KarmaStat label="Questions" value={profile.question_karma} />
+          <KarmaStat label="Answers" value={profile.answer_karma} />
+          <KarmaStat label="Reviews" value={profile.review_karma} />
+        </div>
+
+        {profile.agent_type_average && (
+          <div className="mt-6 rounded-xl border border-xborder bg-xbg-primary p-4">
+            <p className="text-sm font-medium text-xtext-primary">
+              Compared to other {profile.agent_type} agents
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-4 text-sm">
+              <CompareStat
+                label="Q Avg"
+                value={profile.agent_type_average.avg_question_karma}
+                delta={profile.question_karma - profile.agent_type_average.avg_question_karma}
+              />
+              <CompareStat
+                label="A Avg"
+                value={profile.agent_type_average.avg_answer_karma}
+                delta={profile.answer_karma - profile.agent_type_average.avg_answer_karma}
+              />
+              <CompareStat
+                label="R Avg"
+                value={profile.agent_type_average.avg_review_karma}
+                delta={profile.review_karma - profile.agent_type_average.avg_review_karma}
+              />
+            </div>
+          </div>
+        )}
       </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <HighlightColumn title="Recent Questions" items={profile.recent_questions} />
+        <HighlightColumn title="Top Answers" items={profile.top_answers} />
+        <HighlightColumn title="Top Reviews" items={profile.top_reviews} />
+      </div>
+
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold">Recent Activity</h2>
+        <div className="mt-3 space-y-3">
+          {activity.map((item) => (
+            <ActivityCard key={`${item.item_type}-${item.id}`} item={item} />
+          ))}
+        </div>
+        {activity.length === 0 && (
+          <p className="mt-4 text-sm text-xtext-secondary">No public activity yet.</p>
+        )}
+        {nextCursor && (
+          <button
+            onClick={() => loadActivity(nextCursor)}
+            className="mt-4 w-full rounded border border-xborder py-2 text-sm text-xtext-secondary hover:bg-xbg-hover"
+          >
+            Load more
+          </button>
+        )}
+      </section>
     </div>
   );
 }
 
-function KarmaStat({
+function KarmaStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-xborder bg-xbg-primary p-4 text-center">
+      <div className="text-2xl font-bold text-xtext-primary">{value}</div>
+      <div className="text-xs uppercase tracking-[0.12em] text-xtext-secondary">{label}</div>
+    </div>
+  );
+}
+
+function CompareStat({
   label,
   value,
-  color,
+  delta,
 }: {
   label: string;
   value: number;
-  color: "blue" | "green" | "purple";
+  delta: number;
 }) {
-  const bg = { blue: "bg-xaccent/10", green: "bg-xsuccess/10", purple: "bg-purple-500/10" }[color];
-  const text = { blue: "text-xaccent", green: "text-xsuccess", purple: "text-purple-400" }[color];
   return (
-    <div className={`rounded-lg ${bg} p-4 text-center`}>
-      <div className={`text-2xl font-bold ${text}`}>{value}</div>
-      <div className="text-xs text-xtext-secondary">{label}</div>
+    <div className="rounded-xl border border-xborder bg-xbg-secondary p-3">
+      <p className="text-xs uppercase tracking-[0.12em] text-xtext-secondary">{label}</p>
+      <p className="mt-1 text-lg font-semibold text-xtext-primary">{value.toFixed(1)}</p>
+      <p className={`mt-1 text-xs ${delta >= 0 ? "text-xsuccess" : "text-xdanger"}`}>
+        {delta >= 0 ? "+" : ""}
+        {delta.toFixed(1)} vs cohort
+      </p>
     </div>
+  );
+}
+
+function HighlightColumn({
+  title,
+  items,
+}: {
+  title: string;
+  items: AgentActivityItem[];
+}) {
+  return (
+    <section className="rounded-2xl border border-xborder bg-xbg-secondary p-4">
+      <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-xtext-secondary">
+        {title}
+      </h2>
+      <div className="mt-3 space-y-3">
+        {items.map((item) => (
+          <ActivityCard key={`${title}-${item.id}`} item={item} compact />
+        ))}
+        {items.length === 0 && (
+          <p className="text-sm text-xtext-secondary">Nothing yet.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ActivityCard({
+  item,
+  compact = false,
+}: {
+  item: AgentActivityItem;
+  compact?: boolean;
+}) {
+  const href = item.answer_id
+    ? `/questions/${item.question_id}#answer-${item.answer_id}`
+    : `/questions/${item.question_id}`;
+
+  return (
+    <Link
+      href={href}
+      className={`block rounded-xl border border-xborder bg-xbg-secondary p-4 transition-colors hover:bg-xbg-hover ${
+        compact ? "" : "bg-transparent"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3 text-xs text-xtext-secondary">
+        <span className="uppercase tracking-[0.12em]">{item.item_type}</span>
+        <span className={item.score >= 0 ? "text-xsuccess" : "text-xdanger"}>
+          {item.score >= 0 ? "+" : ""}
+          {item.score}
+        </span>
+      </div>
+      {item.title && (
+        <p className="mt-2 text-sm font-medium text-xtext-primary">{item.title}</p>
+      )}
+      <p className="mt-1 text-sm text-xtext-secondary">{item.body}</p>
+      <div className="mt-2 text-xs text-xtext-secondary">
+        <TimeAgo date={item.created_at} />
+      </div>
+    </Link>
   );
 }

@@ -3,7 +3,7 @@ from sqlalchemy import text
 
 async def test_database_is_upgraded_to_current_head(client, db):
     version = await db.execute(text("SELECT version_num FROM alembic_version"))
-    assert version.scalar_one() == "228713650e82"
+    assert version.scalar_one() == "5f18e0a4b9b3"
 
     signup_resp = await client.post(
         "/api/v1/auth/signup",

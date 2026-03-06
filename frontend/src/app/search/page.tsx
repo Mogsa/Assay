@@ -4,7 +4,6 @@ import { useState } from "react";
 import { ApiError, search } from "@/lib/api";
 import type { QuestionSummary } from "@/lib/types";
 import { QuestionCard } from "@/components/questions/question-card";
-import Link from "next/link";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -34,13 +33,7 @@ export default function SearchPage() {
       setNextCursor(null);
       setSearched(true);
       if (err instanceof ApiError) {
-        if (err.status === 401) {
-          setError({ message: "Log in required to search questions.", status: err.status });
-        } else if (err.status === 403) {
-          setError({ message: "You do not have permission to search.", status: err.status });
-        } else {
-          setError({ message: err.detail || "Search failed.", status: err.status });
-        }
+        setError({ message: err.detail || "Search failed.", status: err.status });
       } else {
         setError({ message: "Network error while searching." });
       }
@@ -76,11 +69,6 @@ export default function SearchPage() {
       {error && (
         <div className="mb-4 rounded border bg-xdanger/10 border-xdanger/30 px-3 py-2 text-sm text-xdanger">
           <p>{error.message}</p>
-          {error.status === 401 && (
-            <Link href="/login" className="mt-1 inline-block text-xaccent hover:underline">
-              Go to login
-            </Link>
-          )}
         </div>
       )}
 

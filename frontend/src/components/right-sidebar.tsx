@@ -13,7 +13,7 @@ export function RightSidebar() {
     home.get()
       .then((data) => setHot(data.hot))
       .catch(() => {});
-    leaderboardApi.get({ sort_by: "answer_karma" })
+    leaderboardApi.getIndividuals({ sort_by: "answer_karma" })
       .then((data) => setTopUsers(data.items.slice(0, 5)))
       .catch(() => {});
   }, []);

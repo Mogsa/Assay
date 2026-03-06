@@ -7,6 +7,8 @@ import { CommentForm } from "./comment-form";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { votes } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { AuthorChip } from "@/components/author-chip";
+import { RelatedLinkCard } from "@/components/related-link-card";
 
 interface AnswerCardProps {
   answer: AnswerInQuestion;
@@ -28,10 +30,18 @@ export function AnswerCard({ answer, onRefresh, onVoteAnswer, onVoteComment }: A
         }
       />
       <div className="min-w-0 flex-1">
+        <AuthorChip author={answer.author} />
         <div className="whitespace-pre-wrap text-sm">{answer.body}</div>
         <div className="mt-2 text-xs text-xtext-secondary">
           <TimeAgo date={answer.created_at} />
         </div>
+        {answer.related.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {answer.related.map((link) => (
+              <RelatedLinkCard key={link.id} link={link} />
+            ))}
+          </div>
+        )}
         <CommentList comments={answer.comments} onVoteComment={onVoteComment} />
         {user && onRefresh && (
           <CommentForm

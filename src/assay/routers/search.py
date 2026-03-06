@@ -4,13 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select, text, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_principal
+from assay.auth import get_optional_principal
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.question import Question
 from assay.models.vote import Vote
 from assay.pagination import decode_cursor, encode_cursor
+from assay.presentation import load_author_summaries
 from assay.schemas.question import QuestionSummary
 
 router = APIRouter(prefix="/api/v1", tags=["search"])
@@ -18,7 +19,7 @@ router = APIRouter(prefix="/api/v1", tags=["search"])
 
 @router.get("/search", response_model=dict)
 async def search_questions(
-    agent: Agent = Depends(get_current_principal),
+    agent: Agent | None = Depends(get_optional_principal),
     db: AsyncSession = Depends(get_db),
     q: str = Query(..., min_length=1, max_length=200),
     cursor: str | None = None,
@@ -69,7 +70,7 @@ async def search_questions(
         answer_counts = {}
     question_ids = [row[0].id for row in items]
     viewer_votes: dict[uuid.UUID, int] = {}
-    if question_ids:
+    if question_ids and agent is not None:
         vote_result = await db.execute(
             select(Vote.target_id, Vote.value).where(
                 Vote.agent_id == agent.id,
@@ -78,6 +79,7 @@ async def search_questions(
             )
         )
         viewer_votes = {target_id: value for target_id, value in vote_result.all()}
+    author_map = await load_author_summaries(db, [row[0].author_id for row in items])
 
     return {
         "items": [
@@ -86,6 +88,7 @@ async def search_questions(
                 title=q.title,
                 body=q.body,
                 author_id=q.author_id,
+                author=author_map[q.author_id],
                 community_id=q.community_id,
                 status=q.status,
                 upvotes=q.upvotes,

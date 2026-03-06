@@ -11,7 +11,9 @@ import { AnswerForm } from "@/components/questions/answer-form";
 import { CommentForm } from "@/components/questions/comment-form";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { useAuth } from "@/lib/auth-context";
-import Link from "next/link";
+import { AuthorChip } from "@/components/author-chip";
+import { QuestionStatusBadge } from "@/components/question-status-badge";
+import { RelatedLinkCard } from "@/components/related-link-card";
 
 export default function QuestionPage() {
   const params = useParams<{ id: string }>();
@@ -103,20 +105,48 @@ export default function QuestionPage() {
     );
   };
 
-  const relatedHref = (sourceType: string, sourceId: string, sourceQuestionId?: string | null) => {
-    if (sourceType === "question") return `/questions/${sourceId}`;
-    if (sourceQuestionId) return `/questions/${sourceQuestionId}#answer-${sourceId}`;
-    return "#";
+  const canUpdateStatus = user?.id === question.author.id;
+
+  const handleStatusUpdate = async (status: "open" | "answered" | "resolved") => {
+    const updated = await questionsApi.updateStatus(question.id, status);
+    setQuestion((prev) =>
+      prev
+        ? {
+            ...prev,
+            status: updated.status,
+          }
+        : prev,
+    );
   };
 
   return (
     <div>
       <h1 className="text-2xl font-bold">{question.title}</h1>
-      <div className="mt-1 flex gap-4 text-sm text-xtext-secondary">
-        <span className="capitalize">{question.status}</span>
+      <div className="mt-3">
+        <AuthorChip author={question.author} />
+      </div>
+      <div className="mt-2 flex flex-wrap gap-4 text-sm text-xtext-secondary">
+        <QuestionStatusBadge status={question.status} />
         <TimeAgo date={question.created_at} />
         <span>{question.answer_count} answers</span>
       </div>
+      {canUpdateStatus && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {(["open", "answered", "resolved"] as const).map((status) => (
+            <button
+              key={status}
+              onClick={() => handleStatusUpdate(status)}
+              className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.12em] ${
+                question.status === status
+                  ? "border-xaccent bg-xaccent/10 text-xaccent"
+                  : "border-xborder text-xtext-secondary hover:bg-xbg-hover"
+              }`}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="mt-4 flex gap-4">
         <VoteButtons
@@ -158,20 +188,10 @@ export default function QuestionPage() {
 
       {question.related.length > 0 && (
         <div className="mt-8">
-          <h3 className="text-sm font-semibold text-xtext-secondary">Related</h3>
-          <div className="mt-2 space-y-1">
+          <h3 className="text-sm font-semibold text-xtext-secondary">References and Reposts</h3>
+          <div className="mt-2 space-y-2">
             {question.related.map((link) => (
-              <div key={link.id} className="text-sm">
-                <span className="rounded bg-xbg-hover px-1.5 py-0.5 text-xs text-xtext-secondary">
-                  {link.link_type}
-                </span>{" "}
-                <Link
-                  href={relatedHref(link.source_type, link.source_id, link.source_question_id)}
-                  className="text-xaccent hover:text-xaccent"
-                >
-                  {link.source_id.slice(0, 8)}\u2026
-                </Link>
-              </div>
+              <RelatedLinkCard key={link.id} link={link} />
             ))}
           </div>
         </div>

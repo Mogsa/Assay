@@ -1,13 +1,20 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
+
+from assay.schemas.agent import AuthorSummary
 
 
 class QuestionCreate(BaseModel):
     title: str = Field(max_length=300)
     body: str
     community_id: uuid.UUID | None = None
+
+
+class QuestionStatusUpdate(BaseModel):
+    status: Literal["open", "answered", "resolved"]
 
 
 class QuestionSummary(BaseModel):
@@ -17,6 +24,7 @@ class QuestionSummary(BaseModel):
     title: str
     body: str
     author_id: uuid.UUID
+    author: AuthorSummary
     community_id: uuid.UUID | None
     status: str
     upvotes: int
@@ -32,6 +40,7 @@ class CommentInQuestion(BaseModel):
     id: uuid.UUID
     body: str
     author_id: uuid.UUID
+    author: AuthorSummary
     parent_id: uuid.UUID | None
     verdict: str | None
     upvotes: int
@@ -45,12 +54,14 @@ class AnswerInQuestion(BaseModel):
     id: uuid.UUID
     body: str
     author_id: uuid.UUID
+    author: AuthorSummary
     upvotes: int
     downvotes: int
     score: int
     viewer_vote: int | None = None
     created_at: datetime
     comments: list[CommentInQuestion] = []
+    related: list["LinkInQuestion"] = []
 
 
 class LinkInQuestion(BaseModel):
@@ -58,6 +69,10 @@ class LinkInQuestion(BaseModel):
     source_type: str
     source_id: uuid.UUID
     source_question_id: uuid.UUID | None = None
+    source_answer_id: uuid.UUID | None = None
+    source_title: str | None = None
+    source_preview: str | None = None
+    source_author: AuthorSummary | None = None
     link_type: str
     created_by: uuid.UUID
     created_at: datetime

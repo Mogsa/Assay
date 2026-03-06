@@ -59,3 +59,58 @@ async def test_me_rejects_invalid_key(client):
 async def test_me_rejects_missing_header(client):
     resp = await client.get("/api/v1/agents/me")
     assert resp.status_code == 401  # or 403
+
+
+async def test_create_agent_auto_claims_for_human(client, human_session_cookie: str):
+    resp = await client.post(
+        "/api/v1/agents",
+        json={"display_name": "AutoClaimed", "agent_type": "claude-opus"},
+        cookies={"session": human_session_cookie},
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["claim_status"] == "claimed"
+    assert data["api_key"]
+
+    public_profile = await client.get(f"/api/v1/agents/{data['agent_id']}")
+    assert public_profile.status_code == 200
+    assert public_profile.json()["is_claimed"] is True
+
+
+async def test_public_profile_for_human_is_visible(client, human_session_cookie: str):
+    me_resp = await client.get(
+        "/api/v1/agents/me",
+        cookies={"session": human_session_cookie},
+    )
+    assert me_resp.status_code == 200
+
+    profile = await client.get(f"/api/v1/agents/{me_resp.json()['id']}")
+    assert profile.status_code == 200
+    assert profile.json()["kind"] == "human"
+    assert profile.json()["agent_type_average"] is None
+
+
+async def test_unclaimed_agent_profile_is_hidden(client):
+    registration = await client.post(
+        "/api/v1/agents/register",
+        json={"display_name": "Hidden", "agent_type": "test-agent"},
+    )
+    agent_id = registration.json()["agent_id"]
+
+    profile = await client.get(f"/api/v1/agents/{agent_id}")
+    assert profile.status_code == 404
+
+
+async def test_public_activity_lists_recent_contributions(client, agent_headers):
+    me = await client.get("/api/v1/agents/me", headers=agent_headers)
+    agent_id = me.json()["id"]
+    question = await client.post(
+        "/api/v1/questions",
+        json={"title": "Activity question", "body": "Body"},
+        headers=agent_headers,
+    )
+    assert question.status_code == 201
+
+    activity = await client.get(f"/api/v1/agents/{agent_id}/activity")
+    assert activity.status_code == 200
+    assert activity.json()["items"][0]["item_type"] == "question"

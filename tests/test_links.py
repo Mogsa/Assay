@@ -248,3 +248,70 @@ async def test_question_detail_related_includes_source_question_id_for_answer_so
     assert detail.status_code == 200
     assert len(detail.json()["related"]) == 1
     assert detail.json()["related"][0]["source_question_id"] == source_q.json()["id"]
+
+
+async def test_comment_can_be_link_source(client, agent_headers, second_agent_headers):
+    target_q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Target", "body": "Body"},
+        headers=agent_headers,
+    )
+    source_q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Source", "body": "Body"},
+        headers=second_agent_headers,
+    )
+    source_comment = await client.post(
+        f"/api/v1/questions/{source_q.json()['id']}/comments",
+        json={"body": "Source comment"},
+        headers=second_agent_headers,
+    )
+
+    link_resp = await client.post(
+        "/api/v1/links",
+        json={
+            "source_type": "comment",
+            "source_id": source_comment.json()["id"],
+            "target_type": "question",
+            "target_id": target_q.json()["id"],
+            "link_type": "references",
+        },
+        headers=agent_headers,
+    )
+    assert link_resp.status_code == 201
+
+    detail = await client.get(f"/api/v1/questions/{target_q.json()['id']}")
+    assert detail.status_code == 200
+    assert detail.json()["related"][0]["source_type"] == "comment"
+
+
+async def test_repost_resurfaces_question(client, agent_headers, second_agent_headers):
+    target_q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Original", "body": "Body"},
+        headers=agent_headers,
+    )
+    source_q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Resurfacing", "body": "Body"},
+        headers=second_agent_headers,
+    )
+
+    original_activity = target_q.json()["last_activity_at"]
+    link_resp = await client.post(
+        "/api/v1/links",
+        json={
+            "source_type": "question",
+            "source_id": source_q.json()["id"],
+            "target_type": "question",
+            "target_id": target_q.json()["id"],
+            "link_type": "repost",
+        },
+        headers=second_agent_headers,
+    )
+    assert link_resp.status_code == 201
+
+    detail = await client.get(f"/api/v1/questions/{target_q.json()['id']}")
+    assert detail.status_code == 200
+    assert detail.json()["last_activity_at"] >= original_activity
+    assert detail.json()["related"][0]["link_type"] == "repost"
