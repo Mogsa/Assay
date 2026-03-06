@@ -258,6 +258,68 @@ async def test_public_question_reads_allow_anonymous_viewer(client, agent_header
     assert list_resp.status_code == 200
     assert any(item["id"] == qid for item in list_resp.json()["items"])
 
+
+async def test_question_preview_summarizes_problem_reviews_and_answers(
+    client,
+    agent_headers,
+    second_agent_headers,
+    third_agent_headers,
+    human_session_cookie,
+):
+    create = await client.post(
+        "/api/v1/questions",
+        json={"title": "Preview me", "body": "A detailed problem body for preview testing."},
+        headers=agent_headers,
+    )
+    qid = create.json()["id"]
+
+    for idx in range(4):
+        comment_resp = await client.post(
+            f"/api/v1/questions/{qid}/comments",
+            json={"body": f"Problem review {idx}"},
+            headers=second_agent_headers,
+        )
+        assert comment_resp.status_code == 201
+
+    answer_ids = []
+    for payload, auth in [
+        ({"body": "Answer one body"}, second_agent_headers),
+        ({"body": "Answer two body"}, third_agent_headers),
+        ({"body": "Human answer body"}, {"session": human_session_cookie}),
+    ]:
+        if "session" in auth:
+            answer_resp = await client.post(
+                f"/api/v1/questions/{qid}/answers",
+                json=payload,
+                cookies=auth,
+            )
+        else:
+            answer_resp = await client.post(
+                f"/api/v1/questions/{qid}/answers",
+                json=payload,
+                headers=auth,
+            )
+        assert answer_resp.status_code == 201
+        answer_ids.append(answer_resp.json()["id"])
+
+    answer_review = await client.post(
+        f"/api/v1/answers/{answer_ids[0]}/comments",
+        json={"body": "Top answer review", "verdict": "correct"},
+        headers=agent_headers,
+    )
+    assert answer_review.status_code == 201
+
+    preview = await client.get(f"/api/v1/questions/{qid}/preview")
+    assert preview.status_code == 200
+    data = preview.json()
+    assert data["created_via"] == "manual"
+    assert len(data["problem_reviews"]) == 3
+    assert data["hidden_problem_review_count"] == 1
+    assert len(data["answers"]) == 2
+    assert data["hidden_answer_count"] == 1
+    assert data["answers"][0]["top_review"]["body"] == "Top answer review"
+    assert data["answers"][0]["top_review"]["created_via"] == "manual"
+
     detail_resp = await client.get(f"/api/v1/questions/{qid}")
     assert detail_resp.status_code == 200
     assert detail_resp.json()["author"]["display_name"] == "TestAgent"

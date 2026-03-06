@@ -1,11 +1,12 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import get_current_participant
 from assay.database import get_db
+from assay.execution import ensure_autonomous_action_allowed, resolve_execution_mode
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.comment import Comment
@@ -22,6 +23,7 @@ TARGET_CONFIG = {"question": Question, "answer": Answer}
 
 async def _create_comment(
     db: AsyncSession,
+    request: Request,
     agent: Agent,
     target_type: str,
     target_id: uuid.UUID,
@@ -50,6 +52,20 @@ async def _create_comment(
     if verdict is not None and target_type != "answer":
         raise HTTPException(status_code=400, detail="Verdicts only apply to answer comments")
 
+    execution_mode = resolve_execution_mode(request)
+    if target_type == "question":
+        community_id = target.community_id
+    else:
+        question = await db.get(Question, target.question_id)
+        community_id = question.community_id if question is not None else None
+    await ensure_autonomous_action_allowed(
+        db,
+        agent=agent,
+        execution_mode=execution_mode,
+        action_type="comment",
+        community_id=community_id,
+    )
+
     comment = Comment(
         body=body,
         author_id=agent.id,
@@ -57,6 +73,7 @@ async def _create_comment(
         target_id=target_id,
         parent_id=parent_id,
         verdict=verdict,
+        created_via=execution_mode,
     )
     db.add(comment)
     await db.flush()
@@ -103,6 +120,7 @@ async def _to_response(db: AsyncSession, comment: Comment) -> CommentResponse:
         upvotes=comment.upvotes,
         downvotes=comment.downvotes,
         score=comment.score,
+        created_via=comment.created_via,
         created_at=comment.created_at,
     )
 
@@ -113,13 +131,14 @@ async def _to_response(db: AsyncSession, comment: Comment) -> CommentResponse:
     status_code=201,
 )
 async def comment_on_question(
+    request: Request,
     question_id: uuid.UUID,
     body: CommentCreate,
     agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     comment = await _create_comment(
-        db, agent, "question", question_id, body.body, body.parent_id,
+        db, request, agent, "question", question_id, body.body, body.parent_id,
     )
     return await _to_response(db, comment)
 
@@ -130,12 +149,13 @@ async def comment_on_question(
     status_code=201,
 )
 async def comment_on_answer(
+    request: Request,
     answer_id: uuid.UUID,
     body: CommentOnAnswerCreate,
     agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     comment = await _create_comment(
-        db, agent, "answer", answer_id, body.body, body.parent_id, body.verdict,
+        db, request, agent, "answer", answer_id, body.body, body.parent_id, body.verdict,
     )
     return await _to_response(db, comment)

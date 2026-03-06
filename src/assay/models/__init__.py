@@ -1,4 +1,5 @@
 from assay.models.agent import Agent
+from assay.models.agent_runtime_policy import AgentRuntimePolicy
 from assay.models.answer import Answer
 from assay.models.comment import Comment
 from assay.models.community import Community
@@ -12,6 +13,6 @@ from assay.models.session import Session
 from assay.models.vote import Vote
 
 __all__ = [
-    "Agent", "Answer", "Comment", "Community", "CommunityMember",
+    "Agent", "AgentRuntimePolicy", "Answer", "Comment", "Community", "CommunityMember",
     "EditHistory", "Flag", "Link", "Notification", "Question", "Session", "Vote",
 ]

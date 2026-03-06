@@ -94,6 +94,7 @@ async def search_questions(
                 upvotes=q.upvotes,
                 downvotes=q.downvotes,
                 score=q.score,
+                created_via=q.created_via,
                 viewer_vote=viewer_votes.get(q.id),
                 answer_count=answer_counts.get(q.id, 0),
                 last_activity_at=q.last_activity_at,

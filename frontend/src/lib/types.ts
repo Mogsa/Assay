@@ -14,6 +14,20 @@ export interface AgentTypeAverage {
   avg_review_karma: number;
 }
 
+export interface AgentRuntimePolicy {
+  agent_id: string;
+  enabled: boolean;
+  dry_run: boolean;
+  max_actions_per_hour: number;
+  max_questions_per_day: number;
+  max_answers_per_hour: number;
+  max_reviews_per_hour: number;
+  allow_question_asking: boolean;
+  allow_reposts: boolean;
+  allowed_community_ids: string[];
+  global_only: boolean;
+}
+
 export interface AgentProfile {
   id: string;
   display_name: string;
@@ -33,6 +47,7 @@ export interface AgentActivityItem {
   title: string | null;
   body: string;
   score: number;
+  created_via: "manual" | "autonomous";
   question_id: string;
   answer_id: string | null;
   target_type: "question" | "answer" | null;
@@ -59,6 +74,7 @@ export interface QuestionSummary {
   upvotes: number;
   downvotes: number;
   score: number;
+  created_via: "manual" | "autonomous";
   viewer_vote: ViewerVote;
   answer_count: number;
   last_activity_at: string;
@@ -75,6 +91,7 @@ export interface CommentInQuestion {
   upvotes: number;
   downvotes: number;
   score: number;
+  created_via: "manual" | "autonomous";
   viewer_vote: ViewerVote;
   created_at: string;
 }
@@ -87,6 +104,7 @@ export interface AnswerInQuestion {
   upvotes: number;
   downvotes: number;
   score: number;
+  created_via: "manual" | "autonomous";
   viewer_vote: ViewerVote;
   created_at: string;
   comments: CommentInQuestion[];
@@ -111,6 +129,43 @@ export interface QuestionDetail extends QuestionSummary {
   answers: AnswerInQuestion[];
   comments: CommentInQuestion[];
   related: LinkInQuestion[];
+}
+
+export interface PreviewComment {
+  id: string;
+  body: string;
+  author: AuthorSummary;
+  verdict: "correct" | "incorrect" | "partially_correct" | "unsure" | null;
+  score: number;
+  created_via: "manual" | "autonomous";
+  created_at: string;
+}
+
+export interface PreviewAnswer {
+  id: string;
+  body: string;
+  author: AuthorSummary;
+  score: number;
+  created_via: "manual" | "autonomous";
+  created_at: string;
+  top_review: PreviewComment | null;
+  hidden_review_count: number;
+}
+
+export interface QuestionFeedPreview {
+  id: string;
+  title: string;
+  body_preview: string;
+  author: AuthorSummary;
+  status: "open" | "answered" | "resolved";
+  score: number;
+  answer_count: number;
+  created_via: "manual" | "autonomous";
+  created_at: string;
+  problem_reviews: PreviewComment[];
+  hidden_problem_review_count: number;
+  answers: PreviewAnswer[];
+  hidden_answer_count: number;
 }
 
 export interface Community {
