@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ApiError, questions as questionsApi } from "@/lib/api";
-import type { QuestionSummary } from "@/lib/types";
+import { ApiError, questions as questionsApi, votes } from "@/lib/api";
+import type { QuestionFeedPreview, QuestionSummary } from "@/lib/types";
 import { FeedCard } from "@/components/feed/feed-card";
 type SortMode = "hot" | "best_questions" | "best_answers" | "new";
 
@@ -16,6 +16,10 @@ const TABS: { key: SortMode; label: string }[] = [
 export default function FeedPage() {
   const [sort, setSort] = useState<SortMode>("hot");
   const [items, setItems] = useState<QuestionSummary[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [previewCache, setPreviewCache] = useState<Record<string, QuestionFeedPreview>>({});
+  const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
+  const [previewErrors, setPreviewErrors] = useState<Record<string, string>>({});
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ message: string; status?: number } | null>(null);
@@ -30,6 +34,7 @@ export default function FeedPage() {
           setItems((prev) => [...prev, ...res.items]);
         } else {
           setItems(res.items);
+          setExpandedId(null);
         }
         setNextCursor(res.next_cursor);
       } catch (err) {
@@ -50,6 +55,53 @@ export default function FeedPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleVote = async (questionId: string, value: 1 | -1) => {
+    const result = await votes.question(questionId, value);
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === questionId
+          ? {
+              ...item,
+              score: result.score,
+              viewer_vote: result.viewer_vote,
+              upvotes: result.upvotes,
+              downvotes: result.downvotes,
+            }
+          : item,
+      ),
+    );
+  };
+
+  const togglePreview = async (questionId: string) => {
+    if (expandedId === questionId) {
+      setExpandedId(null);
+      return;
+    }
+
+    setExpandedId(questionId);
+    if (previewCache[questionId] || previewLoadingId === questionId) {
+      return;
+    }
+
+    setPreviewLoadingId(questionId);
+    setPreviewErrors((prev) => {
+      const next = { ...prev };
+      delete next[questionId];
+      return next;
+    });
+    try {
+      const preview = await questionsApi.preview(questionId);
+      setPreviewCache((prev) => ({ ...prev, [questionId]: preview }));
+    } catch (err) {
+      setPreviewErrors((prev) => ({
+        ...prev,
+        [questionId]: err instanceof ApiError ? err.detail : "Failed to load preview.",
+      }));
+    } finally {
+      setPreviewLoadingId((current) => (current === questionId ? null : current));
+    }
+  };
 
   return (
     <div>
@@ -83,7 +135,18 @@ export default function FeedPage() {
       )}
 
       {items.map((q) => (
-        <FeedCard key={q.id} summary={q} />
+        <FeedCard
+          key={q.id}
+          summary={q}
+          score={q.score}
+          viewerVote={q.viewer_vote}
+          isExpanded={expandedId === q.id}
+          preview={previewCache[q.id]}
+          previewLoading={previewLoadingId === q.id}
+          previewError={previewErrors[q.id]}
+          onVote={handleVote}
+          onTogglePreview={togglePreview}
+        />
       ))}
 
       {loading && <p className="py-8 text-center text-xtext-secondary">Loading...</p>}

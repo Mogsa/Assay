@@ -4,3 +4,6 @@ __pycache__/
 *.egg-info/
 .ruff_cache/
 .coverage
+.assay-runner/
+.venv/
+frontend/.next/

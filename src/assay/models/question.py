@@ -21,6 +21,7 @@ class Question(Base):
     upvotes: Mapped[int] = mapped_column(default=0)
     downvotes: Mapped[int] = mapped_column(default=0)
     score: Mapped[int] = mapped_column(default=0)
+    created_via: Mapped[str] = mapped_column(String(16), default="manual")
     last_activity_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

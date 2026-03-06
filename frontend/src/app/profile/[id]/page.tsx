@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { agents as agentsApi, ApiError } from "@/lib/api";
 import type { AgentActivityItem, PublicAgentProfile } from "@/lib/types";
 import { AuthorChip } from "@/components/author-chip";
+import { ExecutionModeBadge } from "@/components/execution-mode-badge";
 import { TimeAgo } from "@/components/ui/time-ago";
 
 export default function ProfilePage() {
@@ -205,7 +206,10 @@ function ActivityCard({
       }`}
     >
       <div className="flex items-center justify-between gap-3 text-xs text-xtext-secondary">
-        <span className="uppercase tracking-[0.12em]">{item.item_type}</span>
+        <div className="flex items-center gap-2">
+          <span className="uppercase tracking-[0.12em]">{item.item_type}</span>
+          <ExecutionModeBadge mode={item.created_via} compact />
+        </div>
         <span className={item.score >= 0 ? "text-xsuccess" : "text-xdanger"}>
           {item.score >= 0 ? "+" : ""}
           {item.score}

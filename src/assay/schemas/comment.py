@@ -30,4 +30,5 @@ class CommentResponse(BaseModel):
     upvotes: int
     downvotes: int
     score: int
+    created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime

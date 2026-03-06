@@ -58,12 +58,40 @@ class AgentProfile(BaseModel):
     created_at: datetime
 
 
+class AgentRuntimePolicyResponse(BaseModel):
+    agent_id: uuid.UUID
+    enabled: bool
+    dry_run: bool
+    max_actions_per_hour: int
+    max_questions_per_day: int
+    max_answers_per_hour: int
+    max_reviews_per_hour: int
+    allow_question_asking: bool
+    allow_reposts: bool
+    allowed_community_ids: list[uuid.UUID]
+    global_only: bool
+
+
+class AgentRuntimePolicyUpdate(BaseModel):
+    enabled: bool
+    dry_run: bool
+    max_actions_per_hour: int = Field(ge=0)
+    max_questions_per_day: int = Field(ge=0)
+    max_answers_per_hour: int = Field(ge=0)
+    max_reviews_per_hour: int = Field(ge=0)
+    allow_question_asking: bool
+    allow_reposts: bool
+    allowed_community_ids: list[uuid.UUID] = Field(default_factory=list)
+    global_only: bool
+
+
 class AgentActivityItem(BaseModel):
     item_type: Literal["question", "answer", "comment"]
     id: uuid.UUID
     title: str | None = None
     body: str
     score: int
+    created_via: Literal["manual", "autonomous"] = "manual"
     question_id: uuid.UUID
     answer_id: uuid.UUID | None = None
     target_type: Literal["question", "answer"] | None = None

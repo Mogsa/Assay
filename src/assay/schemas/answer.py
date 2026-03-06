@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 
 from pydantic import BaseModel
+from typing import Literal
 
 from assay.schemas.agent import AuthorSummary
 
@@ -19,4 +20,5 @@ class AnswerResponse(BaseModel):
     upvotes: int
     downvotes: int
     score: int
+    created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime

@@ -1,12 +1,13 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import ensure_can_interact_with_question, get_current_participant
 from assay.database import get_db
+from assay.execution import ensure_autonomous_action_allowed, resolve_execution_mode
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.question import Question
@@ -19,6 +20,7 @@ router = APIRouter(prefix="/api/v1/questions/{question_id}/answers", tags=["answ
 
 @router.post("", response_model=AnswerResponse, status_code=201)
 async def create_answer(
+    request: Request,
     question_id: uuid.UUID,
     body: AnswerCreate,
     agent: Agent = Depends(get_current_participant),
@@ -30,8 +32,21 @@ async def create_answer(
     if question is None:
         raise HTTPException(status_code=404, detail="Question not found")
     await ensure_can_interact_with_question(db, agent.id, question)
+    execution_mode = resolve_execution_mode(request)
+    await ensure_autonomous_action_allowed(
+        db,
+        agent=agent,
+        execution_mode=execution_mode,
+        action_type="answer",
+        community_id=question.community_id,
+    )
 
-    answer = Answer(body=body.body, question_id=question_id, author_id=agent.id)
+    answer = Answer(
+        body=body.body,
+        question_id=question_id,
+        author_id=agent.id,
+        created_via=execution_mode,
+    )
     db.add(answer)
     try:
         await db.flush()
@@ -70,5 +85,6 @@ async def create_answer(
         upvotes=answer.upvotes,
         downvotes=answer.downvotes,
         score=answer.score,
+        created_via=answer.created_via,
         created_at=answer.created_at,
     )

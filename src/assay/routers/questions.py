@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import get_current_participant, get_optional_principal
 from assay.database import get_db
+from assay.execution import ensure_autonomous_action_allowed, resolve_execution_mode
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.comment import Comment
@@ -19,6 +20,9 @@ from assay.pagination import decode_cursor, encode_cursor
 from assay.presentation import load_author_summaries
 from assay.rate_limit import limiter
 from assay.schemas.question import (
+    PreviewAnswer,
+    PreviewComment,
+    QuestionFeedPreview,
     QuestionCreate,
     QuestionDetail,
     QuestionStatusUpdate,
@@ -79,6 +83,7 @@ def _question_summary_payload(
         upvotes=question.upvotes,
         downvotes=question.downvotes,
         score=question.score,
+        created_via=question.created_via,
         viewer_vote=viewer_vote,
         answer_count=answer_count,
         last_activity_at=question.last_activity_at,
@@ -97,9 +102,33 @@ def _comment_payload(comment: Comment, *, author, viewer_vote: int | None) -> di
         "upvotes": comment.upvotes,
         "downvotes": comment.downvotes,
         "score": comment.score,
+        "created_via": comment.created_via,
         "viewer_vote": viewer_vote,
         "created_at": comment.created_at,
     }
+
+
+def _truncate_preview(text: str, limit: int = 260) -> str:
+    normalized = " ".join(text.split())
+    if len(normalized) <= limit:
+        return normalized
+    return f"{normalized[: limit - 3].rstrip()}..."
+
+
+def _preview_comment_payload(comment: Comment, *, author) -> PreviewComment:
+    return PreviewComment(
+        id=comment.id,
+        body=_truncate_preview(comment.body, 220),
+        author=author,
+        verdict=comment.verdict,
+        score=comment.score,
+        created_via=comment.created_via,
+        created_at=comment.created_at,
+    )
+
+
+def _comment_preview_rank(comment: Comment) -> tuple[int, float]:
+    return (comment.score, -comment.created_at.timestamp())
 
 
 async def _link_summaries(db: AsyncSession, links: list[Link]) -> dict[uuid.UUID, dict]:
@@ -228,11 +257,21 @@ async def create_question(
         if membership.scalar_one_or_none() is None:
             raise HTTPException(status_code=403, detail="Not a member of this community")
 
+    execution_mode = resolve_execution_mode(request)
+    await ensure_autonomous_action_allowed(
+        db,
+        agent=agent,
+        execution_mode=execution_mode,
+        action_type="question",
+        community_id=body.community_id,
+    )
+
     question = Question(
         title=body.title,
         body=body.body,
         author_id=agent.id,
         community_id=body.community_id,
+        created_via=execution_mode,
     )
     db.add(question)
     await db.flush()
@@ -362,6 +401,107 @@ async def list_questions(
     }
 
 
+@router.get("/{question_id}/preview", response_model=QuestionFeedPreview)
+async def get_question_preview(
+    question_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    question = await db.get(Question, question_id)
+    if question is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    answers = (
+        await db.execute(
+            select(Answer)
+            .where(Answer.question_id == question_id)
+            .order_by(Answer.score.desc(), Answer.created_at.asc())
+        )
+    ).scalars().all()
+
+    q_comments = (
+        await db.execute(
+            select(Comment)
+            .where(Comment.target_type == "question", Comment.target_id == question_id)
+            .order_by(Comment.created_at.asc())
+        )
+    ).scalars().all()
+    top_problem_reviews = sorted(
+        [comment for comment in q_comments if comment.parent_id is None],
+        key=_comment_preview_rank,
+        reverse=True,
+    )[:3]
+
+    answer_ids = [answer.id for answer in answers]
+    answer_comments_map: dict[uuid.UUID, list[Comment]] = {answer_id: [] for answer_id in answer_ids}
+    if answer_ids:
+        answer_comment_result = await db.execute(
+            select(Comment)
+            .where(Comment.target_type == "answer", Comment.target_id.in_(answer_ids))
+            .order_by(Comment.created_at.asc())
+        )
+        for comment in answer_comment_result.scalars().all():
+            answer_comments_map[comment.target_id].append(comment)
+
+    preview_answers_raw = answers[:2]
+    author_ids = [question.author_id]
+    author_ids.extend(answer.author_id for answer in preview_answers_raw)
+    author_ids.extend(comment.author_id for comment in top_problem_reviews)
+    for answer in preview_answers_raw:
+        answer_reviews = sorted(
+            [comment for comment in answer_comments_map.get(answer.id, []) if comment.parent_id is None],
+            key=_comment_preview_rank,
+            reverse=True,
+        )
+        if answer_reviews:
+            author_ids.append(answer_reviews[0].author_id)
+    author_map = await load_author_summaries(db, author_ids)
+
+    preview_answers: list[PreviewAnswer] = []
+    for answer in preview_answers_raw:
+        answer_reviews = sorted(
+            [comment for comment in answer_comments_map.get(answer.id, []) if comment.parent_id is None],
+            key=_comment_preview_rank,
+            reverse=True,
+        )
+        top_review = answer_reviews[0] if answer_reviews else None
+        preview_answers.append(
+            PreviewAnswer(
+                id=answer.id,
+                body=_truncate_preview(answer.body, 260),
+                author=author_map[answer.author_id],
+                score=answer.score,
+                created_via=answer.created_via,
+                created_at=answer.created_at,
+                top_review=(
+                    _preview_comment_payload(top_review, author=author_map[top_review.author_id])
+                    if top_review is not None
+                    else None
+                ),
+                hidden_review_count=max(0, len(answer_reviews) - (1 if top_review else 0)),
+            )
+        )
+
+    top_problem_review_count = len([comment for comment in q_comments if comment.parent_id is None])
+    return QuestionFeedPreview(
+        id=question.id,
+        title=question.title,
+        body_preview=_truncate_preview(question.body, 320),
+        author=author_map[question.author_id],
+        status=question.status,
+        score=question.score,
+        answer_count=len(answers),
+        created_via=question.created_via,
+        created_at=question.created_at,
+        problem_reviews=[
+            _preview_comment_payload(comment, author=author_map[comment.author_id])
+            for comment in top_problem_reviews
+        ],
+        hidden_problem_review_count=max(0, top_problem_review_count - len(top_problem_reviews)),
+        answers=preview_answers,
+        hidden_answer_count=max(0, len(answers) - len(preview_answers)),
+    )
+
+
 @router.put("/{question_id}/status", response_model=QuestionSummary)
 async def update_question_status(
     question_id: uuid.UUID,
@@ -474,6 +614,7 @@ async def get_question(
         upvotes=question.upvotes,
         downvotes=question.downvotes,
         score=question.score,
+        created_via=question.created_via,
         viewer_vote=question_vote.get(question.id),
         answer_count=len(answers),
         last_activity_at=question.last_activity_at,
@@ -487,6 +628,7 @@ async def get_question(
                 "upvotes": answer.upvotes,
                 "downvotes": answer.downvotes,
                 "score": answer.score,
+                "created_via": answer.created_via,
                 "viewer_vote": answer_votes.get(answer.id),
                 "created_at": answer.created_at,
                 "comments": [

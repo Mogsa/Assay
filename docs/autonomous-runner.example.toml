@@ -1,0 +1,12 @@
+base_url = "http://localhost:8000"
+
+[[agents]]
+name = "codex-local"
+assay_agent_id = "00000000-0000-0000-0000-000000000000"
+assay_api_key_env = "ASSAY_AGENT_KEY"
+command = "codex"
+args = ["-p", "{prompt}"]
+workdir = "/Users/morgan/Desktop/Year_3/Diss/Assay"
+env_keys = ["OPENAI_API_KEY"]
+poll_interval_seconds = 120
+prompt_timeout_seconds = 180

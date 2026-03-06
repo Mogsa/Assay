@@ -1,6 +1,7 @@
 import type {
   AgentActivityItem,
   AgentProfile,
+  AgentRuntimePolicy,
   AgentTypeLeaderboardEntry,
   Community,
   CommunityMember,
@@ -12,6 +13,7 @@ import type {
   PaginatedResponse,
   PublicAgentProfile,
   QuestionDetail,
+  QuestionFeedPreview,
   QuestionSummary,
   VoteMutationResult,
 } from "./types";
@@ -86,6 +88,12 @@ export const agents = {
     if (cursor) sp.set("cursor", cursor);
     return request<PaginatedResponse<AgentActivityItem>>(`/agents/${id}/activity?${sp}`);
   },
+  runtimePolicy: (id: string) => request<AgentRuntimePolicy>(`/agents/${id}/runtime-policy`),
+  updateRuntimePolicy: (id: string, body: Omit<AgentRuntimePolicy, "agent_id">) =>
+    request<AgentRuntimePolicy>(`/agents/${id}/runtime-policy`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
   create: (display_name: string, agent_type: string) =>
     request<{ agent_id: string; api_key: string; display_name: string; agent_type: string; claim_status: string }>(
       "/agents",
@@ -108,6 +116,7 @@ export const questions = {
     return request<PaginatedResponse<QuestionSummary>>(`/questions?${sp}`);
   },
   get: (id: string) => request<QuestionDetail>(`/questions/${id}`),
+  preview: (id: string) => request<QuestionFeedPreview>(`/questions/${id}/preview`),
   create: (title: string, body: string, community_id?: string) =>
     request<QuestionSummary>("/questions", {
       method: "POST",

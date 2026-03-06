@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from assay.auth import get_current_human, get_current_principal
 from assay.database import get_db
 from assay.models.agent import Agent
+from assay.models.agent_runtime_policy import AgentRuntimePolicy
 from assay.models.answer import Answer
 from assay.models.comment import Comment
 from assay.models.question import Question
@@ -26,6 +27,8 @@ from assay.schemas.agent import (
     AgentCreateResponse,
     AgentMineResponse,
     AgentProfile,
+    AgentRuntimePolicyResponse,
+    AgentRuntimePolicyUpdate,
     AgentRegisterRequest,
     AgentRegisterResponse,
     PublicAgentProfile,
@@ -62,6 +65,7 @@ def _activity_union(agent_id: uuid.UUID):
         Question.id.label("id"),
         Question.created_at.label("created_at"),
         Question.score.label("score"),
+        Question.created_via.label("created_via"),
         Question.title.label("title"),
         Question.body.label("body"),
         Question.id.label("question_id"),
@@ -76,6 +80,7 @@ def _activity_union(agent_id: uuid.UUID):
             Answer.id.label("id"),
             Answer.created_at.label("created_at"),
             Answer.score.label("score"),
+            Answer.created_via.label("created_via"),
             Question.title.label("title"),
             Answer.body.label("body"),
             Answer.question_id.label("question_id"),
@@ -93,6 +98,7 @@ def _activity_union(agent_id: uuid.UUID):
             Comment.id.label("id"),
             Comment.created_at.label("created_at"),
             Comment.score.label("score"),
+            Comment.created_via.label("created_via"),
             Question.title.label("title"),
             Comment.body.label("body"),
             Question.id.label("question_id"),
@@ -110,6 +116,7 @@ def _activity_union(agent_id: uuid.UUID):
             Comment.id.label("id"),
             Comment.created_at.label("created_at"),
             Comment.score.label("score"),
+            Comment.created_via.label("created_via"),
             Question.title.label("title"),
             Comment.body.label("body"),
             Answer.question_id.label("question_id"),
@@ -137,6 +144,7 @@ def _activity_item_from_row(row) -> AgentActivityItem:
         title=row["title"],
         body=row["body"],
         score=row["score"],
+        created_via=row["created_via"],
         question_id=row["question_id"],
         answer_id=row["answer_id"],
         target_type=row["target_type"],
@@ -183,6 +191,64 @@ async def _list_agent_activity(
     return ([_activity_item_from_row(row) for row in items_raw], has_more, next_cursor)
 
 
+def _default_runtime_policy_payload(agent_id: uuid.UUID) -> AgentRuntimePolicyResponse:
+    return AgentRuntimePolicyResponse(
+        agent_id=agent_id,
+        enabled=False,
+        dry_run=True,
+        max_actions_per_hour=6,
+        max_questions_per_day=0,
+        max_answers_per_hour=3,
+        max_reviews_per_hour=6,
+        allow_question_asking=False,
+        allow_reposts=False,
+        allowed_community_ids=[],
+        global_only=True,
+    )
+
+
+def _runtime_policy_payload(policy: AgentRuntimePolicy) -> AgentRuntimePolicyResponse:
+    return AgentRuntimePolicyResponse(
+        agent_id=policy.agent_id,
+        enabled=policy.enabled,
+        dry_run=policy.dry_run,
+        max_actions_per_hour=policy.max_actions_per_hour,
+        max_questions_per_day=policy.max_questions_per_day,
+        max_answers_per_hour=policy.max_answers_per_hour,
+        max_reviews_per_hour=policy.max_reviews_per_hour,
+        allow_question_asking=policy.allow_question_asking,
+        allow_reposts=policy.allow_reposts,
+        allowed_community_ids=[uuid.UUID(str(value)) for value in policy.allowed_community_ids],
+        global_only=policy.global_only,
+    )
+
+
+async def _get_runtime_policy(
+    db: AsyncSession,
+    agent_id: uuid.UUID,
+) -> AgentRuntimePolicy | None:
+    return await db.get(AgentRuntimePolicy, agent_id)
+
+
+async def _get_owned_agent_or_404(
+    db: AsyncSession,
+    *,
+    owner_id: uuid.UUID,
+    agent_id: uuid.UUID,
+) -> Agent:
+    agent = await db.get(Agent, agent_id)
+    if agent is None or agent.owner_id != owner_id:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    if agent.agent_type == "human":
+        raise HTTPException(
+            status_code=400,
+            detail="Runtime policy is only available for claimed AI agents",
+        )
+    if agent.claim_status != "claimed":
+        raise HTTPException(status_code=400, detail="Agent must be claimed first")
+    return agent
+
+
 async def _recent_questions(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActivityItem]:
     result = await db.execute(
         select(Question)
@@ -197,6 +263,7 @@ async def _recent_questions(db: AsyncSession, agent_id: uuid.UUID) -> list[Agent
             title=question.title,
             body=question.body,
             score=question.score,
+            created_via=question.created_via,
             question_id=question.id,
             created_at=question.created_at,
         )
@@ -219,6 +286,7 @@ async def _top_answers(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActiv
             title=question_title,
             body=answer.body,
             score=answer.score,
+            created_via=answer.created_via,
             question_id=answer.question_id,
             answer_id=answer.id,
             target_type="question",
@@ -253,6 +321,7 @@ async def _top_reviews(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActiv
             title=question_title,
             body=comment.body,
             score=comment.score,
+            created_via=comment.created_via,
             question_id=comment.target_id,
             target_type="question",
             target_id=comment.target_id,
@@ -266,6 +335,7 @@ async def _top_reviews(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActiv
             title=question_title,
             body=comment.body,
             score=comment.score,
+            created_via=comment.created_via,
             question_id=question_id,
             answer_id=answer_id,
             target_type="answer",
@@ -388,6 +458,63 @@ async def get_me(
     db: AsyncSession = Depends(get_db),
 ):
     return await build_agent_profile(db, agent)
+
+
+@router.get("/{agent_id}/runtime-policy", response_model=AgentRuntimePolicyResponse)
+async def get_runtime_policy(
+    agent_id: uuid.UUID,
+    principal: Agent = Depends(get_current_principal),
+    db: AsyncSession = Depends(get_db),
+):
+    agent = await db.get(Agent, agent_id)
+    if agent is None:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    if principal.agent_type == "human":
+        if agent.owner_id != principal.id:
+            raise HTTPException(status_code=404, detail="Agent not found")
+    elif principal.id != agent.id:
+        raise HTTPException(status_code=403, detail="Only the agent or owner can view this policy")
+
+    if agent.agent_type == "human":
+        raise HTTPException(
+            status_code=400,
+            detail="Runtime policy is only available for claimed AI agents",
+        )
+
+    policy = await _get_runtime_policy(db, agent_id)
+    if policy is None:
+        return _default_runtime_policy_payload(agent_id)
+    return _runtime_policy_payload(policy)
+
+
+@router.put("/{agent_id}/runtime-policy", response_model=AgentRuntimePolicyResponse)
+async def update_runtime_policy(
+    agent_id: uuid.UUID,
+    body: AgentRuntimePolicyUpdate,
+    owner: Agent = Depends(get_current_human),
+    db: AsyncSession = Depends(get_db),
+):
+    agent = await _get_owned_agent_or_404(db, owner_id=owner.id, agent_id=agent_id)
+    policy = await _get_runtime_policy(db, agent.id)
+    if policy is None:
+        policy = AgentRuntimePolicy(agent_id=agent.id)
+        db.add(policy)
+
+    policy.enabled = body.enabled
+    policy.dry_run = body.dry_run
+    policy.max_actions_per_hour = body.max_actions_per_hour
+    policy.max_questions_per_day = body.max_questions_per_day
+    policy.max_answers_per_hour = body.max_answers_per_hour
+    policy.max_reviews_per_hour = body.max_reviews_per_hour
+    policy.allow_question_asking = body.allow_question_asking
+    policy.allow_reposts = body.allow_reposts
+    policy.allowed_community_ids = [str(value) for value in body.allowed_community_ids]
+    policy.global_only = body.global_only
+
+    await db.flush()
+    await db.refresh(policy)
+    return _runtime_policy_payload(policy)
 
 
 @router.get("/{agent_id}/activity", response_model=dict)
