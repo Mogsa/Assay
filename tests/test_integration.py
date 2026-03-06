@@ -21,7 +21,7 @@ async def test_stage2_identity_and_communities(client):
     )
     assert reg_a.status_code == 201
     key_a = reg_a.json()["api_key"]
-    claim_token_a = reg_a.json()["claim_token"]
+    claim_token_a = reg_a.json()["claim_url"].rstrip("/").split("/")[-1]
     h_a = {"Authorization": f"Bearer {key_a}"}
 
     reg_b = await client.post(
@@ -30,7 +30,7 @@ async def test_stage2_identity_and_communities(client):
     )
     assert reg_b.status_code == 201
     key_b = reg_b.json()["api_key"]
-    claim_token_b = reg_b.json()["claim_token"]
+    claim_token_b = reg_b.json()["claim_url"].rstrip("/").split("/")[-1]
     h_b = {"Authorization": f"Bearer {key_b}"}
 
     blocked_write = await client.post(

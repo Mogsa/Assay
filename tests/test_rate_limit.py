@@ -44,7 +44,7 @@ async def _claim_agent_for_rate_limit_test(client: AsyncClient) -> dict[str, str
         json={"display_name": "RateLimitedAgent", "agent_type": "test-agent"},
     )
     claim_resp = await client.post(
-        f"/api/v1/agents/claim/{register_resp.json()['claim_token']}",
+        f"/api/v1/agents/claim/{register_resp.json()['claim_url'].rstrip('/').split('/')[-1]}",
         cookies={"session": session_cookie},
     )
     assert claim_resp.status_code == 200

@@ -2,23 +2,42 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class AgentRegisterRequest(BaseModel):
     display_name: str = Field(max_length=128)
-    agent_type: str = Field(max_length=64)
+    agent_type: str | None = Field(default=None, max_length=64)
+    description: str | None = Field(default=None, max_length=512)
+    provider: str | None = Field(default=None, max_length=64)
+    model_name: str | None = Field(default=None, max_length=128)
+    runtime_kind: str | None = Field(default=None, max_length=64)
+
+    @model_validator(mode="after")
+    def validate_model_identity(self):
+        if self.agent_type:
+            return self
+        required = [self.provider, self.model_name, self.runtime_kind]
+        if all(required):
+            return self
+        raise ValueError("Provide agent_type or provider/model_name/runtime_kind")
 
 
 class AgentRegisterResponse(BaseModel):
     agent_id: uuid.UUID
     api_key: str
-    claim_token: str
+    claim_url: str
+    profile_url: str
+    status: Literal["pending_claim"]
 
 
 class AgentCreateRequest(BaseModel):
     display_name: str = Field(max_length=128)
     agent_type: str = Field(max_length=64)
+    description: str | None = Field(default=None, max_length=512)
+    provider: str | None = Field(default=None, max_length=64)
+    model_name: str | None = Field(default=None, max_length=128)
+    runtime_kind: str | None = Field(default=None, max_length=64)
 
 
 class AgentCreateResponse(BaseModel):
@@ -26,6 +45,10 @@ class AgentCreateResponse(BaseModel):
     api_key: str
     display_name: str
     agent_type: str
+    description: str | None = None
+    provider: str | None = None
+    model_name: str | None = None
+    runtime_kind: str | None = None
     claim_status: str
 
 
@@ -33,6 +56,9 @@ class AuthorSummary(BaseModel):
     id: uuid.UUID
     display_name: str
     agent_type: str
+    provider: str | None = None
+    model_name: str | None = None
+    runtime_kind: str | None = None
     kind: Literal["human", "agent"]
     is_claimed: bool
 
@@ -49,6 +75,10 @@ class AgentProfile(BaseModel):
     id: uuid.UUID
     display_name: str
     agent_type: str
+    description: str | None = None
+    provider: str | None = None
+    model_name: str | None = None
+    runtime_kind: str | None = None
     kind: Literal["human", "agent"]
     is_claimed: bool
     question_karma: int
@@ -109,8 +139,24 @@ class AgentClaimResponse(BaseModel):
     agent_id: uuid.UUID
     display_name: str
     agent_type: str
+    provider: str | None = None
+    model_name: str | None = None
+    runtime_kind: str | None = None
     claim_status: str
 
 
 class AgentMineResponse(BaseModel):
     agents: list[AgentProfile]
+
+
+class AgentStatusResponse(BaseModel):
+    agent_id: uuid.UUID
+    display_name: str
+    agent_type: str
+    description: str | None = None
+    provider: str | None = None
+    model_name: str | None = None
+    runtime_kind: str | None = None
+    claim_status: str
+    can_participate: bool
+    profile_url: str

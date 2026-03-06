@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
 import pytest
 from httpx import AsyncClient
@@ -7,17 +8,28 @@ from sqlalchemy import update as sa_update
 from assay.models.agent import Agent
 
 
+def claim_token_from_response(data: dict) -> str:
+    return urlparse(data["claim_url"]).path.rstrip("/").split("/")[-1]
+
+
 @pytest.mark.asyncio
-async def test_register_returns_claim_token(client: AsyncClient):
+async def test_register_returns_claim_url(client: AsyncClient):
     resp = await client.post(
         "/api/v1/agents/register",
-        json={"display_name": "ClaimMe", "agent_type": "claude-opus-4"},
+        json={
+            "display_name": "ClaimMe",
+            "description": "Agent ready to join from a provider CLI.",
+            "provider": "anthropic",
+            "model_name": "claude-opus-4",
+            "runtime_kind": "claude-cli",
+        },
     )
     assert resp.status_code == 201
     data = resp.json()
     assert "api_key" in data
-    assert "claim_token" in data
-    assert "claim_url" not in data
+    assert "claim_url" in data
+    assert data["status"] == "pending_claim"
+    assert data["profile_url"].endswith(f"/profile/{data['agent_id']}")
 
 
 @pytest.mark.asyncio
@@ -26,7 +38,7 @@ async def test_claim_agent(client: AsyncClient):
         "/api/v1/agents/register",
         json={"display_name": "MyBot", "agent_type": "test-bot"},
     )
-    claim_token = reg_resp.json()["claim_token"]
+    claim_token = claim_token_from_response(reg_resp.json())
 
     signup_resp = await client.post(
         "/api/v1/auth/signup",
@@ -49,7 +61,7 @@ async def test_claim_rejects_bearer_auth(client: AsyncClient):
         "/api/v1/agents/register",
         json={"display_name": "SelfClaim", "agent_type": "test-bot"},
     )
-    claim_token = reg_resp.json()["claim_token"]
+    claim_token = claim_token_from_response(reg_resp.json())
     api_key = reg_resp.json()["api_key"]
 
     resp = await client.post(
@@ -65,7 +77,7 @@ async def test_claim_already_claimed_returns_409(client: AsyncClient):
         "/api/v1/agents/register",
         json={"display_name": "Taken", "agent_type": "test-bot"},
     )
-    claim_token = reg_resp.json()["claim_token"]
+    claim_token = claim_token_from_response(reg_resp.json())
 
     signup_resp = await client.post(
         "/api/v1/auth/signup",
@@ -110,8 +122,14 @@ async def test_agents_mine_lists_claimed_agents(client: AsyncClient):
     )
     cookie = signup_resp.cookies.get("session")
 
-    await client.post(f"/api/v1/agents/claim/{reg1.json()['claim_token']}", cookies={"session": cookie})
-    await client.post(f"/api/v1/agents/claim/{reg2.json()['claim_token']}", cookies={"session": cookie})
+    await client.post(
+        f"/api/v1/agents/claim/{claim_token_from_response(reg1.json())}",
+        cookies={"session": cookie},
+    )
+    await client.post(
+        f"/api/v1/agents/claim/{claim_token_from_response(reg2.json())}",
+        cookies={"session": cookie},
+    )
 
     resp = await client.get("/api/v1/agents/mine", cookies={"session": cookie})
     assert resp.status_code == 200
@@ -132,7 +150,7 @@ async def test_claim_expired_token_returns_410(client: AsyncClient, db):
         "/api/v1/agents/register",
         json={"display_name": "ExpiredBot", "agent_type": "test-bot"},
     )
-    claim_token = reg_resp.json()["claim_token"]
+    claim_token = claim_token_from_response(reg_resp.json())
     agent_id = reg_resp.json()["agent_id"]
 
     await db.execute(

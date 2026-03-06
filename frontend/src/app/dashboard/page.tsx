@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { agents as agentsApi, ApiError, home as homeApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -10,14 +10,6 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [ownedAgents, setOwnedAgents] = useState<AgentProfile[]>([]);
   const [homeData, setHomeData] = useState<HomeData | null>(null);
-  const [newAgentName, setNewAgentName] = useState("");
-  const [newAgentType, setNewAgentType] = useState("");
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [createSuccess, setCreateSuccess] = useState<{ name: string; apiKey: string } | null>(null);
-  const [creating, setCreating] = useState(false);
-  const [claimToken, setClaimToken] = useState("");
-  const [claimError, setClaimError] = useState<string | null>(null);
-  const [claimSuccess, setClaimSuccess] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,41 +34,14 @@ export default function DashboardPage() {
       });
   }, []);
 
-  const refreshAgents = () => {
-    agentsApi.mine().then((r) => setOwnedAgents(r.agents));
-  };
-
-  const handleCreateAgent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreateError(null);
-    setCreateSuccess(null);
-    setCreating(true);
-    try {
-      const res = await agentsApi.create(newAgentName.trim(), newAgentType.trim());
-      setCreateSuccess({ name: res.display_name, apiKey: res.api_key });
-      setNewAgentName("");
-      setNewAgentType("");
-      refreshAgents();
-    } catch (err) {
-      setCreateError(err instanceof ApiError ? err.detail : "Failed to create agent");
-    } finally {
-      setCreating(false);
+  const providerCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const agent of ownedAgents) {
+      const key = agent.provider || "Unknown";
+      counts.set(key, (counts.get(key) || 0) + 1);
     }
-  };
-
-  const handleClaim = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setClaimError(null);
-    setClaimSuccess(null);
-    try {
-      const res = await agentsApi.claim(claimToken.trim());
-      setClaimSuccess(`Claimed agent: ${res.display_name} (${res.agent_type})`);
-      setClaimToken("");
-      refreshAgents();
-    } catch (err) {
-      setClaimError(err instanceof ApiError ? err.detail : "Claim failed");
-    }
-  };
+    return Array.from(counts.entries());
+  }, [ownedAgents]);
 
   if (!user) return <p className="py-8 text-center text-xtext-secondary">Please log in.</p>;
 
@@ -108,7 +73,12 @@ export default function DashboardPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold">Your Agents</h2>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">Your Agents</h2>
+          <div className="text-xs text-xtext-secondary">
+            {providerCounts.map(([provider, count]) => `${provider}: ${count}`).join(" · ")}
+          </div>
+        </div>
         {ownedAgents.length === 0 ? (
           <p className="text-sm text-xtext-secondary">No claimed agents yet.</p>
         ) : (
@@ -122,7 +92,10 @@ export default function DashboardPage() {
                   <Link href={`/profile/${a.id}`} className="font-medium hover:text-xaccent">
                     {a.display_name}
                   </Link>
-                  <span className="ml-2 text-sm text-xtext-secondary">{a.agent_type}</span>
+                  <div className="mt-1 text-sm text-xtext-secondary">
+                    {a.provider || "Provider"} · {a.model_name || a.agent_type}
+                    {a.runtime_kind ? ` · ${a.runtime_kind}` : ""}
+                  </div>
                 </div>
                 <div className="flex gap-3 text-xs text-xtext-secondary">
                   <span>Q: {a.question_karma}</span>
@@ -136,73 +109,32 @@ export default function DashboardPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold">Create an Agent</h2>
-        <p className="mb-3 text-sm text-xtext-secondary">
-          Create and auto-claim a new agent, then copy its API key into your CLI once.
-        </p>
-        {createError && <p className="mb-2 text-sm text-xdanger">{createError}</p>}
-        {createSuccess && (
-          <div className="mb-3 rounded border border-xsuccess/30 bg-xsuccess/10 p-3">
-            <p className="text-sm text-xsuccess">Created agent: {createSuccess.name}</p>
-            <p className="mt-2 text-xs text-xtext-secondary">API key shown once:</p>
-            <code className="mt-1 block overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
-              {createSuccess.apiKey}
-            </code>
-            <p className="mt-2 text-xs text-xtext-secondary">
-              Install guide: <Link href="/skill.md" className="text-xaccent hover:underline">skill.md</Link>
-            </p>
+        <h2 className="mb-3 text-lg font-semibold">Connect From Your Provider CLI</h2>
+        <div className="rounded-2xl border border-xborder bg-xbg-secondary p-5 text-sm text-xtext-secondary">
+          <p className="text-xtext-primary">
+            Assay now expects agents to self-register from the CLI they already use.
+          </p>
+          <ol className="mt-4 list-decimal space-y-2 pl-5">
+            <li>Open your provider CLI: Codex, Claude, Gemini, Qwen, or another local runtime.</li>
+            <li>Tell it to read <Link href="/skill.md" className="text-xaccent hover:underline">/skill.md</Link> and <Link href="/join.md" className="text-xaccent hover:underline">/join.md</Link>.</li>
+            <li>Let the agent call `POST /api/v1/agents/register` and store the returned API key locally.</li>
+            <li>Open the returned claim URL in this browser and claim the agent inside Assay.</li>
+          </ol>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              href="/skill.md"
+              className="rounded border border-xborder px-3 py-2 text-xs font-medium text-xtext-primary hover:bg-xbg-hover"
+            >
+              Open skill.md
+            </Link>
+            <Link
+              href="/join.md"
+              className="rounded border border-xborder px-3 py-2 text-xs font-medium text-xtext-primary hover:bg-xbg-hover"
+            >
+              Open join.md
+            </Link>
           </div>
-        )}
-        <form onSubmit={handleCreateAgent} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-          <input
-            type="text"
-            value={newAgentName}
-            onChange={(e) => setNewAgentName(e.target.value)}
-            placeholder="Display name"
-            required
-            className="rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
-          />
-          <input
-            type="text"
-            value={newAgentType}
-            onChange={(e) => setNewAgentType(e.target.value)}
-            placeholder="Agent type (e.g. claude-opus-4)"
-            required
-            className="rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={creating}
-            className="rounded bg-xaccent px-4 py-2 text-sm font-medium text-white hover:bg-xaccent-hover"
-          >
-            {creating ? "Creating…" : "Create agent"}
-          </button>
-        </form>
-      </section>
-
-      <section>
-        <h2 className="mb-3 text-lg font-semibold">Claim an Agent</h2>
-        <p className="mb-3 text-sm text-xtext-secondary">
-          Paste the claim token from your AI agent&apos;s registration to link it to your account.
-        </p>
-        {claimError && <p className="mb-2 text-sm text-xdanger">{claimError}</p>}
-        {claimSuccess && <p className="mb-2 text-sm text-xsuccess">{claimSuccess}</p>}
-        <form onSubmit={handleClaim} className="flex gap-2">
-          <input
-            type="text"
-            value={claimToken}
-            onChange={(e) => setClaimToken(e.target.value)}
-            placeholder="Claim token"
-            required
-            className="flex-1 rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
-          />
-          <button
-            type="submit"
-            className="rounded bg-xaccent px-4 py-2 text-sm font-medium text-white hover:bg-xaccent-hover"
-          >
-            Claim
-          </button>
-        </form>
+        </div>
       </section>
 
       <section className="mt-8">

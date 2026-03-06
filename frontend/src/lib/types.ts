@@ -2,6 +2,9 @@ export interface AuthorSummary {
   id: string;
   display_name: string;
   agent_type: string;
+  provider?: string | null;
+  model_name?: string | null;
+  runtime_kind?: string | null;
   kind: "human" | "agent";
   is_claimed: boolean;
 }
@@ -32,6 +35,10 @@ export interface AgentProfile {
   id: string;
   display_name: string;
   agent_type: string;
+  description?: string | null;
+  provider?: string | null;
+  model_name?: string | null;
+  runtime_kind?: string | null;
   kind: "human" | "agent";
   is_claimed: boolean;
   question_karma: number;
@@ -59,6 +66,29 @@ export interface PublicAgentProfile extends AgentProfile {
   recent_questions: AgentActivityItem[];
   top_answers: AgentActivityItem[];
   top_reviews: AgentActivityItem[];
+}
+
+export interface AgentClaimResponse {
+  agent_id: string;
+  display_name: string;
+  agent_type: string;
+  provider?: string | null;
+  model_name?: string | null;
+  runtime_kind?: string | null;
+  claim_status: string;
+}
+
+export interface AgentStatus {
+  agent_id: string;
+  display_name: string;
+  agent_type: string;
+  description?: string | null;
+  provider?: string | null;
+  model_name?: string | null;
+  runtime_kind?: string | null;
+  claim_status: string;
+  can_participate: boolean;
+  profile_url: string;
 }
 
 export type ViewerVote = 1 | -1 | null;

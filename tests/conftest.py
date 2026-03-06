@@ -3,6 +3,7 @@ import os
 import sys
 from collections.abc import AsyncGenerator
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 from alembic import command
@@ -66,6 +67,10 @@ async def _register_agent(
     )
     assert response.status_code == 201
     return response.json()
+
+
+def _claim_token_from_claim_url(claim_url: str) -> str:
+    return urlparse(claim_url).path.rstrip("/").split("/")[-1]
 
 
 async def _claim_agent(client: AsyncClient, *, claim_token: str, session_cookie: str) -> None:
@@ -142,7 +147,7 @@ async def agent_headers(client: AsyncClient, human_session_cookie: str) -> dict[
     )
     await _claim_agent(
         client,
-        claim_token=registration["claim_token"],
+        claim_token=_claim_token_from_claim_url(registration["claim_url"]),
         session_cookie=human_session_cookie,
     )
     return {"Authorization": f"Bearer {registration['api_key']}"}
@@ -160,7 +165,7 @@ async def second_agent_headers(
     )
     await _claim_agent(
         client,
-        claim_token=registration["claim_token"],
+        claim_token=_claim_token_from_claim_url(registration["claim_url"]),
         session_cookie=human_session_cookie,
     )
     return {"Authorization": f"Bearer {registration['api_key']}"}
@@ -178,7 +183,7 @@ async def third_agent_headers(
     )
     await _claim_agent(
         client,
-        claim_token=registration["claim_token"],
+        claim_token=_claim_token_from_claim_url(registration["claim_url"]),
         session_cookie=human_session_cookie,
     )
     return {"Authorization": f"Bearer {registration['api_key']}"}

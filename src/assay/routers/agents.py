@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import get_current_human, get_current_principal
 from assay.database import get_db
+from assay.config import settings
 from assay.models.agent import Agent
 from assay.models.agent_runtime_policy import AgentRuntimePolicy
 from assay.models.answer import Answer
@@ -27,6 +28,7 @@ from assay.schemas.agent import (
     AgentCreateResponse,
     AgentMineResponse,
     AgentProfile,
+    AgentStatusResponse,
     AgentRuntimePolicyResponse,
     AgentRuntimePolicyUpdate,
     AgentRegisterRequest,
@@ -47,6 +49,28 @@ def _new_api_key() -> tuple[str, str]:
 def _new_claim_token() -> tuple[str, str]:
     claim_token = secrets.token_urlsafe(32)
     return claim_token, hashlib.sha256(claim_token.encode()).hexdigest()
+
+
+def _public_base_url(request: Request | None = None) -> str:
+    if settings.web_base_url:
+        return settings.web_base_url.rstrip("/")
+    if request is not None:
+        return str(request.base_url).rstrip("/")
+    return settings.base_url.rstrip("/")
+
+
+def _claim_url(token: str, request: Request | None = None) -> str:
+    return f"{_public_base_url(request)}/claim/{token}"
+
+
+def _profile_url(agent_id: uuid.UUID, request: Request | None = None) -> str:
+    return f"{_public_base_url(request)}/profile/{agent_id}"
+
+
+async def _ensure_display_name_available(db: AsyncSession, display_name: str) -> None:
+    result = await db.execute(select(Agent.id).where(Agent.display_name == display_name))
+    if result.scalar_one_or_none() is not None:
+        raise HTTPException(status_code=409, detail="Agent name already taken")
 
 
 async def _get_public_agent_or_404(db: AsyncSession, agent_id: uuid.UUID) -> Agent:
@@ -356,12 +380,21 @@ async def register_agent(
     body: AgentRegisterRequest,
     db: AsyncSession = Depends(get_db),
 ):
+    await _ensure_display_name_available(db, body.display_name)
     api_key, api_key_hash = _new_api_key()
     claim_token, claim_token_hash = _new_claim_token()
+    provider = body.provider or ("other" if body.agent_type != "human" else None)
+    model_name = body.model_name or body.agent_type
+    runtime_kind = body.runtime_kind or ("unknown" if body.agent_type != "human" else None)
+    agent_label = model_name or body.agent_type or "agent"
 
     agent = Agent(
         display_name=body.display_name,
-        agent_type=body.agent_type,
+        agent_type=agent_label,
+        description=body.description,
+        provider=provider,
+        model_name=model_name,
+        runtime_kind=runtime_kind,
         api_key_hash=api_key_hash,
         claim_token_hash=claim_token_hash,
         claim_token_expires_at=datetime.now(timezone.utc)
@@ -375,7 +408,9 @@ async def register_agent(
     return AgentRegisterResponse(
         agent_id=agent.id,
         api_key=api_key,
-        claim_token=claim_token,
+        claim_url=_claim_url(claim_token, request),
+        profile_url=_profile_url(agent.id, request),
+        status="pending_claim",
     )
 
 
@@ -385,10 +420,19 @@ async def create_agent(
     owner: Agent = Depends(get_current_human),
     db: AsyncSession = Depends(get_db),
 ):
+    await _ensure_display_name_available(db, body.display_name)
+    provider = body.provider or ("other" if body.agent_type != "human" else None)
+    model_name = body.model_name or body.agent_type
+    runtime_kind = body.runtime_kind or ("unknown" if body.agent_type != "human" else None)
+    agent_label = model_name or body.agent_type
     api_key, api_key_hash = _new_api_key()
     agent = Agent(
         display_name=body.display_name,
-        agent_type=body.agent_type,
+        agent_type=agent_label,
+        description=body.description,
+        provider=provider,
+        model_name=model_name,
+        runtime_kind=runtime_kind,
         api_key_hash=api_key_hash,
         owner_id=owner.id,
         claim_status="claimed",
@@ -401,7 +445,11 @@ async def create_agent(
         agent_id=agent.id,
         api_key=api_key,
         display_name=agent.display_name,
-        agent_type=agent.agent_type,
+        agent_type=agent_label,
+        description=agent.description,
+        provider=agent.provider,
+        model_name=agent.model_name,
+        runtime_kind=agent.runtime_kind,
         claim_status=agent.claim_status,
     )
 
@@ -433,8 +481,29 @@ async def claim_agent(
     return AgentClaimResponse(
         agent_id=agent.id,
         display_name=agent.display_name,
-        agent_type=agent.agent_type,
+        agent_type=agent.model_name or agent.agent_type,
+        provider=agent.provider,
+        model_name=agent.model_name,
+        runtime_kind=agent.runtime_kind,
         claim_status=agent.claim_status,
+    )
+
+
+@router.get("/status", response_model=AgentStatusResponse)
+async def agent_status(
+    agent: Agent = Depends(get_current_principal),
+):
+    return AgentStatusResponse(
+        agent_id=agent.id,
+        display_name=agent.display_name,
+        agent_type=agent.model_name or agent.agent_type,
+        description=agent.description,
+        provider=agent.provider,
+        model_name=agent.model_name,
+        runtime_kind=agent.runtime_kind,
+        claim_status=agent.claim_status,
+        can_participate=agent.agent_type == "human" or agent.claim_status == "claimed",
+        profile_url=_profile_url(agent.id),
     )
 
 

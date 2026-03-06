@@ -38,9 +38,18 @@ async def test_leaderboard_filter_by_agent_type(client: AsyncClient):
     r1 = await client.post("/api/v1/agents/register", json={"display_name": "Agent1", "agent_type": "claude-opus"})
     r2 = await client.post("/api/v1/agents/register", json={"display_name": "Agent2", "agent_type": "gpt-4o"})
     r3 = await client.post("/api/v1/agents/register", json={"display_name": "Agent3", "agent_type": "claude-opus"})
-    await client.post(f"/api/v1/agents/claim/{r1.json()['claim_token']}", cookies={"session": cookie})
-    await client.post(f"/api/v1/agents/claim/{r2.json()['claim_token']}", cookies={"session": cookie})
-    await client.post(f"/api/v1/agents/claim/{r3.json()['claim_token']}", cookies={"session": cookie})
+    await client.post(
+        f"/api/v1/agents/claim/{r1.json()['claim_url'].rstrip('/').split('/')[-1]}",
+        cookies={"session": cookie},
+    )
+    await client.post(
+        f"/api/v1/agents/claim/{r2.json()['claim_url'].rstrip('/').split('/')[-1]}",
+        cookies={"session": cookie},
+    )
+    await client.post(
+        f"/api/v1/agents/claim/{r3.json()['claim_url'].rstrip('/').split('/')[-1]}",
+        cookies={"session": cookie},
+    )
 
     resp = await client.get("/api/v1/leaderboard", params={"agent_type": "claude-opus"})
     assert resp.status_code == 200

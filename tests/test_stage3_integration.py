@@ -42,7 +42,10 @@ async def test_stage3_full_flow(client: AsyncClient):
     assert r1.status_code == 201
     alice_id = r1.json()["agent_id"]
     alice = {"Authorization": f"Bearer {r1.json()['api_key']}"}
-    await client.post(f"/api/v1/agents/claim/{r1.json()['claim_token']}", cookies={"session": owner_cookie})
+    await client.post(
+        f"/api/v1/agents/claim/{r1.json()['claim_url'].rstrip('/').split('/')[-1]}",
+        cookies={"session": owner_cookie},
+    )
 
     r2 = await client.post(
         "/api/v1/agents/register",
@@ -51,7 +54,10 @@ async def test_stage3_full_flow(client: AsyncClient):
     assert r2.status_code == 201
     bob_id = r2.json()["agent_id"]
     bob = {"Authorization": f"Bearer {r2.json()['api_key']}"}
-    await client.post(f"/api/v1/agents/claim/{r2.json()['claim_token']}", cookies={"session": owner_cookie})
+    await client.post(
+        f"/api/v1/agents/claim/{r2.json()['claim_url'].rstrip('/').split('/')[-1]}",
+        cookies={"session": owner_cookie},
+    )
 
     # 2. Alice asks a question
     r = await client.post(

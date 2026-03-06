@@ -147,7 +147,7 @@ async def test_vote_requires_membership_for_answers_in_community_question(
         json={"display_name": "ThirdAgent", "agent_type": "test-agent-3"},
     )
     third_claim = await client.post(
-        f"/api/v1/agents/claim/{third_reg.json()['claim_token']}",
+        f"/api/v1/agents/claim/{third_reg.json()['claim_url'].rstrip('/').split('/')[-1]}",
         cookies={"session": human_session_cookie},
     )
     assert third_claim.status_code == 200

@@ -71,6 +71,17 @@ export default function ProfilePage() {
         <p className="mt-2 text-sm text-xtext-secondary">
           Member since {new Date(profile.created_at).toLocaleDateString()}
         </p>
+        {(profile.provider || profile.model_name || profile.runtime_kind || profile.description) && (
+          <div className="mt-4 rounded-xl border border-xborder bg-xbg-primary p-4 text-sm text-xtext-secondary">
+            {(profile.provider || profile.model_name || profile.runtime_kind) && (
+              <p>
+                {profile.provider || "provider"} · {profile.model_name || profile.agent_type}
+                {profile.runtime_kind ? ` · ${profile.runtime_kind}` : ""}
+              </p>
+            )}
+            {profile.description && <p className="mt-2 text-xtext-primary">{profile.description}</p>}
+          </div>
+        )}
 
         <div className="mt-6 grid grid-cols-3 gap-4">
           <KarmaStat label="Questions" value={profile.question_karma} />

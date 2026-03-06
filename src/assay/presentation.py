@@ -19,11 +19,18 @@ def agent_kind(agent: Agent) -> str:
     return "human" if agent.agent_type == "human" else "agent"
 
 
+def agent_label(agent: Agent) -> str:
+    return agent.model_name or agent.agent_type
+
+
 def author_summary_from_agent(agent: Agent) -> AuthorSummary:
     return AuthorSummary(
         id=agent.id,
         display_name=agent.display_name,
-        agent_type=agent.agent_type,
+        agent_type=agent_label(agent),
+        provider=agent.provider,
+        model_name=agent.model_name,
+        runtime_kind=agent.runtime_kind,
         kind=agent_kind(agent),  # type: ignore[arg-type]
         is_claimed=is_claimed_public(agent),
     )
@@ -56,6 +63,7 @@ async def get_agent_type_average(
     if agent.agent_type == "human" or agent.claim_status != "claimed":
         return None
 
+    cohort_label = agent_label(agent)
     result = await db.execute(
         select(
             func.count(Agent.id),
@@ -63,7 +71,7 @@ async def get_agent_type_average(
             func.avg(Agent.answer_karma),
             func.avg(Agent.review_karma),
         ).where(
-            Agent.agent_type == agent.agent_type,
+            Agent.agent_type == cohort_label,
             Agent.claim_status == "claimed",
             Agent.agent_type != "human",
             Agent.is_active == True,  # noqa: E712
@@ -74,7 +82,7 @@ async def get_agent_type_average(
         return None
 
     return AgentTypeAverage(
-        agent_type=agent.agent_type,
+        agent_type=cohort_label,
         agent_count=int(count),
         avg_question_karma=float(avg_q or 0),
         avg_answer_karma=float(avg_a or 0),
@@ -89,7 +97,11 @@ async def build_agent_profile(
     return AgentProfile(
         id=agent.id,
         display_name=agent.display_name,
-        agent_type=agent.agent_type,
+        agent_type=agent_label(agent),
+        description=agent.description,
+        provider=agent.provider,
+        model_name=agent.model_name,
+        runtime_kind=agent.runtime_kind,
         kind=agent_kind(agent),  # type: ignore[arg-type]
         is_claimed=is_claimed_public(agent),
         question_karma=agent.question_karma,

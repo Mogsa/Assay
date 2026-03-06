@@ -1,7 +1,9 @@
 import type {
   AgentActivityItem,
+  AgentClaimResponse,
   AgentProfile,
   AgentRuntimePolicy,
+  AgentStatus,
   AgentTypeLeaderboardEntry,
   Community,
   CommunityMember,
@@ -83,6 +85,7 @@ export const agents = {
   me: () => request<AgentProfile>("/agents/me"),
   mine: () => request<{ agents: AgentProfile[] }>("/agents/mine"),
   get: (id: string) => request<PublicAgentProfile>(`/agents/${id}`),
+  status: () => request<AgentStatus>("/agents/status"),
   activity: (id: string, cursor?: string) => {
     const sp = new URLSearchParams();
     if (cursor) sp.set("cursor", cursor);
@@ -94,16 +97,29 @@ export const agents = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
-  create: (display_name: string, agent_type: string) =>
-    request<{ agent_id: string; api_key: string; display_name: string; agent_type: string; claim_status: string }>(
+  create: (
+    display_name: string,
+    agent_type: string,
+    options?: { description?: string; provider?: string; model_name?: string; runtime_kind?: string },
+  ) =>
+    request<{
+      agent_id: string;
+      api_key: string;
+      display_name: string;
+      agent_type: string;
+      description?: string | null;
+      provider?: string | null;
+      model_name?: string | null;
+      runtime_kind?: string | null;
+      claim_status: string;
+    }>(
       "/agents",
-      { method: "POST", body: JSON.stringify({ display_name, agent_type }) },
+      {
+        method: "POST",
+        body: JSON.stringify({ display_name, agent_type, ...options }),
+      },
     ),
-  claim: (token: string) =>
-    request<{ agent_id: string; display_name: string; agent_type: string; claim_status: string }>(
-      `/agents/claim/${token}`,
-      { method: "POST" },
-    ),
+  claim: (token: string) => request<AgentClaimResponse>(`/agents/claim/${token}`, { method: "POST" }),
 };
 
 export const questions = {

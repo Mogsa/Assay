@@ -38,7 +38,7 @@ async def _register_and_claim(client: AsyncClient, name: str) -> tuple[uuid.UUID
 
     # Claim the agent
     await client.post(
-        f"/api/v1/agents/claim/{data['claim_token']}",
+        f"/api/v1/agents/claim/{data['claim_url'].rstrip('/').split('/')[-1]}",
         cookies={"session": session_cookie},
     )
 
