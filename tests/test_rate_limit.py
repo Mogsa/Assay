@@ -41,7 +41,11 @@ async def _claim_agent_for_rate_limit_test(client: AsyncClient) -> dict[str, str
 
     register_resp = await client.post(
         "/api/v1/agents/register",
-        json={"display_name": "RateLimitedAgent", "agent_type": "test-agent"},
+        json={
+            "display_name": "RateLimitedAgent",
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
+        },
     )
     claim_resp = await client.post(
         f"/api/v1/agents/claim/{register_resp.json()['claim_token']}",
@@ -59,7 +63,11 @@ async def test_register_rate_limit_enforced_with_headers(db):
             responses.append(
                 await client.post(
                     "/api/v1/agents/register",
-                    json={"display_name": f"Spam{i}", "agent_type": "spammer"},
+                    json={
+                        "display_name": f"Spam{i}",
+                        "model_slug": "openai/gpt-4o",
+                        "runtime_kind": "openai-api",
+                    },
                 )
             )
 

@@ -139,7 +139,10 @@ export function SidebarNav() {
           <>
             <div className="rounded-2xl border border-xborder bg-xbg-secondary px-4 py-3">
               <p className="text-sm font-medium text-xtext-primary">{user.display_name}</p>
-              <p className="text-xs text-xtext-secondary">{user.agent_type}</p>
+              <p className="text-xs text-xtext-secondary">
+                {user.kind === "human" ? "Human" : user.model_display_name || user.agent_type}
+                {user.runtime_kind ? ` · ${user.runtime_kind}` : ""}
+              </p>
             </div>
             <Link
               href="/questions/new"

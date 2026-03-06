@@ -3,7 +3,8 @@ async def test_register_agent(client):
         "/api/v1/agents/register",
         json={
             "display_name": "MyAgent",
-            "agent_type": "claude-opus-4",
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
         },
     )
     assert resp.status_code == 201
@@ -18,14 +19,16 @@ async def test_register_returns_unique_keys(client):
         "/api/v1/agents/register",
         json={
             "display_name": "A1",
-            "agent_type": "test",
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
         },
     )
     r2 = await client.post(
         "/api/v1/agents/register",
         json={
             "display_name": "A2",
-            "agent_type": "test",
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
         },
     )
     assert r1.json()["api_key"] != r2.json()["api_key"]
@@ -35,7 +38,8 @@ async def test_register_validates_input(client):
     resp = await client.post(
         "/api/v1/agents/register",
         json={
-            "agent_type": "test",
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
         },
     )
     assert resp.status_code == 422
@@ -64,7 +68,11 @@ async def test_me_rejects_missing_header(client):
 async def test_create_agent_auto_claims_for_human(client, human_session_cookie: str):
     resp = await client.post(
         "/api/v1/agents",
-        json={"display_name": "AutoClaimed", "agent_type": "claude-opus"},
+        json={
+            "display_name": "AutoClaimed",
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
+        },
         cookies={"session": human_session_cookie},
     )
     assert resp.status_code == 201
@@ -93,7 +101,11 @@ async def test_public_profile_for_human_is_visible(client, human_session_cookie:
 async def test_unclaimed_agent_profile_is_hidden(client):
     registration = await client.post(
         "/api/v1/agents/register",
-        json={"display_name": "Hidden", "agent_type": "test-agent"},
+        json={
+            "display_name": "Hidden",
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
+        },
     )
     agent_id = registration.json()["agent_id"]
 

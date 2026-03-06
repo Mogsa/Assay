@@ -3,6 +3,11 @@ import type {
   AgentProfile,
   AgentRuntimePolicy,
   AgentTypeLeaderboardEntry,
+  CatalogModel,
+  CatalogRuntime,
+  CliDeviceApprovalResponse,
+  CliDeviceStartResponse,
+  CliDeviceTokenResponse,
   Community,
   CommunityMember,
   EditHistoryEntry,
@@ -94,16 +99,73 @@ export const agents = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
-  create: (display_name: string, agent_type: string) =>
-    request<{ agent_id: string; api_key: string; display_name: string; agent_type: string; claim_status: string }>(
+  create: (display_name: string, model_slug: string, runtime_kind: string) =>
+    request<{
+      agent_id: string;
+      api_key: string;
+      display_name: string;
+      agent_type: string;
+      model_slug: string | null;
+      model_display_name: string | null;
+      runtime_kind: string | null;
+      claim_status: string;
+    }>(
       "/agents",
-      { method: "POST", body: JSON.stringify({ display_name, agent_type }) },
+      { method: "POST", body: JSON.stringify({ display_name, model_slug, runtime_kind }) },
     ),
+  rotateApiKey: (id: string) =>
+    request<{
+      agent_id: string;
+      api_key: string;
+      display_name: string;
+      agent_type: string;
+      model_slug: string | null;
+      model_display_name: string | null;
+      runtime_kind: string | null;
+    }>(`/agents/${id}/api-key`, { method: "POST" }),
   claim: (token: string) =>
-    request<{ agent_id: string; display_name: string; agent_type: string; claim_status: string }>(
+    request<{
+      agent_id: string;
+      display_name: string;
+      agent_type: string;
+      model_slug: string | null;
+      model_display_name: string | null;
+      runtime_kind: string | null;
+      claim_status: string;
+    }>(
       `/agents/claim/${token}`,
       { method: "POST" },
     ),
+};
+
+export const catalog = {
+  models: () => request<CatalogModel[]>("/catalog/models"),
+  runtimes: () => request<CatalogRuntime[]>("/catalog/runtimes"),
+  runtimesForModel: (modelSlug: string) =>
+    request<CatalogRuntime[]>(`/catalog/models/${encodeURIComponent(modelSlug)}/runtimes`),
+};
+
+export const cliAuth = {
+  startDevice: (display_name: string, model_slug: string, runtime_kind: string) =>
+    request<CliDeviceStartResponse>("/cli/device/start", {
+      method: "POST",
+      body: JSON.stringify({ display_name, model_slug, runtime_kind }),
+    }),
+  approveDevice: (user_code: string, agent_id?: string) =>
+    request<CliDeviceApprovalResponse>("/cli/device/approve", {
+      method: "POST",
+      body: JSON.stringify({ user_code, agent_id: agent_id || null }),
+    }),
+  pollDevice: (device_code: string) =>
+    request<CliDeviceTokenResponse | { status: string }>("/cli/device/poll", {
+      method: "POST",
+      body: JSON.stringify({ device_code }),
+    }),
+  refreshToken: (refresh_token: string) =>
+    request<CliDeviceTokenResponse>("/cli/token/refresh", {
+      method: "POST",
+      body: JSON.stringify({ refresh_token }),
+    }),
 };
 
 export const questions = {
@@ -223,18 +285,18 @@ export const home = {
 };
 
 export const leaderboard = {
-  getIndividuals: (params?: { sort_by?: string; agent_type?: string; cursor?: string }) => {
+  getIndividuals: (params?: { sort_by?: string; model_slug?: string; cursor?: string }) => {
     const sp = new URLSearchParams();
     if (params?.sort_by) sp.set("sort_by", params.sort_by);
-    if (params?.agent_type) sp.set("agent_type", params.agent_type);
+    if (params?.model_slug) sp.set("model_slug", params.model_slug);
     if (params?.cursor) sp.set("cursor", params.cursor);
     sp.set("view", "individuals");
     return request<PaginatedResponse<LeaderboardEntry>>(`/leaderboard?${sp}`);
   },
-  getAgentTypes: (params?: { sort_by?: string; agent_type?: string; cursor?: string }) => {
+  getAgentTypes: (params?: { sort_by?: string; model_slug?: string; cursor?: string }) => {
     const sp = new URLSearchParams();
     if (params?.sort_by) sp.set("sort_by", params.sort_by);
-    if (params?.agent_type) sp.set("agent_type", params.agent_type);
+    if (params?.model_slug) sp.set("model_slug", params.model_slug);
     if (params?.cursor) sp.set("cursor", params.cursor);
     sp.set("view", "agent_types");
     return request<PaginatedResponse<AgentTypeLeaderboardEntry>>(`/leaderboard?${sp}`);

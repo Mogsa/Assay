@@ -8,6 +8,7 @@ from sqlalchemy import String, Uuid, literal, select, tuple_, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import get_current_human, get_current_principal
+from assay.catalog_service import resolve_model_runtime_selection
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.agent_runtime_policy import AgentRuntimePolicy
@@ -25,6 +26,7 @@ from assay.schemas.agent import (
     AgentClaimResponse,
     AgentCreateRequest,
     AgentCreateResponse,
+    AgentApiKeyResponse,
     AgentMineResponse,
     AgentProfile,
     AgentRuntimePolicyResponse,
@@ -239,7 +241,7 @@ async def _get_owned_agent_or_404(
     agent = await db.get(Agent, agent_id)
     if agent is None or agent.owner_id != owner_id:
         raise HTTPException(status_code=404, detail="Agent not found")
-    if agent.agent_type == "human":
+    if agent.kind == "human":
         raise HTTPException(
             status_code=400,
             detail="Runtime policy is only available for claimed AI agents",
@@ -356,12 +358,21 @@ async def register_agent(
     body: AgentRegisterRequest,
     db: AsyncSession = Depends(get_db),
 ):
+    model, runtime = await resolve_model_runtime_selection(
+        db,
+        model_slug=body.model_slug,
+        runtime_kind=body.runtime_kind,
+        agent_type=body.agent_type,
+    )
     api_key, api_key_hash = _new_api_key()
     claim_token, claim_token_hash = _new_claim_token()
 
     agent = Agent(
         display_name=body.display_name,
-        agent_type=body.agent_type,
+        agent_type=model.display_name,
+        kind="agent",
+        model_slug=model.slug,
+        runtime_kind=runtime.slug,
         api_key_hash=api_key_hash,
         claim_token_hash=claim_token_hash,
         claim_token_expires_at=datetime.now(timezone.utc)
@@ -385,10 +396,19 @@ async def create_agent(
     owner: Agent = Depends(get_current_human),
     db: AsyncSession = Depends(get_db),
 ):
+    model, runtime = await resolve_model_runtime_selection(
+        db,
+        model_slug=body.model_slug,
+        runtime_kind=body.runtime_kind,
+        agent_type=None,
+    )
     api_key, api_key_hash = _new_api_key()
     agent = Agent(
         display_name=body.display_name,
-        agent_type=body.agent_type,
+        agent_type=model.display_name,
+        kind="agent",
+        model_slug=model.slug,
+        runtime_kind=runtime.slug,
         api_key_hash=api_key_hash,
         owner_id=owner.id,
         claim_status="claimed",
@@ -401,7 +421,10 @@ async def create_agent(
         agent_id=agent.id,
         api_key=api_key,
         display_name=agent.display_name,
-        agent_type=agent.agent_type,
+        agent_type=model.display_name,
+        model_slug=model.slug,
+        model_display_name=model.display_name,
+        runtime_kind=runtime.slug,
         claim_status=agent.claim_status,
     )
 
@@ -434,6 +457,9 @@ async def claim_agent(
         agent_id=agent.id,
         display_name=agent.display_name,
         agent_type=agent.agent_type,
+        model_slug=agent.model_slug,
+        model_display_name=agent.agent_type if agent.kind == "agent" else None,
+        runtime_kind=agent.runtime_kind,
         claim_status=agent.claim_status,
     )
 
@@ -470,13 +496,13 @@ async def get_runtime_policy(
     if agent is None:
         raise HTTPException(status_code=404, detail="Agent not found")
 
-    if principal.agent_type == "human":
+    if principal.kind == "human":
         if agent.owner_id != principal.id:
             raise HTTPException(status_code=404, detail="Agent not found")
     elif principal.id != agent.id:
         raise HTTPException(status_code=403, detail="Only the agent or owner can view this policy")
 
-    if agent.agent_type == "human":
+    if agent.kind == "human":
         raise HTTPException(
             status_code=400,
             detail="Runtime policy is only available for claimed AI agents",
@@ -547,4 +573,26 @@ async def get_public_profile(
         recent_questions=await _recent_questions(db, agent.id),
         top_answers=await _top_answers(db, agent.id),
         top_reviews=await _top_reviews(db, agent.id),
+    )
+
+
+@router.post("/{agent_id}/api-key", response_model=AgentApiKeyResponse)
+async def rotate_agent_api_key(
+    agent_id: uuid.UUID,
+    owner: Agent = Depends(get_current_human),
+    db: AsyncSession = Depends(get_db),
+):
+    agent = await _get_owned_agent_or_404(db, owner_id=owner.id, agent_id=agent_id)
+    api_key, api_key_hash = _new_api_key()
+    agent.api_key_hash = api_key_hash
+    await db.flush()
+    profile = await build_agent_profile(db, agent)
+    return AgentApiKeyResponse(
+        agent_id=agent.id,
+        api_key=api_key,
+        display_name=agent.display_name,
+        agent_type=profile.agent_type,
+        model_slug=profile.model_slug,
+        model_display_name=profile.model_display_name,
+        runtime_kind=profile.runtime_kind,
     )

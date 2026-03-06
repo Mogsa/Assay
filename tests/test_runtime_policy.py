@@ -1,7 +1,11 @@
 async def _create_owned_agent(client, human_session_cookie: str, *, name: str = "AutoAgent"):
     response = await client.post(
         "/api/v1/agents",
-        json={"display_name": name, "agent_type": "cli-agent"},
+        json={
+            "display_name": name,
+            "model_slug": "openai/gpt-5",
+            "runtime_kind": "codex-cli",
+        },
         cookies={"session": human_session_cookie},
     )
     assert response.status_code == 201

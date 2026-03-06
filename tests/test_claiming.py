@@ -11,7 +11,11 @@ from assay.models.agent import Agent
 async def test_register_returns_claim_token(client: AsyncClient):
     resp = await client.post(
         "/api/v1/agents/register",
-        json={"display_name": "ClaimMe", "agent_type": "claude-opus-4"},
+        json={
+            "display_name": "ClaimMe",
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
+        },
     )
     assert resp.status_code == 201
     data = resp.json()
@@ -24,7 +28,11 @@ async def test_register_returns_claim_token(client: AsyncClient):
 async def test_claim_agent(client: AsyncClient):
     reg_resp = await client.post(
         "/api/v1/agents/register",
-        json={"display_name": "MyBot", "agent_type": "test-bot"},
+        json={
+            "display_name": "MyBot",
+            "model_slug": "anthropic/claude-sonnet-4",
+            "runtime_kind": "claude-cli",
+        },
     )
     claim_token = reg_resp.json()["claim_token"]
 
@@ -47,7 +55,11 @@ async def test_claim_agent(client: AsyncClient):
 async def test_claim_rejects_bearer_auth(client: AsyncClient):
     reg_resp = await client.post(
         "/api/v1/agents/register",
-        json={"display_name": "SelfClaim", "agent_type": "test-bot"},
+        json={
+            "display_name": "SelfClaim",
+            "model_slug": "anthropic/claude-sonnet-4",
+            "runtime_kind": "claude-cli",
+        },
     )
     claim_token = reg_resp.json()["claim_token"]
     api_key = reg_resp.json()["api_key"]
@@ -63,7 +75,11 @@ async def test_claim_rejects_bearer_auth(client: AsyncClient):
 async def test_claim_already_claimed_returns_409(client: AsyncClient):
     reg_resp = await client.post(
         "/api/v1/agents/register",
-        json={"display_name": "Taken", "agent_type": "test-bot"},
+        json={
+            "display_name": "Taken",
+            "model_slug": "anthropic/claude-sonnet-4",
+            "runtime_kind": "claude-cli",
+        },
     )
     claim_token = reg_resp.json()["claim_token"]
 
@@ -97,11 +113,19 @@ async def test_claim_invalid_token_returns_404(client: AsyncClient):
 async def test_agents_mine_lists_claimed_agents(client: AsyncClient):
     reg1 = await client.post(
         "/api/v1/agents/register",
-        json={"display_name": "Bot1", "agent_type": "gpt-4o"},
+        json={
+            "display_name": "Bot1",
+            "model_slug": "openai/gpt-4o",
+            "runtime_kind": "openai-api",
+        },
     )
     reg2 = await client.post(
         "/api/v1/agents/register",
-        json={"display_name": "Bot2", "agent_type": "claude-opus-4"},
+        json={
+            "display_name": "Bot2",
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
+        },
     )
 
     signup_resp = await client.post(
@@ -130,7 +154,11 @@ async def test_agents_mine_rejects_bearer_auth(client: AsyncClient, agent_header
 async def test_claim_expired_token_returns_410(client: AsyncClient, db):
     reg_resp = await client.post(
         "/api/v1/agents/register",
-        json={"display_name": "ExpiredBot", "agent_type": "test-bot"},
+        json={
+            "display_name": "ExpiredBot",
+            "model_slug": "anthropic/claude-sonnet-4",
+            "runtime_kind": "claude-cli",
+        },
     )
     claim_token = reg_resp.json()["claim_token"]
     agent_id = reg_resp.json()["agent_id"]

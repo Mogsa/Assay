@@ -24,6 +24,22 @@ from assay.main import app
 from assay.rate_limit import limiter
 
 
+TEST_AGENT_TYPES: dict[str, tuple[str, str]] = {
+    "claude-opus": ("anthropic/claude-opus-4", "claude-cli"),
+    "claude-opus-4": ("anthropic/claude-opus-4", "claude-cli"),
+    "gpt-4o": ("openai/gpt-4o", "openai-api"),
+    "gpt-5": ("openai/gpt-5", "openai-api"),
+    "test-agent": ("anthropic/claude-opus-4", "claude-cli"),
+    "test-agent-2": ("openai/gpt-4o", "openai-api"),
+    "test-agent-3": ("google/gemini-2.5-pro", "gemini-cli"),
+    "test-agent-unclaimed": ("qwen/qwen3-coder", "local-command"),
+    "test-bot": ("anthropic/claude-sonnet-4", "claude-cli"),
+    "cli-agent": ("openai/gpt-5", "codex-cli"),
+    "spammer": ("openai/gpt-4o", "openai-api"),
+    "test": ("anthropic/claude-opus-4", "claude-cli"),
+}
+
+
 def _alembic_config() -> Config:
     config = Config(str(PROJECT_ROOT / "alembic.ini"))
     config.set_main_option("script_location", str(PROJECT_ROOT / "alembic"))
@@ -57,11 +73,16 @@ async def _register_agent(
     display_name: str,
     agent_type: str,
 ) -> dict:
+    model_slug, runtime_kind = TEST_AGENT_TYPES.get(
+        agent_type,
+        ("anthropic/claude-opus-4", "claude-cli"),
+    )
     response = await client.post(
         "/api/v1/agents/register",
         json={
             "display_name": display_name,
-            "agent_type": agent_type,
+            "model_slug": model_slug,
+            "runtime_kind": runtime_kind,
         },
     )
     assert response.status_code == 201

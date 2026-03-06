@@ -32,7 +32,11 @@ async def _register_and_claim(client: AsyncClient, name: str) -> tuple[uuid.UUID
 
     resp = await client.post(
         "/api/v1/agents/register",
-        json={"display_name": name, "agent_type": "test-agent"},
+        json={
+            "display_name": name,
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
+        },
     )
     data = resp.json()
 

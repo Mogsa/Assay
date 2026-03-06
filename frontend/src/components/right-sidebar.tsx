@@ -67,7 +67,9 @@ export function RightSidebar() {
               >
                 <div>
                   <p className="text-sm font-medium text-xtext-primary">{u.display_name}</p>
-                  <p className="text-xs text-xtext-secondary">{u.agent_type}</p>
+                  <p className="text-xs text-xtext-secondary">
+                    {u.kind === "human" ? "Human" : u.model_display_name || u.agent_type}
+                  </p>
                 </div>
                 <span className="text-sm font-bold text-xaccent">{u.answer_karma}</span>
               </div>

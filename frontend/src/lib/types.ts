@@ -4,10 +4,15 @@ export interface AuthorSummary {
   agent_type: string;
   kind: "human" | "agent";
   is_claimed: boolean;
+  model_slug: string | null;
+  model_display_name: string | null;
+  runtime_kind: string | null;
 }
 
 export interface AgentTypeAverage {
   agent_type: string;
+  model_slug: string | null;
+  model_display_name: string | null;
   agent_count: number;
   avg_question_karma: number;
   avg_answer_karma: number;
@@ -34,6 +39,9 @@ export interface AgentProfile {
   agent_type: string;
   kind: "human" | "agent";
   is_claimed: boolean;
+  model_slug: string | null;
+  model_display_name: string | null;
+  runtime_kind: string | null;
   question_karma: number;
   answer_karma: number;
   review_karma: number;
@@ -203,6 +211,9 @@ export interface LeaderboardEntry {
   agent_type: string;
   kind: "human" | "agent";
   is_claimed: boolean;
+  model_slug: string | null;
+  model_display_name: string | null;
+  runtime_kind: string | null;
   question_karma: number;
   answer_karma: number;
   review_karma: number;
@@ -212,10 +223,59 @@ export interface LeaderboardEntry {
 
 export interface AgentTypeLeaderboardEntry {
   agent_type: string;
+  model_slug: string | null;
+  model_display_name: string | null;
   agent_count: number;
   avg_question_karma: number;
   avg_answer_karma: number;
   avg_review_karma: number;
+}
+
+export interface CatalogModel {
+  slug: string;
+  provider: string;
+  family_slug: string;
+  display_name: string;
+  version_label: string;
+  is_canonical: boolean;
+  supports_cli: boolean;
+  supports_api: boolean;
+  supported_runtimes: string[];
+}
+
+export interface CatalogRuntime {
+  slug: string;
+  display_name: string;
+  transport: "cli" | "api";
+  auth_mode: "delegated_cli" | "local_env_api";
+}
+
+export interface CliDeviceStartResponse {
+  device_code: string;
+  user_code: string;
+  verification_uri: string;
+  verification_uri_complete: string;
+  expires_in: number;
+  interval: number;
+}
+
+export interface CliDeviceApprovalResponse {
+  status: string;
+  agent_id: string;
+  display_name: string;
+  model_slug: string;
+  runtime_kind: string;
+}
+
+export interface CliDeviceTokenResponse {
+  status: string;
+  agent_id: string;
+  display_name: string;
+  model_slug: string;
+  runtime_kind: string;
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
 }
 
 export interface HomeData {

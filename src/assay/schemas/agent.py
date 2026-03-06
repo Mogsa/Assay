@@ -7,7 +7,9 @@ from pydantic import BaseModel, Field
 
 class AgentRegisterRequest(BaseModel):
     display_name: str = Field(max_length=128)
-    agent_type: str = Field(max_length=64)
+    model_slug: str | None = None
+    runtime_kind: str | None = None
+    agent_type: str | None = Field(default=None, max_length=64)
 
 
 class AgentRegisterResponse(BaseModel):
@@ -18,7 +20,8 @@ class AgentRegisterResponse(BaseModel):
 
 class AgentCreateRequest(BaseModel):
     display_name: str = Field(max_length=128)
-    agent_type: str = Field(max_length=64)
+    model_slug: str
+    runtime_kind: str
 
 
 class AgentCreateResponse(BaseModel):
@@ -26,6 +29,9 @@ class AgentCreateResponse(BaseModel):
     api_key: str
     display_name: str
     agent_type: str
+    model_slug: str | None = None
+    model_display_name: str | None = None
+    runtime_kind: str | None = None
     claim_status: str
 
 
@@ -35,10 +41,15 @@ class AuthorSummary(BaseModel):
     agent_type: str
     kind: Literal["human", "agent"]
     is_claimed: bool
+    model_slug: str | None = None
+    model_display_name: str | None = None
+    runtime_kind: str | None = None
 
 
 class AgentTypeAverage(BaseModel):
     agent_type: str
+    model_slug: str | None = None
+    model_display_name: str | None = None
     agent_count: int
     avg_question_karma: float
     avg_answer_karma: float
@@ -51,6 +62,9 @@ class AgentProfile(BaseModel):
     agent_type: str
     kind: Literal["human", "agent"]
     is_claimed: bool
+    model_slug: str | None = None
+    model_display_name: str | None = None
+    runtime_kind: str | None = None
     question_karma: int
     answer_karma: int
     review_karma: int
@@ -109,8 +123,21 @@ class AgentClaimResponse(BaseModel):
     agent_id: uuid.UUID
     display_name: str
     agent_type: str
+    model_slug: str | None = None
+    model_display_name: str | None = None
+    runtime_kind: str | None = None
     claim_status: str
 
 
 class AgentMineResponse(BaseModel):
     agents: list[AgentProfile]
+
+
+class AgentApiKeyResponse(BaseModel):
+    agent_id: uuid.UUID
+    api_key: str
+    display_name: str
+    agent_type: str
+    model_slug: str | None = None
+    model_display_name: str | None = None
+    runtime_kind: str | None = None

@@ -11,7 +11,7 @@ type LeaderboardView = "individuals" | "agent_types";
 export default function LeaderboardPage() {
   const [sortBy, setSortBy] = useState<SortAxis>("answer_karma");
   const [view, setView] = useState<LeaderboardView>("individuals");
-  const [agentType, setAgentType] = useState("");
+  const [modelSlug, setModelSlug] = useState("");
   const [individuals, setIndividuals] = useState<LeaderboardEntry[]>([]);
   const [agentTypes, setAgentTypes] = useState<AgentTypeLeaderboardEntry[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -26,7 +26,7 @@ export default function LeaderboardPage() {
         if (view === "individuals") {
           const res = await leaderboardApi.getIndividuals({
             sort_by: sortBy,
-            agent_type: agentType || undefined,
+            model_slug: modelSlug || undefined,
             cursor,
           });
           if (cursor) {
@@ -38,7 +38,7 @@ export default function LeaderboardPage() {
         } else {
           const res = await leaderboardApi.getAgentTypes({
             sort_by: sortBy,
-            agent_type: agentType || undefined,
+            model_slug: modelSlug || undefined,
             cursor,
           });
           if (cursor) {
@@ -59,7 +59,7 @@ export default function LeaderboardPage() {
         setLoading(false);
       }
     },
-    [agentType, sortBy, view],
+    [modelSlug, sortBy, view],
   );
 
   useEffect(() => {
@@ -118,9 +118,9 @@ export default function LeaderboardPage() {
 
         <input
           type="text"
-          value={agentType}
-          onChange={(e) => setAgentType(e.target.value)}
-          placeholder="Filter by model type…"
+          value={modelSlug}
+          onChange={(e) => setModelSlug(e.target.value)}
+          placeholder="Filter by model slug…"
           className="rounded-full border border-xborder bg-xbg-secondary px-3 py-1.5 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
         />
       </div>
@@ -147,7 +147,7 @@ export default function LeaderboardPage() {
                   </Link>
                 </td>
                 <td className="py-2 text-xtext-secondary">
-                  {entry.kind === "human" ? "Human" : entry.agent_type}
+                  {entry.kind === "human" ? "Human" : entry.model_display_name || entry.agent_type}
                 </td>
                 <td className="py-2 text-right">{entry.question_karma}</td>
                 <td className="py-2 text-right">{entry.answer_karma}</td>
@@ -169,8 +169,8 @@ export default function LeaderboardPage() {
           </thead>
           <tbody>
             {agentTypes.map((entry) => (
-              <tr key={entry.agent_type} className="border-b border-xborder">
-                <td className="py-2 font-medium">{entry.agent_type}</td>
+              <tr key={entry.model_slug || entry.agent_type} className="border-b border-xborder">
+                <td className="py-2 font-medium">{entry.model_display_name || entry.agent_type}</td>
                 <td className="py-2 text-right text-xtext-secondary">{entry.agent_count}</td>
                 <td className="py-2 text-right">{entry.avg_question_karma.toFixed(1)}</td>
                 <td className="py-2 text-right">{entry.avg_answer_karma.toFixed(1)}</td>

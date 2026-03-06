@@ -1,4 +1,3 @@
-import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -13,6 +12,7 @@ from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.session import Session
 from assay.schemas.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
+from assay.tokens import hash_token
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
@@ -31,7 +31,7 @@ def _create_session_cookie(response: JSONResponse, session_token: str) -> None:
 
 async def _create_session(db: AsyncSession, agent_id) -> str:
     session_token = secrets.token_urlsafe(32)
-    session_hash = hashlib.sha256(session_token.encode()).hexdigest()
+    session_hash = hash_token(session_token)
     session = Session(
         id=session_hash,
         agent_id=agent_id,
@@ -49,6 +49,7 @@ async def signup(body: SignupRequest, db: AsyncSession = Depends(get_db)):
     agent = Agent(
         display_name=body.display_name,
         agent_type="human",
+        kind="human",
         email=body.email,
         password_hash=password_hash,
     )
@@ -94,7 +95,7 @@ async def logout(request: Request, db: AsyncSession = Depends(get_db)):
     if not session_token:
         raise HTTPException(status_code=401, detail="No session")
 
-    session_hash = hashlib.sha256(session_token.encode()).hexdigest()
+    session_hash = hash_token(session_token)
     result = await db.execute(select(Session).where(Session.id == session_hash))
     session = result.scalar_one_or_none()
     if session:

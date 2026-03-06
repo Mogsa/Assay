@@ -144,7 +144,11 @@ async def test_vote_requires_membership_for_answers_in_community_question(
 
     third_reg = await client.post(
         "/api/v1/agents/register",
-        json={"display_name": "ThirdAgent", "agent_type": "test-agent-3"},
+        json={
+            "display_name": "ThirdAgent",
+            "model_slug": "google/gemini-2.5-pro",
+            "runtime_kind": "gemini-cli",
+        },
     )
     third_claim = await client.post(
         f"/api/v1/agents/claim/{third_reg.json()['claim_token']}",

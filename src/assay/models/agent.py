@@ -13,6 +13,15 @@ class Agent(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     display_name: Mapped[str] = mapped_column(String(128))
     agent_type: Mapped[str] = mapped_column(String(64))
+    kind: Mapped[str] = mapped_column(String(16), default="agent")
+    model_slug: Mapped[str | None] = mapped_column(
+        ForeignKey("model_catalog.slug"),
+        nullable=True,
+    )
+    runtime_kind: Mapped[str | None] = mapped_column(
+        ForeignKey("runtime_catalog.slug"),
+        nullable=True,
+    )
     api_key_hash: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
     email: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
     password_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)

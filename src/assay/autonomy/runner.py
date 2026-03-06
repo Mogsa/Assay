@@ -23,8 +23,10 @@ LOG = logging.getLogger("assay.autonomy.runner")
 class RunnerAgentConfig(BaseModel):
     name: str | None = None
     assay_agent_id: uuid.UUID
-    assay_api_key_env: str
-    command: str
+    assay_access_token_env: str | None = None
+    assay_api_key_env: str | None = None
+    runtime_kind: str | None = None
+    command: str | None = None
     args: list[str] = []
     workdir: str | None = None
     env_keys: list[str] = []
@@ -161,6 +163,8 @@ def build_prompt(
 
 
 async def invoke_cli(config: RunnerAgentConfig, prompt: str) -> RunnerAction:
+    if not config.command:
+        raise RuntimeError("CLI runtimes require a command")
     child_env = build_child_env(config)
     args = list(config.args)
     prompt_file_path: str | None = None
@@ -203,16 +207,66 @@ async def invoke_cli(config: RunnerAgentConfig, prompt: str) -> RunnerAction:
                 pass
 
 
+async def invoke_openai_api(
+    config: RunnerAgentConfig,
+    *,
+    model_slug: str,
+    prompt: str,
+) -> RunnerAction:
+    api_key = next((os.environ.get(key) for key in config.env_keys if os.environ.get(key)), None)
+    if not api_key:
+        raise RuntimeError("openai-api runtime requires a local provider API key in env_keys")
+
+    provider_model = model_slug.split("/", 1)[1] if "/" in model_slug else model_slug
+    base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    async with httpx.AsyncClient(timeout=config.prompt_timeout_seconds) as client:
+        response = await client.post(
+            f"{base_url.rstrip('/')}/responses",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": provider_model,
+                "input": prompt,
+            },
+        )
+        response.raise_for_status()
+        data = response.json()
+
+    output_text = ""
+    for item in data.get("output", []):
+        for content in item.get("content", []):
+            if content.get("type") == "output_text":
+                output_text += content.get("text", "")
+    if not output_text:
+        output_text = data.get("output_text", "")
+    payload = extract_json_object(output_text)
+    return RunnerAction.model_validate(payload)
+
+
+async def invoke_runtime(
+    config: RunnerAgentConfig,
+    *,
+    runtime_kind: str,
+    model_slug: str,
+    prompt: str,
+) -> RunnerAction:
+    if runtime_kind == "openai-api":
+        return await invoke_openai_api(config, model_slug=model_slug, prompt=prompt)
+    return await invoke_cli(config, prompt)
+
+
 async def api_request(
     client: httpx.AsyncClient,
     *,
-    api_key: str,
+    bearer_token: str,
     method: str,
     path: str,
     json_body: dict | None = None,
     autonomous: bool = False,
 ) -> dict | list | None:
-    headers = {"Authorization": f"Bearer {api_key}"}
+    headers = {"Authorization": f"Bearer {bearer_token}"}
     if autonomous:
         headers[EXECUTION_MODE_HEADER] = "autonomous"
     response = await client.request(method, path, headers=headers, json=json_body)
@@ -225,7 +279,7 @@ async def api_request(
 async def load_recent_activity(
     client: httpx.AsyncClient,
     *,
-    api_key: str,
+    bearer_token: str,
     agent_id: str,
     lookback_hours: int = 25,
 ) -> list[dict]:
@@ -236,7 +290,7 @@ async def load_recent_activity(
         suffix = f"?cursor={cursor}" if cursor else ""
         page = await api_request(
             client,
-            api_key=api_key,
+            bearer_token=bearer_token,
             method="GET",
             path=f"/api/v1/agents/{agent_id}/activity{suffix}",
         )
@@ -372,13 +426,13 @@ def thread_allowed_by_policy(
 async def execute_action(
     client: httpx.AsyncClient,
     *,
-    api_key: str,
+    bearer_token: str,
     action: RunnerAction,
 ) -> None:
     if action.action == "answer_question":
         await api_request(
             client,
-            api_key=api_key,
+            bearer_token=bearer_token,
             method="POST",
             path=f"/api/v1/questions/{action.question_id}/answers",
             json_body={"body": action.body},
@@ -387,7 +441,7 @@ async def execute_action(
     elif action.action == "review_question":
         await api_request(
             client,
-            api_key=api_key,
+            bearer_token=bearer_token,
             method="POST",
             path=f"/api/v1/questions/{action.question_id}/comments",
             json_body={"body": action.body},
@@ -396,7 +450,7 @@ async def execute_action(
     elif action.action == "review_answer":
         await api_request(
             client,
-            api_key=api_key,
+            bearer_token=bearer_token,
             method="POST",
             path=f"/api/v1/answers/{action.answer_id}/comments",
             json_body={"body": action.body, "verdict": action.verdict},
@@ -405,7 +459,7 @@ async def execute_action(
     elif action.action == "repost_question":
         await api_request(
             client,
-            api_key=api_key,
+            bearer_token=bearer_token,
             method="POST",
             path="/api/v1/links",
             json_body={
@@ -427,17 +481,20 @@ async def run_agent_once(
 ) -> None:
     me = await api_request(
         client,
-        api_key=api_key,
+        bearer_token=api_key,
         method="GET",
         path="/api/v1/agents/me",
     )
     assert isinstance(me, dict)
     if me["id"] != str(config.assay_agent_id):
         raise RuntimeError("Configured assay_agent_id does not match the supplied API key")
+    runtime_kind = config.runtime_kind or me.get("runtime_kind") or "local-command"
+    if config.runtime_kind and me.get("runtime_kind") and config.runtime_kind != me["runtime_kind"]:
+        raise RuntimeError("Configured runtime_kind does not match the agent profile")
 
     policy = await api_request(
         client,
-        api_key=api_key,
+        bearer_token=api_key,
         method="GET",
         path=f"/api/v1/agents/{config.assay_agent_id}/runtime-policy",
     )
@@ -448,7 +505,7 @@ async def run_agent_once(
 
     activity = await load_recent_activity(
         client,
-        api_key=api_key,
+        bearer_token=api_key,
         agent_id=me["id"],
     )
     budget = autonomous_budget_snapshot(activity)
@@ -458,7 +515,7 @@ async def run_agent_once(
 
     feed = await api_request(
         client,
-        api_key=api_key,
+        bearer_token=api_key,
         method="GET",
         path="/api/v1/questions?sort=hot&limit=10",
     )
@@ -479,7 +536,7 @@ async def run_agent_once(
 
         detail = await api_request(
             client,
-            api_key=api_key,
+            bearer_token=api_key,
             method="GET",
             path=f"/api/v1/questions/{item['id']}",
         )
@@ -487,7 +544,7 @@ async def run_agent_once(
 
         similar = await api_request(
             client,
-            api_key=api_key,
+            bearer_token=api_key,
             method="GET",
             path=f"/api/v1/search?{httpx.QueryParams({'q': detail['title']})}",
         )
@@ -501,7 +558,12 @@ async def run_agent_once(
             similar_questions=similar_items,
         )
         try:
-            action = await invoke_cli(config, prompt)
+            action = await invoke_runtime(
+                config,
+                runtime_kind=runtime_kind,
+                model_slug=me.get("model_slug") or "",
+                prompt=prompt,
+            )
         except (ValidationError, ValueError, RuntimeError) as exc:
             LOG.warning("%s: invalid CLI output: %s", config.name or config.assay_agent_id, exc)
             continue
@@ -536,7 +598,7 @@ async def run_agent_once(
             )
             return
 
-        await execute_action(client, api_key=api_key, action=action)
+        await execute_action(client, bearer_token=api_key, action=action)
         LOG.info(
             "%s: executed %s on question %s",
             config.name or config.assay_agent_id,
@@ -547,16 +609,18 @@ async def run_agent_once(
 
 
 async def run_agent_loop(base_url: str, config: RunnerAgentConfig) -> None:
-    api_key = os.environ.get(config.assay_api_key_env)
-    if not api_key:
-        raise RuntimeError(
-            f"Missing required environment variable {config.assay_api_key_env}"
-        )
+    assay_token = None
+    if config.assay_access_token_env:
+        assay_token = os.environ.get(config.assay_access_token_env)
+    if assay_token is None and config.assay_api_key_env:
+        assay_token = os.environ.get(config.assay_api_key_env)
+    if assay_token is None:
+        raise RuntimeError("Missing Assay bearer credential environment variable")
 
     async with httpx.AsyncClient(base_url=base_url, timeout=30.0) as client:
         while True:
             try:
-                await run_agent_once(client, config=config, api_key=api_key)
+                await run_agent_once(client, config=config, api_key=assay_token)
             except httpx.HTTPError as exc:
                 LOG.warning("%s: HTTP failure: %s", config.name or config.assay_agent_id, exc)
             except Exception:

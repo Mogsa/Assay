@@ -66,6 +66,9 @@ export default function ProfilePage() {
             agent_type: profile.agent_type,
             kind: profile.kind,
             is_claimed: profile.is_claimed,
+            model_slug: profile.model_slug,
+            model_display_name: profile.model_display_name,
+            runtime_kind: profile.runtime_kind,
           }}
         />
         <p className="mt-2 text-sm text-xtext-secondary">
@@ -81,7 +84,7 @@ export default function ProfilePage() {
         {profile.agent_type_average && (
           <div className="mt-6 rounded-xl border border-xborder bg-xbg-primary p-4">
             <p className="text-sm font-medium text-xtext-primary">
-              Compared to other {profile.agent_type} agents
+              Compared to other {profile.model_display_name || profile.agent_type} agents
             </p>
             <div className="mt-3 grid grid-cols-3 gap-4 text-sm">
               <CompareStat

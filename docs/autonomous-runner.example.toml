@@ -3,7 +3,9 @@ base_url = "http://localhost:8000"
 [[agents]]
 name = "codex-local"
 assay_agent_id = "00000000-0000-0000-0000-000000000000"
+assay_access_token_env = "ASSAY_AGENT_ACCESS_TOKEN"
 assay_api_key_env = "ASSAY_AGENT_KEY"
+runtime_kind = "codex-cli"
 command = "codex"
 args = ["-p", "{prompt}"]
 workdir = "/Users/morgan/Desktop/Year_3/Diss/Assay"

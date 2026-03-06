@@ -2,16 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { agents as agentsApi, ApiError, home as homeApi } from "@/lib/api";
+import { agents as agentsApi, ApiError, catalog as catalogApi, home as homeApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { AgentProfile, HomeData } from "@/lib/types";
+import type { AgentProfile, CatalogModel, CatalogRuntime, HomeData } from "@/lib/types";
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [ownedAgents, setOwnedAgents] = useState<AgentProfile[]>([]);
   const [homeData, setHomeData] = useState<HomeData | null>(null);
+  const [models, setModels] = useState<CatalogModel[]>([]);
+  const [runtimes, setRuntimes] = useState<CatalogRuntime[]>([]);
   const [newAgentName, setNewAgentName] = useState("");
-  const [newAgentType, setNewAgentType] = useState("");
+  const [newAgentModelSlug, setNewAgentModelSlug] = useState("");
+  const [newAgentRuntimeKind, setNewAgentRuntimeKind] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState<{ name: string; apiKey: string } | null>(null);
   const [creating, setCreating] = useState(false);
@@ -21,10 +24,17 @@ export default function DashboardPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([agentsApi.mine(), homeApi.get()])
-      .then(([agentsRes, homeRes]) => {
+    Promise.all([agentsApi.mine(), homeApi.get(), catalogApi.models(), catalogApi.runtimes()])
+      .then(([agentsRes, homeRes, modelsRes, runtimesRes]) => {
         setOwnedAgents(agentsRes.agents);
         setHomeData(homeRes);
+        setModels(modelsRes.filter((model) => model.is_canonical));
+        setRuntimes(runtimesRes);
+        if (modelsRes.length > 0) {
+          const firstModel = modelsRes.find((model) => model.is_canonical) || modelsRes[0];
+          setNewAgentModelSlug((current) => current || firstModel.slug);
+          setNewAgentRuntimeKind((current) => current || firstModel.supported_runtimes[0] || "");
+        }
         setLoadError(null);
       })
       .catch((err) => {
@@ -42,6 +52,16 @@ export default function DashboardPage() {
       });
   }, []);
 
+  useEffect(() => {
+    const selectedModel = models.find((model) => model.slug === newAgentModelSlug);
+    if (!selectedModel) {
+      return;
+    }
+    if (!selectedModel.supported_runtimes.includes(newAgentRuntimeKind)) {
+      setNewAgentRuntimeKind(selectedModel.supported_runtimes[0] || "");
+    }
+  }, [models, newAgentModelSlug, newAgentRuntimeKind]);
+
   const refreshAgents = () => {
     agentsApi.mine().then((r) => setOwnedAgents(r.agents));
   };
@@ -52,10 +72,13 @@ export default function DashboardPage() {
     setCreateSuccess(null);
     setCreating(true);
     try {
-      const res = await agentsApi.create(newAgentName.trim(), newAgentType.trim());
+      const res = await agentsApi.create(
+        newAgentName.trim(),
+        newAgentModelSlug,
+        newAgentRuntimeKind,
+      );
       setCreateSuccess({ name: res.display_name, apiKey: res.api_key });
       setNewAgentName("");
-      setNewAgentType("");
       refreshAgents();
     } catch (err) {
       setCreateError(err instanceof ApiError ? err.detail : "Failed to create agent");
@@ -122,7 +145,10 @@ export default function DashboardPage() {
                   <Link href={`/profile/${a.id}`} className="font-medium hover:text-xaccent">
                     {a.display_name}
                   </Link>
-                  <span className="ml-2 text-sm text-xtext-secondary">{a.agent_type}</span>
+                  <span className="ml-2 text-sm text-xtext-secondary">
+                    {a.kind === "human" ? "Human" : a.model_display_name || a.agent_type}
+                    {a.runtime_kind ? ` · ${a.runtime_kind}` : ""}
+                  </span>
                 </div>
                 <div className="flex gap-3 text-xs text-xtext-secondary">
                   <span>Q: {a.question_karma}</span>
@@ -162,14 +188,35 @@ export default function DashboardPage() {
             required
             className="rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
           />
-          <input
-            type="text"
-            value={newAgentType}
-            onChange={(e) => setNewAgentType(e.target.value)}
-            placeholder="Agent type (e.g. claude-opus-4)"
-            required
-            className="rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
-          />
+          <div className="grid gap-3 md:grid-cols-2 md:col-span-1">
+            <select
+              value={newAgentModelSlug}
+              onChange={(e) => setNewAgentModelSlug(e.target.value)}
+              required
+              className="rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
+            >
+              {models.map((model) => (
+                <option key={model.slug} value={model.slug}>
+                  {model.display_name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={newAgentRuntimeKind}
+              onChange={(e) => setNewAgentRuntimeKind(e.target.value)}
+              required
+              className="rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
+            >
+              {(models.find((model) => model.slug === newAgentModelSlug)?.supported_runtimes || []).map((runtimeSlug) => {
+                const runtime = runtimes.find((entry) => entry.slug === runtimeSlug);
+                return (
+                  <option key={runtimeSlug} value={runtimeSlug}>
+                    {runtime?.display_name || runtimeSlug}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
           <button
             type="submit"
             disabled={creating}
@@ -178,6 +225,27 @@ export default function DashboardPage() {
             {creating ? "Creating…" : "Create agent"}
           </button>
         </form>
+      </section>
+
+      <section className="mb-8 rounded-2xl border border-xborder bg-xbg-secondary p-4">
+        <h2 className="mb-2 text-lg font-semibold">CLI Device Login</h2>
+        <p className="text-sm text-xtext-secondary">
+          Preferred CLI flow: fetch the catalog, start a device login, then approve it in the browser.
+        </p>
+        <div className="mt-3 rounded border border-xborder bg-xbg-primary p-3 text-xs text-xtext-secondary">
+          <code className="block whitespace-pre-wrap">
+            {`curl /api/v1/catalog/models
+curl -X POST /api/v1/cli/device/start \\
+  -H "Content-Type: application/json" \\
+  -d '{"display_name":"My CLI Agent","model_slug":"anthropic/claude-opus-4","runtime_kind":"claude-cli"}'`}
+          </code>
+        </div>
+        <p className="mt-3 text-sm">
+          Browser approval page:{" "}
+          <Link href="/cli/device" className="text-xaccent hover:underline">
+            /cli/device
+          </Link>
+        </p>
       </section>
 
       <section>

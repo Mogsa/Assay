@@ -7,13 +7,14 @@ from fastapi import Depends
 
 from assay.database import get_db
 from assay.models.agent import Agent
+from assay.models.model_catalog import ModelCatalog
 from assay.pagination import decode_cursor, encode_cursor
 from assay.presentation import build_agent_profile
 
 router = APIRouter(prefix="/api/v1", tags=["leaderboard"])
 
 
-PUBLIC_AGENT_FILTER = or_(Agent.agent_type == "human", Agent.claim_status == "claimed")
+PUBLIC_AGENT_FILTER = or_(Agent.kind == "human", Agent.claim_status == "claimed")
 
 
 @router.get("/leaderboard", response_model=dict)
@@ -21,10 +22,12 @@ async def leaderboard(
     db: AsyncSession = Depends(get_db),
     sort_by: str = Query("answer_karma", pattern="^(question_karma|answer_karma|review_karma)$"),
     view: str = Query("individuals", pattern="^(individuals|agent_types)$"),
+    model_slug: str | None = None,
     agent_type: str | None = None,
     cursor: str | None = None,
     limit: int = Query(20, ge=1, le=100),
 ):
+    filter_model_slug = model_slug or agent_type
     if view == "agent_types":
         avg_question = func.avg(Agent.question_karma).label("avg_question_karma")
         avg_answer = func.avg(Agent.answer_karma).label("avg_answer_karma")
@@ -37,27 +40,30 @@ async def leaderboard(
         sort_col = sort_map[sort_by]
         stmt = (
             select(
-                Agent.agent_type.label("agent_type"),
+                Agent.model_slug.label("model_slug"),
+                ModelCatalog.display_name.label("agent_type"),
                 func.count(Agent.id).label("agent_count"),
                 avg_question,
                 avg_answer,
                 avg_review,
             )
+            .join(ModelCatalog, ModelCatalog.slug == Agent.model_slug)
             .where(
                 Agent.is_active == True,  # noqa: E712
                 Agent.claim_status == "claimed",
-                Agent.agent_type != "human",
+                Agent.kind == "agent",
+                ModelCatalog.is_canonical == True,  # noqa: E712
             )
-            .group_by(Agent.agent_type)
-            .order_by(sort_col.desc(), Agent.agent_type.asc())
+            .group_by(Agent.model_slug, ModelCatalog.display_name)
+            .order_by(sort_col.desc(), ModelCatalog.display_name.asc())
         )
-        if agent_type:
-            stmt = stmt.where(Agent.agent_type == agent_type)
+        if filter_model_slug:
+            stmt = stmt.where(Agent.model_slug == filter_model_slug)
         if cursor:
             try:
                 decoded = decode_cursor(cursor)
                 stmt = stmt.having(
-                    tuple_(sort_col, Agent.agent_type)
+                    tuple_(sort_col, ModelCatalog.display_name)
                     < tuple_(float(decoded["karma"]), decoded["agent_type"])
                 )
             except (KeyError, TypeError, ValueError) as exc:
@@ -78,6 +84,8 @@ async def leaderboard(
             "items": [
                 {
                     "agent_type": row["agent_type"],
+                    "model_slug": row["model_slug"],
+                    "model_display_name": row["agent_type"],
                     "agent_count": row["agent_count"],
                     "avg_question_karma": float(row["avg_question_karma"] or 0),
                     "avg_answer_karma": float(row["avg_answer_karma"] or 0),
@@ -96,8 +104,13 @@ async def leaderboard(
         .order_by(sort_col.desc(), Agent.id.desc())
     )
 
-    if agent_type:
-        stmt = stmt.where(Agent.agent_type == agent_type)
+    if filter_model_slug:
+        stmt = stmt.where(
+            or_(
+                Agent.model_slug == filter_model_slug,
+                Agent.agent_type == filter_model_slug,
+            )
+        )
 
     if cursor:
         try:

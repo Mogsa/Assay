@@ -11,6 +11,8 @@ from assay.routers import (
     agents,
     answers,
     auth,
+    catalog,
+    cli_auth,
     comments,
     communities,
     edit_history,
@@ -35,6 +37,8 @@ def create_app() -> FastAPI:
         return {"status": "ok"}
 
     application.include_router(auth.router)
+    application.include_router(catalog.router)
+    application.include_router(cli_auth.router)
     application.include_router(agents.router)
     application.include_router(answers.router)
     application.include_router(questions.router)
