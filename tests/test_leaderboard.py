@@ -2,18 +2,38 @@ import pytest
 from httpx import AsyncClient
 
 
-async def _register_agent(client: AsyncClient, name: str, agent_type: str) -> tuple[str, dict]:
-    """Register an agent and return (agent_id, headers)."""
+async def _connect_agent(
+    client: AsyncClient,
+    *,
+    name: str,
+    agent_type: str,
+    session_cookie: str,
+) -> tuple[str, dict]:
     payload = {
-        "claude-opus": {"model_slug": "anthropic/claude-opus-4", "runtime_kind": "claude-cli"},
+        "claude-opus": {
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
+            "provider_terms_acknowledged": True,
+        },
         "gpt-4o": {"model_slug": "openai/gpt-4o", "runtime_kind": "openai-api"},
     }[agent_type]
-    resp = await client.post(
-        "/api/v1/agents/register",
+    start = await client.post(
+        "/api/v1/cli/device/start",
         json={"display_name": name, **payload},
     )
-    data = resp.json()
-    return data["agent_id"], {"Authorization": f"Bearer {data['api_key']}"}
+    assert start.status_code == 201
+    approve = await client.post(
+        "/api/v1/cli/device/approve",
+        cookies={"session": session_cookie},
+        json={"user_code": start.json()["user_code"]},
+    )
+    assert approve.status_code == 200
+    poll = await client.post(
+        "/api/v1/cli/device/poll",
+        json={"device_code": start.json()["device_code"]},
+    )
+    data = poll.json()
+    return data["agent_id"], {"Authorization": f"Bearer {data['access_token']}"}
 
 
 async def test_leaderboard_default_sort(client: AsyncClient, agent_headers):
@@ -39,12 +59,9 @@ async def test_leaderboard_filter_by_agent_type(client: AsyncClient):
     )
     cookie = signup.cookies.get("session")
 
-    r1 = await client.post("/api/v1/agents/register", json={"display_name": "Agent1", "agent_type": "claude-opus"})
-    r2 = await client.post("/api/v1/agents/register", json={"display_name": "Agent2", "agent_type": "gpt-4o"})
-    r3 = await client.post("/api/v1/agents/register", json={"display_name": "Agent3", "agent_type": "claude-opus"})
-    await client.post(f"/api/v1/agents/claim/{r1.json()['claim_token']}", cookies={"session": cookie})
-    await client.post(f"/api/v1/agents/claim/{r2.json()['claim_token']}", cookies={"session": cookie})
-    await client.post(f"/api/v1/agents/claim/{r3.json()['claim_token']}", cookies={"session": cookie})
+    await _connect_agent(client, name="Agent1", agent_type="claude-opus", session_cookie=cookie)
+    await _connect_agent(client, name="Agent2", agent_type="gpt-4o", session_cookie=cookie)
+    await _connect_agent(client, name="Agent3", agent_type="claude-opus", session_cookie=cookie)
 
     resp = await client.get("/api/v1/leaderboard", params={"model_slug": "anthropic/claude-opus-4"})
     assert resp.status_code == 200
@@ -67,29 +84,18 @@ async def test_leaderboard_is_public(client: AsyncClient):
 
 
 async def test_leaderboard_agent_types_view(client: AsyncClient, human_session_cookie: str):
-    create_a = await client.post(
-        "/api/v1/agents",
-        json={
-            "display_name": "Claude A",
-            "model_slug": "anthropic/claude-opus-4",
-            "runtime_kind": "claude-cli",
-        },
-        cookies={"session": human_session_cookie},
+    _agent_a_id, h_a = await _connect_agent(
+        client,
+        name="Claude A",
+        agent_type="claude-opus",
+        session_cookie=human_session_cookie,
     )
-    assert create_a.status_code == 201
-    create_b = await client.post(
-        "/api/v1/agents",
-        json={
-            "display_name": "Claude B",
-            "model_slug": "anthropic/claude-opus-4",
-            "runtime_kind": "claude-cli",
-        },
-        cookies={"session": human_session_cookie},
+    _agent_b_id, h_b = await _connect_agent(
+        client,
+        name="Claude B",
+        agent_type="claude-opus",
+        session_cookie=human_session_cookie,
     )
-    assert create_b.status_code == 201
-
-    h_a = {"Authorization": f"Bearer {create_a.json()['api_key']}"}
-    h_b = {"Authorization": f"Bearer {create_b.json()['api_key']}"}
 
     q = await client.post(
         "/api/v1/questions",

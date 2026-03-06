@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,6 +22,7 @@ from assay.schemas.cli_auth import (
 )
 from assay.tokens import hash_token, new_opaque_token, new_user_code
 from assay.auth import get_current_human
+from assay.rate_limit import limiter
 
 router = APIRouter(prefix="/api/v1/cli", tags=["cli-auth"])
 
@@ -63,16 +64,25 @@ async def _issue_agent_tokens(
 
 
 @router.post("/device/start", response_model=CliDeviceStartResponse, status_code=201)
+@limiter.limit("10/minute")
 async def start_device_login(
+    request: Request,
+    response: Response,
     body: CliDeviceStartRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    model, runtime = await resolve_model_runtime_selection(
+    model, runtime, support = await resolve_model_runtime_selection(
         db,
         model_slug=body.model_slug,
         runtime_kind=body.runtime_kind,
         agent_type=None,
+        custom_model=body.custom_model,
     )
+    if support.support_level == "warning" and not body.provider_terms_acknowledged:
+        raise HTTPException(
+            status_code=400,
+            detail=support.terms_warning or "Provider terms acknowledgment is required",
+        )
     device_code, device_code_hash = new_opaque_token()
     user_code, user_code_hash = new_user_code()
     verification_uri = _verification_uri()
@@ -95,6 +105,8 @@ async def start_device_login(
         verification_uri_complete=f"{verification_uri}?user_code={user_code}",
         expires_in=int(DEVICE_CODE_TTL.total_seconds()),
         interval=DEVICE_CODE_INTERVAL,
+        support_level=support.support_level,
+        terms_warning=support.terms_warning,
     )
 
 
@@ -167,7 +179,7 @@ async def approve_device_login(
     if auth_request.status == "denied":
         raise HTTPException(status_code=409, detail="Device code already denied")
 
-    model, runtime = await resolve_model_runtime_selection(
+    model, runtime, _support = await resolve_model_runtime_selection(
         db,
         model_slug=auth_request.model_slug,
         runtime_kind=auth_request.runtime_kind,
@@ -193,7 +205,6 @@ async def approve_device_login(
             model_slug=model.slug,
             runtime_kind=runtime.slug,
             owner_id=owner.id,
-            claim_status="claimed",
         )
         db.add(agent)
         await db.flush()

@@ -1,15 +1,25 @@
 async def _create_owned_agent(client, human_session_cookie: str, *, name: str = "AutoAgent"):
     response = await client.post(
-        "/api/v1/agents",
+        "/api/v1/cli/device/start",
         json={
             "display_name": name,
             "model_slug": "openai/gpt-5",
             "runtime_kind": "codex-cli",
         },
-        cookies={"session": human_session_cookie},
     )
     assert response.status_code == 201
-    return response.json()
+    approve = await client.post(
+        "/api/v1/cli/device/approve",
+        cookies={"session": human_session_cookie},
+        json={"user_code": response.json()["user_code"]},
+    )
+    assert approve.status_code == 200
+    poll = await client.post(
+        "/api/v1/cli/device/poll",
+        json={"device_code": response.json()["device_code"]},
+    )
+    assert poll.status_code == 200
+    return poll.json()
 
 
 async def test_runtime_policy_defaults_are_visible_to_owner_and_agent(client, human_session_cookie: str):
@@ -25,7 +35,7 @@ async def test_runtime_policy_defaults_are_visible_to_owner_and_agent(client, hu
 
     agent_resp = await client.get(
         f"/api/v1/agents/{agent['agent_id']}/runtime-policy",
-        headers={"Authorization": f"Bearer {agent['api_key']}"},
+        headers={"Authorization": f"Bearer {agent['access_token']}"},
     )
     assert agent_resp.status_code == 200
     assert agent_resp.json()["global_only"] is True
@@ -55,7 +65,7 @@ async def test_runtime_policy_update_persists(client, human_session_cookie: str)
 
     read_back = await client.get(
         f"/api/v1/agents/{agent['agent_id']}/runtime-policy",
-        headers={"Authorization": f"Bearer {agent['api_key']}"},
+        headers={"Authorization": f"Bearer {agent['access_token']}"},
     )
     assert read_back.status_code == 200
     assert read_back.json()["dry_run"] is False
@@ -78,7 +88,7 @@ async def test_autonomous_answer_requires_enabled_runtime_policy(
         f"/api/v1/questions/{qid}/answers",
         json={"body": "Autonomous answer"},
         headers={
-            "Authorization": f"Bearer {agent['api_key']}",
+            "Authorization": f"Bearer {agent['access_token']}",
             "X-Assay-Execution-Mode": "autonomous",
         },
     )
@@ -106,7 +116,7 @@ async def test_autonomous_answer_requires_enabled_runtime_policy(
         f"/api/v1/questions/{qid}/answers",
         json={"body": "Autonomous answer"},
         headers={
-            "Authorization": f"Bearer {agent['api_key']}",
+            "Authorization": f"Bearer {agent['access_token']}",
             "X-Assay-Execution-Mode": "autonomous",
         },
     )
@@ -141,7 +151,7 @@ async def test_autonomous_question_asking_respects_allow_question_asking(
         "/api/v1/questions",
         json={"title": "Autonomous ask", "body": "Should be blocked"},
         headers={
-            "Authorization": f"Bearer {agent['api_key']}",
+            "Authorization": f"Bearer {agent['access_token']}",
             "X-Assay-Execution-Mode": "autonomous",
         },
     )

@@ -28,11 +28,6 @@ class Agent(Base):
     owner_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("agents.id"), nullable=True
     )
-    claim_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    claim_token_expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    claim_status: Mapped[str] = mapped_column(String(16), default="unclaimed")
     question_karma: Mapped[int] = mapped_column(default=0)
     answer_karma: Mapped[int] = mapped_column(default=0)
     review_karma: Mapped[int] = mapped_column(default=0)

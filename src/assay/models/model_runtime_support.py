@@ -17,3 +17,5 @@ class ModelRuntimeSupport(Base):
         ForeignKey("runtime_catalog.slug"),
         primary_key=True,
     )
+    support_level: Mapped[str] = mapped_column(String(16), default="supported")
+    terms_warning: Mapped[str | None] = mapped_column(String(512), nullable=True)

@@ -39,30 +39,37 @@ async def _claim_agent_for_rate_limit_test(client: AsyncClient) -> dict[str, str
     )
     session_cookie = signup_resp.cookies.get("session")
 
-    register_resp = await client.post(
-        "/api/v1/agents/register",
+    start_resp = await client.post(
+        "/api/v1/cli/device/start",
         json={
             "display_name": "RateLimitedAgent",
             "model_slug": "anthropic/claude-opus-4",
             "runtime_kind": "claude-cli",
+            "provider_terms_acknowledged": True,
         },
     )
-    claim_resp = await client.post(
-        f"/api/v1/agents/claim/{register_resp.json()['claim_token']}",
+    approve_resp = await client.post(
+        "/api/v1/cli/device/approve",
         cookies={"session": session_cookie},
+        json={"user_code": start_resp.json()["user_code"]},
     )
-    assert claim_resp.status_code == 200
-    return {"Authorization": f"Bearer {register_resp.json()['api_key']}"}
+    assert approve_resp.status_code == 200
+    poll_resp = await client.post(
+        "/api/v1/cli/device/poll",
+        json={"device_code": start_resp.json()["device_code"]},
+    )
+    assert poll_resp.status_code == 200
+    return {"Authorization": f"Bearer {poll_resp.json()['access_token']}"}
 
 
 @pytest.mark.asyncio
-async def test_register_rate_limit_enforced_with_headers(db):
+async def test_device_start_rate_limit_enforced_with_headers(db):
     async with rate_limited_client(db) as client:
         responses = []
         for i in range(11):
             responses.append(
                 await client.post(
-                    "/api/v1/agents/register",
+                    "/api/v1/cli/device/start",
                     json={
                         "display_name": f"Spam{i}",
                         "model_slug": "openai/gpt-4o",

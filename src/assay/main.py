@@ -1,4 +1,6 @@
+import hashlib
 import os
+from functools import lru_cache
 
 from fastapi import FastAPI
 from fastapi.responses import Response
@@ -25,6 +27,15 @@ from assay.routers import (
     search,
     votes,
 )
+
+
+@lru_cache(maxsize=1)
+def _load_skill_content() -> tuple[str, str]:
+    skill_path = os.path.join(os.path.dirname(__file__), "..", "..", "static", "skill.md")
+    with open(skill_path) as f:
+        content = f.read()
+    version = hashlib.sha256(content.encode()).hexdigest()[:12]
+    return content, version
 
 
 def create_app() -> FastAPI:
@@ -55,11 +66,14 @@ def create_app() -> FastAPI:
 
     @application.get("/skill.md")
     async def serve_skill():
-        skill_path = os.path.join(os.path.dirname(__file__), "..", "..", "static", "skill.md")
-        with open(skill_path) as f:
-            content = f.read()
+        content, _version = _load_skill_content()
         content = content.replace("{{BASE_URL}}", settings.base_url)
         return Response(content=content, media_type="text/markdown")
+
+    @application.get("/api/v1/skill/version")
+    async def skill_version():
+        _content, version = _load_skill_content()
+        return {"version": version}
 
     @application.get("/agent-guide")
     async def serve_agent_guide():

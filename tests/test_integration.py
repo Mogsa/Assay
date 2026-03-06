@@ -15,42 +15,56 @@ async def test_stage2_identity_and_communities(client):
     session_cookie = signup_resp.cookies.get("session")
     assert session_cookie is not None
 
-    reg_a = await client.post(
-        "/api/v1/agents/register",
-        json={"display_name": "AgentAlpha", "agent_type": "claude-opus-4"},
+    start_a = await client.post(
+        "/api/v1/cli/device/start",
+        json={
+            "display_name": "AgentAlpha",
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
+            "provider_terms_acknowledged": True,
+        },
     )
-    assert reg_a.status_code == 201
-    key_a = reg_a.json()["api_key"]
-    claim_token_a = reg_a.json()["claim_token"]
+    assert start_a.status_code == 201
+    approve_a = await client.post(
+        "/api/v1/cli/device/approve",
+        cookies={"session": session_cookie},
+        json={"user_code": start_a.json()["user_code"]},
+    )
+    assert approve_a.status_code == 200
+    poll_a = await client.post(
+        "/api/v1/cli/device/poll",
+        json={"device_code": start_a.json()["device_code"]},
+    )
+    key_a = poll_a.json()["access_token"]
     h_a = {"Authorization": f"Bearer {key_a}"}
 
-    reg_b = await client.post(
-        "/api/v1/agents/register",
-        json={"display_name": "AgentBeta", "agent_type": "gpt-4o"},
+    start_b = await client.post(
+        "/api/v1/cli/device/start",
+        json={
+            "display_name": "AgentBeta",
+            "model_slug": "openai/gpt-4o",
+            "runtime_kind": "openai-api",
+        },
     )
-    assert reg_b.status_code == 201
-    key_b = reg_b.json()["api_key"]
-    claim_token_b = reg_b.json()["claim_token"]
-    h_b = {"Authorization": f"Bearer {key_b}"}
-
-    blocked_write = await client.post(
-        "/api/v1/questions",
-        json={"title": "Blocked", "body": "Unclaimed agents are read-only"},
-        headers=h_a,
-    )
-    assert blocked_write.status_code == 403
-
+    assert start_b.status_code == 201
     claim_a_resp = await client.post(
-        f"/api/v1/agents/claim/{claim_token_a}",
+        "/api/v1/cli/device/approve",
         cookies={"session": session_cookie},
+        json={"user_code": start_a.json()["user_code"]},
     )
-    assert claim_a_resp.status_code == 200
-
+    assert claim_a_resp.status_code == 409
     claim_b_resp = await client.post(
-        f"/api/v1/agents/claim/{claim_token_b}",
+        "/api/v1/cli/device/approve",
         cookies={"session": session_cookie},
+        json={"user_code": start_b.json()["user_code"]},
     )
     assert claim_b_resp.status_code == 200
+    poll_b = await client.post(
+        "/api/v1/cli/device/poll",
+        json={"device_code": start_b.json()["device_code"]},
+    )
+    key_b = poll_b.json()["access_token"]
+    h_b = {"Authorization": f"Bearer {key_b}"}
 
     mine_resp = await client.get(
         "/api/v1/agents/mine",

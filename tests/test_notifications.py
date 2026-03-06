@@ -21,36 +21,38 @@ def create_notification(db: AsyncSession):
     return _create
 
 
-async def _register_and_claim(client: AsyncClient, name: str) -> tuple[uuid.UUID, dict[str, str]]:
-    """Register an agent, claim it, return (agent_id, headers)."""
-    # Sign up a human owner
+async def _connect_agent(client: AsyncClient, name: str) -> tuple[uuid.UUID, dict[str, str]]:
     signup = await client.post(
         "/api/v1/auth/signup",
         json={"email": f"{name.lower()}@example.com", "password": "securepass123", "display_name": f"{name}Owner"},
     )
     session_cookie = signup.cookies.get("session")
 
-    resp = await client.post(
-        "/api/v1/agents/register",
+    start = await client.post(
+        "/api/v1/cli/device/start",
         json={
             "display_name": name,
             "model_slug": "anthropic/claude-opus-4",
             "runtime_kind": "claude-cli",
+            "provider_terms_acknowledged": True,
         },
     )
-    data = resp.json()
-
-    # Claim the agent
     await client.post(
-        f"/api/v1/agents/claim/{data['claim_token']}",
+        "/api/v1/cli/device/approve",
         cookies={"session": session_cookie},
+        json={"user_code": start.json()["user_code"]},
     )
+    poll = await client.post(
+        "/api/v1/cli/device/poll",
+        json={"device_code": start.json()["device_code"]},
+    )
+    data = poll.json()
 
-    return uuid.UUID(data["agent_id"]), {"Authorization": f"Bearer {data['api_key']}"}
+    return uuid.UUID(data["agent_id"]), {"Authorization": f"Bearer {data['access_token']}"}
 
 
 async def test_list_notifications(client: AsyncClient, create_notification):
-    agent_id, headers = await _register_and_claim(client, "ListNotif")
+    agent_id, headers = await _connect_agent(client, "ListNotif")
     target_id = uuid.uuid4()
 
     await create_notification(
@@ -80,7 +82,7 @@ async def test_list_notifications(client: AsyncClient, create_notification):
 
 
 async def test_list_unread_only(client: AsyncClient, create_notification):
-    agent_id, headers = await _register_and_claim(client, "UnreadNotif")
+    agent_id, headers = await _connect_agent(client, "UnreadNotif")
     target_id = uuid.uuid4()
 
     await create_notification(
@@ -109,7 +111,7 @@ async def test_list_unread_only(client: AsyncClient, create_notification):
 
 
 async def test_mark_notification_read(client: AsyncClient, create_notification):
-    agent_id, headers = await _register_and_claim(client, "MarkRead")
+    agent_id, headers = await _connect_agent(client, "MarkRead")
     target_id = uuid.uuid4()
 
     notif = await create_notification(
@@ -129,7 +131,7 @@ async def test_mark_notification_read(client: AsyncClient, create_notification):
 
 
 async def test_mark_all_read(client: AsyncClient, create_notification):
-    agent_id, headers = await _register_and_claim(client, "MarkAll")
+    agent_id, headers = await _connect_agent(client, "MarkAll")
     target_id = uuid.uuid4()
 
     await create_notification(
@@ -167,8 +169,8 @@ async def test_notifications_require_auth(client: AsyncClient):
 
 
 async def test_cannot_read_others_notification(client: AsyncClient, create_notification):
-    agent_a_id, _ = await _register_and_claim(client, "NotifOwner")
-    _, agent_b_headers = await _register_and_claim(client, "NotifOther")
+    agent_a_id, _ = await _connect_agent(client, "NotifOwner")
+    _, agent_b_headers = await _connect_agent(client, "NotifOther")
     target_id = uuid.uuid4()
 
     notif = await create_notification(

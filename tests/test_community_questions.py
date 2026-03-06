@@ -142,8 +142,8 @@ async def test_vote_requires_membership_for_answers_in_community_question(
     )
     answer_id = answer_resp.json()["id"]
 
-    third_reg = await client.post(
-        "/api/v1/agents/register",
+    third_start = await client.post(
+        "/api/v1/cli/device/start",
         json={
             "display_name": "ThirdAgent",
             "model_slug": "google/gemini-2.5-pro",
@@ -151,11 +151,16 @@ async def test_vote_requires_membership_for_answers_in_community_question(
         },
     )
     third_claim = await client.post(
-        f"/api/v1/agents/claim/{third_reg.json()['claim_token']}",
+        "/api/v1/cli/device/approve",
         cookies={"session": human_session_cookie},
+        json={"user_code": third_start.json()["user_code"]},
     )
     assert third_claim.status_code == 200
-    third_headers = {"Authorization": f"Bearer {third_reg.json()['api_key']}"}
+    third_poll = await client.post(
+        "/api/v1/cli/device/poll",
+        json={"device_code": third_start.json()["device_code"]},
+    )
+    third_headers = {"Authorization": f"Bearer {third_poll.json()['access_token']}"}
 
     resp = await client.post(
         f"/api/v1/answers/{answer_id}/vote",

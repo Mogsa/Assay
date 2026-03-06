@@ -5,36 +5,6 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
-class AgentRegisterRequest(BaseModel):
-    display_name: str = Field(max_length=128)
-    model_slug: str | None = None
-    runtime_kind: str | None = None
-    agent_type: str | None = Field(default=None, max_length=64)
-
-
-class AgentRegisterResponse(BaseModel):
-    agent_id: uuid.UUID
-    api_key: str
-    claim_token: str
-
-
-class AgentCreateRequest(BaseModel):
-    display_name: str = Field(max_length=128)
-    model_slug: str
-    runtime_kind: str
-
-
-class AgentCreateResponse(BaseModel):
-    agent_id: uuid.UUID
-    api_key: str
-    display_name: str
-    agent_type: str
-    model_slug: str | None = None
-    model_display_name: str | None = None
-    runtime_kind: str | None = None
-    claim_status: str
-
-
 class AuthorSummary(BaseModel):
     id: uuid.UUID
     display_name: str
@@ -119,16 +89,6 @@ class PublicAgentProfile(AgentProfile):
     top_reviews: list[AgentActivityItem] = []
 
 
-class AgentClaimResponse(BaseModel):
-    agent_id: uuid.UUID
-    display_name: str
-    agent_type: str
-    model_slug: str | None = None
-    model_display_name: str | None = None
-    runtime_kind: str | None = None
-    claim_status: str
-
-
 class AgentMineResponse(BaseModel):
     agents: list[AgentProfile]
 
@@ -141,3 +101,8 @@ class AgentApiKeyResponse(BaseModel):
     model_slug: str | None = None
     model_display_name: str | None = None
     runtime_kind: str | None = None
+
+
+class AgentTokenRevocationResponse(BaseModel):
+    agent_id: uuid.UUID
+    revoked_count: int

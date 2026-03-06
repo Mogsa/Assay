@@ -67,34 +67,41 @@ async def _signup_human(
     return session_cookie
 
 
-async def _register_agent(
+async def _connect_agent(
     client: AsyncClient,
     *,
     display_name: str,
     agent_type: str,
+    session_cookie: str,
+    existing_agent_id: str | None = None,
 ) -> dict:
     model_slug, runtime_kind = TEST_AGENT_TYPES.get(
         agent_type,
         ("anthropic/claude-opus-4", "claude-cli"),
     )
-    response = await client.post(
-        "/api/v1/agents/register",
+    start = await client.post(
+        "/api/v1/cli/device/start",
         json={
             "display_name": display_name,
             "model_slug": model_slug,
             "runtime_kind": runtime_kind,
+            "provider_terms_acknowledged": runtime_kind == "claude-cli",
         },
     )
-    assert response.status_code == 201
-    return response.json()
-
-
-async def _claim_agent(client: AsyncClient, *, claim_token: str, session_cookie: str) -> None:
-    response = await client.post(
-        f"/api/v1/agents/claim/{claim_token}",
+    assert start.status_code == 201
+    payload = start.json()
+    approve = await client.post(
+        "/api/v1/cli/device/approve",
         cookies={"session": session_cookie},
+        json={"user_code": payload["user_code"], "agent_id": existing_agent_id},
     )
-    assert response.status_code == 200
+    assert approve.status_code == 200
+    poll = await client.post(
+        "/api/v1/cli/device/poll",
+        json={"device_code": payload["device_code"]},
+    )
+    assert poll.status_code == 200
+    return poll.json()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -156,17 +163,13 @@ async def human_session_cookie(client: AsyncClient) -> str:
 
 @pytest.fixture
 async def agent_headers(client: AsyncClient, human_session_cookie: str) -> dict[str, str]:
-    registration = await _register_agent(
+    connection = await _connect_agent(
         client,
         display_name="TestAgent",
         agent_type="test-agent",
-    )
-    await _claim_agent(
-        client,
-        claim_token=registration["claim_token"],
         session_cookie=human_session_cookie,
     )
-    return {"Authorization": f"Bearer {registration['api_key']}"}
+    return {"Authorization": f"Bearer {connection['access_token']}"}
 
 
 @pytest.fixture
@@ -174,17 +177,13 @@ async def second_agent_headers(
     client: AsyncClient,
     human_session_cookie: str,
 ) -> dict[str, str]:
-    registration = await _register_agent(
+    connection = await _connect_agent(
         client,
         display_name="SecondAgent",
         agent_type="test-agent-2",
-    )
-    await _claim_agent(
-        client,
-        claim_token=registration["claim_token"],
         session_cookie=human_session_cookie,
     )
-    return {"Authorization": f"Bearer {registration['api_key']}"}
+    return {"Authorization": f"Bearer {connection['access_token']}"}
 
 
 @pytest.fixture
@@ -192,24 +191,10 @@ async def third_agent_headers(
     client: AsyncClient,
     human_session_cookie: str,
 ) -> dict[str, str]:
-    registration = await _register_agent(
+    connection = await _connect_agent(
         client,
         display_name="ThirdAgent",
         agent_type="test-agent-3",
-    )
-    await _claim_agent(
-        client,
-        claim_token=registration["claim_token"],
         session_cookie=human_session_cookie,
     )
-    return {"Authorization": f"Bearer {registration['api_key']}"}
-
-
-@pytest.fixture
-async def unclaimed_agent_headers(client: AsyncClient) -> dict[str, str]:
-    registration = await _register_agent(
-        client,
-        display_name="UnclaimedAgent",
-        agent_type="test-agent-unclaimed",
-    )
-    return {"Authorization": f"Bearer {registration['api_key']}"}
+    return {"Authorization": f"Bearer {connection['access_token']}"}

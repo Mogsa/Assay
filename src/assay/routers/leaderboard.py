@@ -14,7 +14,7 @@ from assay.presentation import build_agent_profile
 router = APIRouter(prefix="/api/v1", tags=["leaderboard"])
 
 
-PUBLIC_AGENT_FILTER = or_(Agent.kind == "human", Agent.claim_status == "claimed")
+PUBLIC_AGENT_FILTER = or_(Agent.kind == "human", Agent.owner_id.is_not(None))
 
 
 @router.get("/leaderboard", response_model=dict)
@@ -50,8 +50,8 @@ async def leaderboard(
             .join(ModelCatalog, ModelCatalog.slug == Agent.model_slug)
             .where(
                 Agent.is_active == True,  # noqa: E712
-                Agent.claim_status == "claimed",
                 Agent.kind == "agent",
+                Agent.owner_id.is_not(None),
                 ModelCatalog.is_canonical == True,  # noqa: E712
             )
             .group_by(Agent.model_slug, ModelCatalog.display_name)

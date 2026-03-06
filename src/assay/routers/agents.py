@@ -1,16 +1,16 @@
 import hashlib
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from sqlalchemy import String, Uuid, literal, select, tuple_, union_all
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import String, Uuid, literal, select, tuple_, union_all, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import get_current_human, get_current_principal
-from assay.catalog_service import resolve_model_runtime_selection
 from assay.database import get_db
 from assay.models.agent import Agent
+from assay.models.agent_auth_token import AgentAuthToken
 from assay.models.agent_runtime_policy import AgentRuntimePolicy
 from assay.models.answer import Answer
 from assay.models.comment import Comment
@@ -20,35 +20,23 @@ from assay.presentation import (
     build_agent_profile,
     is_public_profile,
 )
-from assay.rate_limit import limiter
 from assay.schemas.agent import (
     AgentActivityItem,
-    AgentClaimResponse,
-    AgentCreateRequest,
-    AgentCreateResponse,
     AgentApiKeyResponse,
     AgentMineResponse,
     AgentProfile,
     AgentRuntimePolicyResponse,
     AgentRuntimePolicyUpdate,
-    AgentRegisterRequest,
-    AgentRegisterResponse,
+    AgentTokenRevocationResponse,
     PublicAgentProfile,
 )
 
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
 
-CLAIM_TOKEN_EXPIRY_HOURS = 24
-
 
 def _new_api_key() -> tuple[str, str]:
     api_key = secrets.token_urlsafe(32)
     return api_key, hashlib.sha256(api_key.encode()).hexdigest()
-
-
-def _new_claim_token() -> tuple[str, str]:
-    claim_token = secrets.token_urlsafe(32)
-    return claim_token, hashlib.sha256(claim_token.encode()).hexdigest()
 
 
 async def _get_public_agent_or_404(db: AsyncSession, agent_id: uuid.UUID) -> Agent:
@@ -244,10 +232,8 @@ async def _get_owned_agent_or_404(
     if agent.kind == "human":
         raise HTTPException(
             status_code=400,
-            detail="Runtime policy is only available for claimed AI agents",
+            detail="Runtime policy is only available for connected AI agents",
         )
-    if agent.claim_status != "claimed":
-        raise HTTPException(status_code=400, detail="Agent must be claimed first")
     return agent
 
 
@@ -350,120 +336,6 @@ async def _top_reviews(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActiv
     return items[:3]
 
 
-@router.post("/register", response_model=AgentRegisterResponse, status_code=201)
-@limiter.limit("10/minute")
-async def register_agent(
-    request: Request,
-    response: Response,
-    body: AgentRegisterRequest,
-    db: AsyncSession = Depends(get_db),
-):
-    model, runtime = await resolve_model_runtime_selection(
-        db,
-        model_slug=body.model_slug,
-        runtime_kind=body.runtime_kind,
-        agent_type=body.agent_type,
-    )
-    api_key, api_key_hash = _new_api_key()
-    claim_token, claim_token_hash = _new_claim_token()
-
-    agent = Agent(
-        display_name=body.display_name,
-        agent_type=model.display_name,
-        kind="agent",
-        model_slug=model.slug,
-        runtime_kind=runtime.slug,
-        api_key_hash=api_key_hash,
-        claim_token_hash=claim_token_hash,
-        claim_token_expires_at=datetime.now(timezone.utc)
-        + timedelta(hours=CLAIM_TOKEN_EXPIRY_HOURS),
-        claim_status="unclaimed",
-    )
-    db.add(agent)
-    await db.flush()
-    await db.refresh(agent)
-
-    return AgentRegisterResponse(
-        agent_id=agent.id,
-        api_key=api_key,
-        claim_token=claim_token,
-    )
-
-
-@router.post("", response_model=AgentCreateResponse, status_code=201)
-async def create_agent(
-    body: AgentCreateRequest,
-    owner: Agent = Depends(get_current_human),
-    db: AsyncSession = Depends(get_db),
-):
-    model, runtime = await resolve_model_runtime_selection(
-        db,
-        model_slug=body.model_slug,
-        runtime_kind=body.runtime_kind,
-        agent_type=None,
-    )
-    api_key, api_key_hash = _new_api_key()
-    agent = Agent(
-        display_name=body.display_name,
-        agent_type=model.display_name,
-        kind="agent",
-        model_slug=model.slug,
-        runtime_kind=runtime.slug,
-        api_key_hash=api_key_hash,
-        owner_id=owner.id,
-        claim_status="claimed",
-    )
-    db.add(agent)
-    await db.flush()
-    await db.refresh(agent)
-
-    return AgentCreateResponse(
-        agent_id=agent.id,
-        api_key=api_key,
-        display_name=agent.display_name,
-        agent_type=model.display_name,
-        model_slug=model.slug,
-        model_display_name=model.display_name,
-        runtime_kind=runtime.slug,
-        claim_status=agent.claim_status,
-    )
-
-
-@router.post("/claim/{token}", response_model=AgentClaimResponse)
-async def claim_agent(
-    token: str,
-    owner: Agent = Depends(get_current_human),
-    db: AsyncSession = Depends(get_db),
-):
-    token_hash = hashlib.sha256(token.encode()).hexdigest()
-    result = await db.execute(select(Agent).where(Agent.claim_token_hash == token_hash))
-    agent = result.scalar_one_or_none()
-    if agent is None:
-        raise HTTPException(status_code=404, detail="Invalid claim token")
-
-    if agent.claim_status == "claimed":
-        raise HTTPException(status_code=409, detail="Agent already claimed")
-
-    if agent.claim_token_expires_at and agent.claim_token_expires_at < datetime.now(
-        timezone.utc
-    ):
-        raise HTTPException(status_code=410, detail="Claim token expired")
-
-    agent.owner_id = owner.id
-    agent.claim_status = "claimed"
-    await db.commit()
-
-    return AgentClaimResponse(
-        agent_id=agent.id,
-        display_name=agent.display_name,
-        agent_type=agent.agent_type,
-        model_slug=agent.model_slug,
-        model_display_name=agent.agent_type if agent.kind == "agent" else None,
-        runtime_kind=agent.runtime_kind,
-        claim_status=agent.claim_status,
-    )
-
-
 @router.get("/mine", response_model=AgentMineResponse)
 async def list_my_agents(
     owner: Agent = Depends(get_current_human),
@@ -505,7 +377,7 @@ async def get_runtime_policy(
     if agent.kind == "human":
         raise HTTPException(
             status_code=400,
-            detail="Runtime policy is only available for claimed AI agents",
+            detail="Runtime policy is only available for connected AI agents",
         )
 
     policy = await _get_runtime_policy(db, agent_id)
@@ -595,4 +467,26 @@ async def rotate_agent_api_key(
         model_slug=profile.model_slug,
         model_display_name=profile.model_display_name,
         runtime_kind=profile.runtime_kind,
+    )
+
+
+@router.post("/{agent_id}/tokens/revoke-all", response_model=AgentTokenRevocationResponse)
+async def revoke_agent_tokens(
+    agent_id: uuid.UUID,
+    owner: Agent = Depends(get_current_human),
+    db: AsyncSession = Depends(get_db),
+):
+    agent = await _get_owned_agent_or_404(db, owner_id=owner.id, agent_id=agent_id)
+    result = await db.execute(
+        update(AgentAuthToken)
+        .where(
+            AgentAuthToken.agent_id == agent.id,
+            AgentAuthToken.revoked_at.is_(None),
+        )
+        .values(revoked_at=datetime.now(timezone.utc))
+    )
+    await db.flush()
+    return AgentTokenRevocationResponse(
+        agent_id=agent.id,
+        revoked_count=int(result.rowcount or 0),
     )

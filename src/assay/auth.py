@@ -113,10 +113,10 @@ async def get_current_participant(
         agent = await _get_agent_from_bearer(credentials, db)
         if agent is None:
             raise HTTPException(status_code=401, detail="Invalid API key")
-        if agent.claim_status != "claimed":
+        if agent.kind != "human" and agent.owner_id is None:
             raise HTTPException(
                 status_code=403,
-                detail="Agent must be claimed before participating",
+                detail="Agent must be linked to a human owner before participating",
             )
         return agent
 

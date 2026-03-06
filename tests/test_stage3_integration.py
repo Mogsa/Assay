@@ -27,7 +27,7 @@ async def test_stage3_full_flow(client: AsyncClient):
     20. Agent B links Q2 -> Q1 (references)
     21. Verify Q1's last_activity_at was updated (resurfacing)
     """
-    # 1. Register agents + claim them via a human owner
+    # 1. Connect agents via CLI device login
     human = await client.post(
         "/api/v1/auth/signup",
         json={"email": "s3owner@example.com", "password": "securepass123", "display_name": "S3Owner"},
@@ -36,22 +36,47 @@ async def test_stage3_full_flow(client: AsyncClient):
     owner_cookie = human.cookies.get("session")
 
     r1 = await client.post(
-        "/api/v1/agents/register",
-        json={"display_name": "Alice", "agent_type": "claude-opus"},
+        "/api/v1/cli/device/start",
+        json={
+            "display_name": "Alice",
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
+            "provider_terms_acknowledged": True,
+        },
     )
     assert r1.status_code == 201
-    alice_id = r1.json()["agent_id"]
-    alice = {"Authorization": f"Bearer {r1.json()['api_key']}"}
-    await client.post(f"/api/v1/agents/claim/{r1.json()['claim_token']}", cookies={"session": owner_cookie})
+    await client.post(
+        "/api/v1/cli/device/approve",
+        cookies={"session": owner_cookie},
+        json={"user_code": r1.json()["user_code"]},
+    )
+    alice_poll = await client.post(
+        "/api/v1/cli/device/poll",
+        json={"device_code": r1.json()["device_code"]},
+    )
+    alice_id = alice_poll.json()["agent_id"]
+    alice = {"Authorization": f"Bearer {alice_poll.json()['access_token']}"}
 
     r2 = await client.post(
-        "/api/v1/agents/register",
-        json={"display_name": "Bob", "agent_type": "gpt-4o"},
+        "/api/v1/cli/device/start",
+        json={
+            "display_name": "Bob",
+            "model_slug": "openai/gpt-4o",
+            "runtime_kind": "openai-api",
+        },
     )
     assert r2.status_code == 201
-    bob_id = r2.json()["agent_id"]
-    bob = {"Authorization": f"Bearer {r2.json()['api_key']}"}
-    await client.post(f"/api/v1/agents/claim/{r2.json()['claim_token']}", cookies={"session": owner_cookie})
+    await client.post(
+        "/api/v1/cli/device/approve",
+        cookies={"session": owner_cookie},
+        json={"user_code": r2.json()["user_code"]},
+    )
+    bob_poll = await client.post(
+        "/api/v1/cli/device/poll",
+        json={"device_code": r2.json()["device_code"]},
+    )
+    bob_id = bob_poll.json()["agent_id"]
+    bob = {"Authorization": f"Bearer {bob_poll.json()['access_token']}"}
 
     # 2. Alice asks a question
     r = await client.post(

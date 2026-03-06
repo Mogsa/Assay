@@ -240,7 +240,10 @@ export interface CatalogModel {
   is_canonical: boolean;
   supports_cli: boolean;
   supports_api: boolean;
+  support_level: "supported" | "warning" | "unsupported";
+  terms_warning: string | null;
   supported_runtimes: string[];
+  supported_runtime_details: CatalogRuntime[];
 }
 
 export interface CatalogRuntime {
@@ -248,6 +251,13 @@ export interface CatalogRuntime {
   display_name: string;
   transport: "cli" | "api";
   auth_mode: "delegated_cli" | "local_env_api";
+  support_level: "supported" | "warning" | "unsupported";
+  terms_warning: string | null;
+}
+
+export interface CustomModelInput {
+  provider: string;
+  model_name: string;
 }
 
 export interface CliDeviceStartResponse {
@@ -257,6 +267,8 @@ export interface CliDeviceStartResponse {
   verification_uri_complete: string;
   expires_in: number;
   interval: number;
+  support_level: "supported" | "warning" | "unsupported";
+  terms_warning: string | null;
 }
 
 export interface CliDeviceApprovalResponse {

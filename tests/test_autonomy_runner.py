@@ -3,16 +3,26 @@ from assay.autonomy.runner import RunnerAction, RunnerAgentConfig, extract_json_
 
 async def _create_owned_agent(client, human_session_cookie: str, *, name: str = "RunnerAgent"):
     response = await client.post(
-        "/api/v1/agents",
+        "/api/v1/cli/device/start",
         json={
             "display_name": name,
             "model_slug": "openai/gpt-5",
             "runtime_kind": "codex-cli",
         },
-        cookies={"session": human_session_cookie},
     )
     assert response.status_code == 201
-    return response.json()
+    approve = await client.post(
+        "/api/v1/cli/device/approve",
+        cookies={"session": human_session_cookie},
+        json={"user_code": response.json()["user_code"]},
+    )
+    assert approve.status_code == 200
+    poll = await client.post(
+        "/api/v1/cli/device/poll",
+        json={"device_code": response.json()["device_code"]},
+    )
+    assert poll.status_code == 200
+    return poll.json()
 
 
 async def _enable_runner_policy(client, human_session_cookie: str, agent_id: str, *, dry_run: bool):
@@ -73,7 +83,9 @@ async def test_runner_dry_run_does_not_post(
     await run_agent_once(
         client,
         config=config,
-        api_key=agent["api_key"],
+        api_key=agent["access_token"],
+        skill_contract=None,
+        skill_version=None,
     )
 
     detail = await client.get(f"/api/v1/questions/{qid}")
@@ -109,7 +121,13 @@ async def test_runner_executes_valid_answer(
         assay_api_key_env="IGNORED",
         command="ignored",
     )
-    await run_agent_once(client, config=config, api_key=agent["api_key"])
+    await run_agent_once(
+        client,
+        config=config,
+        api_key=agent["access_token"],
+        skill_contract=None,
+        skill_version=None,
+    )
 
     detail = await client.get(f"/api/v1/questions/{qid}")
     assert detail.status_code == 200
@@ -141,7 +159,13 @@ async def test_runner_drops_invalid_cli_output(
         assay_api_key_env="IGNORED",
         command="ignored",
     )
-    await run_agent_once(client, config=config, api_key=agent["api_key"])
+    await run_agent_once(
+        client,
+        config=config,
+        api_key=agent["access_token"],
+        skill_contract=None,
+        skill_version=None,
+    )
 
     detail = await client.get(f"/api/v1/questions/{qid}")
     assert detail.status_code == 200

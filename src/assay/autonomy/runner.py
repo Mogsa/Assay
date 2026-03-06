@@ -125,6 +125,8 @@ def build_prompt(
     policy: dict,
     thread: dict,
     similar_questions: list[dict],
+    skill_contract: str | None,
+    skill_version: str | None,
 ) -> str:
     policy_summary = {
         "enabled": policy["enabled"],
@@ -144,6 +146,8 @@ def build_prompt(
         "Allowed actions: skip, answer_question, review_question, review_answer, repost_question.\n"
         "Never propose question asking. Never propose actions outside the allowed policy.\n"
         "Prefer rigorous, concise actions with clear reasoning. Do not act on your own content.\n\n"
+        f"Assay skill version: {skill_version or 'unknown'}\n\n"
+        f"Assay skill contract:\n{skill_contract or 'Unavailable'}\n\n"
         f"Agent id: {agent_id}\n"
         f"Runtime policy:\n{json.dumps(policy_summary, indent=2)}\n\n"
         f"Current thread:\n{json.dumps(thread, indent=2)}\n\n"
@@ -478,6 +482,8 @@ async def run_agent_once(
     *,
     config: RunnerAgentConfig,
     api_key: str,
+    skill_contract: str | None,
+    skill_version: str | None,
 ) -> None:
     me = await api_request(
         client,
@@ -556,6 +562,8 @@ async def run_agent_once(
             policy=policy,
             thread=detail,
             similar_questions=similar_items,
+            skill_contract=skill_contract,
+            skill_version=skill_version,
         )
         try:
             action = await invoke_runtime(
@@ -618,9 +626,26 @@ async def run_agent_loop(base_url: str, config: RunnerAgentConfig) -> None:
         raise RuntimeError("Missing Assay bearer credential environment variable")
 
     async with httpx.AsyncClient(base_url=base_url, timeout=30.0) as client:
+        skill_contract: str | None = None
+        skill_version: str | None = None
+        try:
+            version_resp = await client.get("/api/v1/skill/version")
+            version_resp.raise_for_status()
+            skill_version = version_resp.json().get("version")
+            skill_resp = await client.get("/skill.md")
+            skill_resp.raise_for_status()
+            skill_contract = skill_resp.text
+        except httpx.HTTPError as exc:
+            LOG.warning("%s: failed to load Assay skill: %s", config.name or config.assay_agent_id, exc)
         while True:
             try:
-                await run_agent_once(client, config=config, api_key=assay_token)
+                await run_agent_once(
+                    client,
+                    config=config,
+                    api_key=assay_token,
+                    skill_contract=skill_contract,
+                    skill_version=skill_version,
+                )
             except httpx.HTTPError as exc:
                 LOG.warning("%s: HTTP failure: %s", config.name or config.assay_agent_id, exc)
             except Exception:

@@ -1,5 +1,14 @@
 import re
 
+ANTHROPIC_CLI_WARNING = (
+    "Anthropic consumer Claude and Claude Code subscriptions may not permit every "
+    "third-party automation or product use case. Confirm your provider terms before use."
+)
+CUSTOM_MODEL_WARNING = (
+    "Custom models are allowed, but they are excluded from canonical model averages "
+    "and agent-type leaderboards."
+)
+
 
 DEFAULT_RUNTIME_BY_MODEL: dict[str, str] = {
     "anthropic/claude-opus-4": "claude-cli",
@@ -29,6 +38,15 @@ LEGACY_MODEL_ALIASES: dict[str, str] = {
 def sanitize_legacy_model_slug(value: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-")
     return slug or "legacy-unknown"
+
+
+def sanitize_catalog_slug(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-")
+    return slug or "unknown"
+
+
+def custom_model_slug(provider: str, model_name: str) -> str:
+    return f"custom/{sanitize_catalog_slug(provider)}/{sanitize_catalog_slug(model_name)}"
 
 
 def legacy_model_slug(value: str) -> str:

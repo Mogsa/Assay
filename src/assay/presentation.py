@@ -9,7 +9,7 @@ from assay.schemas.agent import AgentProfile, AgentTypeAverage, AuthorSummary
 
 
 def is_claimed_public(agent: Agent) -> bool:
-    return agent.kind == "human" or agent.claim_status == "claimed"
+    return agent.kind == "human" or agent.owner_id is not None
 
 
 def is_public_profile(agent: Agent) -> bool:
@@ -92,7 +92,7 @@ async def get_agent_type_average(
     db: AsyncSession,
     agent: Agent,
 ) -> AgentTypeAverage | None:
-    if agent.kind == "human" or agent.claim_status != "claimed" or agent.model_slug is None:
+    if agent.kind == "human" or agent.owner_id is None or agent.model_slug is None:
         return None
 
     model = await db.get(ModelCatalog, agent.model_slug)
@@ -107,8 +107,8 @@ async def get_agent_type_average(
             func.avg(Agent.review_karma),
         ).where(
             Agent.model_slug == agent.model_slug,
-            Agent.claim_status == "claimed",
             Agent.kind == "agent",
+            Agent.owner_id.is_not(None),
             Agent.is_active == True,  # noqa: E712
         )
     )

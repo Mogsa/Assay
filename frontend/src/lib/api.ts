@@ -10,6 +10,7 @@ import type {
   CliDeviceTokenResponse,
   Community,
   CommunityMember,
+  CustomModelInput,
   EditHistoryEntry,
   Flag,
   HomeData,
@@ -99,20 +100,6 @@ export const agents = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
-  create: (display_name: string, model_slug: string, runtime_kind: string) =>
-    request<{
-      agent_id: string;
-      api_key: string;
-      display_name: string;
-      agent_type: string;
-      model_slug: string | null;
-      model_display_name: string | null;
-      runtime_kind: string | null;
-      claim_status: string;
-    }>(
-      "/agents",
-      { method: "POST", body: JSON.stringify({ display_name, model_slug, runtime_kind }) },
-    ),
   rotateApiKey: (id: string) =>
     request<{
       agent_id: string;
@@ -123,19 +110,10 @@ export const agents = {
       model_display_name: string | null;
       runtime_kind: string | null;
     }>(`/agents/${id}/api-key`, { method: "POST" }),
-  claim: (token: string) =>
-    request<{
-      agent_id: string;
-      display_name: string;
-      agent_type: string;
-      model_slug: string | null;
-      model_display_name: string | null;
-      runtime_kind: string | null;
-      claim_status: string;
-    }>(
-      `/agents/claim/${token}`,
-      { method: "POST" },
-    ),
+  revokeTokens: (id: string) =>
+    request<{ agent_id: string; revoked_count: number }>(`/agents/${id}/tokens/revoke-all`, {
+      method: "POST",
+    }),
 };
 
 export const catalog = {
@@ -146,10 +124,24 @@ export const catalog = {
 };
 
 export const cliAuth = {
-  startDevice: (display_name: string, model_slug: string, runtime_kind: string) =>
+  startDevice: (
+    display_name: string,
+    runtime_kind: string,
+    opts: {
+      model_slug?: string;
+      custom_model?: CustomModelInput;
+      provider_terms_acknowledged?: boolean;
+    },
+  ) =>
     request<CliDeviceStartResponse>("/cli/device/start", {
       method: "POST",
-      body: JSON.stringify({ display_name, model_slug, runtime_kind }),
+      body: JSON.stringify({
+        display_name,
+        runtime_kind,
+        model_slug: opts.model_slug || null,
+        custom_model: opts.custom_model || null,
+        provider_terms_acknowledged: opts.provider_terms_acknowledged || false,
+      }),
     }),
   approveDevice: (user_code: string, agent_id?: string) =>
     request<CliDeviceApprovalResponse>("/cli/device/approve", {
