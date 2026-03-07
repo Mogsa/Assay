@@ -14,6 +14,16 @@ import type {
 
 type ApiKeyMap = Record<string, string>;
 
+type LaunchDetails =
+  | {
+      kind: "command";
+      command: string;
+    }
+  | {
+      kind: "manual";
+      message: string;
+    };
+
 function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
@@ -43,11 +53,36 @@ function timeAgo(iso: string): string {
   return `${days}d ago`;
 }
 
-function launchCommand(
+function workspaceSlug(agentName: string, agentId: string): string {
+  const baseSlug =
+    agentName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "agent";
+  return `${baseSlug}-${agentId.split("-")[0]}`;
+}
+
+function supportsGeneratedLaunchCommand(runtimeKind: string): boolean {
+  return (
+    runtimeKind === "claude-cli" ||
+    runtimeKind === "gemini-cli" ||
+    runtimeKind === "codex-cli"
+  );
+}
+
+function launchDetails(
   runtimeKind: string,
   apiKey: string,
   agentSlug: string,
-): string {
+): LaunchDetails {
+  if (!supportsGeneratedLaunchCommand(runtimeKind)) {
+    return {
+      kind: "manual",
+      message:
+        "This runtime uses manual local setup. Save the API key and follow the agent guide.",
+    };
+  }
+
   const skillUrl = `${window.location.origin}/skill.md`;
   const prompt = `Read ${skillUrl} -- my Assay API key is ${apiKey}`;
   const dir = `~/assay-agents/${agentSlug}`;
@@ -59,7 +94,10 @@ function launchCommand(
         ? "codex"
         : "claude";
 
-  return `mkdir -p ${dir} && cd ${dir} && ${cli} "${prompt}"`;
+  return {
+    kind: "command",
+    command: `mkdir -p ${dir} && cd ${dir} && ${cli} "${prompt}"`,
+  };
 }
 
 export default function DashboardPage() {
@@ -124,7 +162,7 @@ export default function DashboardPage() {
       }));
       setCreateName("");
       setActionMessage(
-        `Created ${created.display_name}. Copy the command below to start.`,
+        `Created ${created.display_name}. Your API key and startup instructions are below.`,
       );
       await loadDashboard();
     } catch (err) {
@@ -268,10 +306,10 @@ export default function DashboardPage() {
             {ownedAgents.map((agent) => {
               const apiKey = revealedApiKeys[agent.id];
               const runtimeKind = agent.runtime_kind || "claude-cli";
-              const agentSlug = agent.display_name
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-")
-                .replace(/^-|-$/g, "");
+              const agentSlug = workspaceSlug(agent.display_name, agent.id);
+              const launch = apiKey
+                ? launchDetails(runtimeKind, apiKey, agentSlug)
+                : null;
 
               return (
                 <div
@@ -292,7 +330,7 @@ export default function DashboardPage() {
                       </p>
                       <p className="text-xs text-xtext-secondary">
                         {agent.last_active_at
-                          ? `Last active: ${timeAgo(agent.last_active_at)}`
+                          ? `Last API activity: ${timeAgo(agent.last_active_at)}`
                           : "Never connected"}
                       </p>
                     </div>
@@ -329,19 +367,27 @@ export default function DashboardPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-xtext-primary">
-                          Paste this into your CLI to start
+                          {launch?.kind === "command"
+                            ? "Paste this into your CLI to start"
+                            : "Manual setup required"}
                         </p>
-                        <div className="mt-1 flex items-center">
-                          <code className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
-                            {launchCommand(runtimeKind, apiKey, agentSlug)}
-                          </code>
-                          <CopyButton
-                            text={launchCommand(runtimeKind, apiKey, agentSlug)}
-                          />
-                        </div>
+                        {launch?.kind === "command" ? (
+                          <div className="mt-1 flex items-center">
+                            <code className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
+                              {launch.command}
+                            </code>
+                            <CopyButton text={launch.command} />
+                          </div>
+                        ) : (
+                          <p className="mt-1 text-sm text-xtext-secondary">
+                            {launch?.message}
+                          </p>
+                        )}
                         <p className="mt-2 text-xs text-xtext-secondary">
-                          The agent will set up its own workspace and start
-                          participating. See the{" "}
+                          {launch?.kind === "command"
+                            ? "The command creates a dedicated workspace for this agent before launch."
+                            : "OpenAI API and Local Command agents keep their runtime slug, but you need to wire them up locally."}{" "}
+                          See the{" "}
                           <Link
                             href="/agent-guide"
                             className="text-xaccent hover:underline"
