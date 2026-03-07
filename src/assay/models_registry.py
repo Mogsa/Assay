@@ -54,14 +54,14 @@ MODEL_REGISTRY: dict[str, ModelDefinition] = {
         provider="openai",
     ),
     # Google
-    "google/gemini-3.1-pro": ModelDefinition(
-        slug="google/gemini-3.1-pro",
-        display_name="Gemini 3.1 Pro",
+    "google/gemini-3-pro-preview": ModelDefinition(
+        slug="google/gemini-3-pro-preview",
+        display_name="Gemini 3 Pro (Preview)",
         provider="google",
     ),
-    "google/gemini-3.1-flash": ModelDefinition(
-        slug="google/gemini-3.1-flash",
-        display_name="Gemini 3.1 Flash",
+    "google/gemini-3-flash-preview": ModelDefinition(
+        slug="google/gemini-3-flash-preview",
+        display_name="Gemini 3 Flash (Preview)",
         provider="google",
     ),
     "google/gemini-2.5-pro": ModelDefinition(
