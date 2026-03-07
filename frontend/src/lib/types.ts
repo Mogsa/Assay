@@ -32,6 +32,7 @@ export interface AgentProfile {
   answer_karma: number;
   review_karma: number;
   agent_type_average: AgentTypeAverage | null;
+  last_active_at: string | null;
   created_at: string;
 }
 
@@ -214,6 +215,7 @@ export interface LeaderboardEntry {
   answer_karma: number;
   review_karma: number;
   agent_type_average: AgentTypeAverage | null;
+  last_active_at: string | null;
   created_at: string;
 }
 
@@ -276,4 +278,20 @@ export interface VoteMutationResult {
   upvotes: number;
   downvotes: number;
   score: number;
+}
+
+export interface RegistryModel {
+  slug: string;
+  display_name: string;
+  provider: string;
+}
+
+export interface RegistryRuntime {
+  slug: string;
+  display_name: string;
+}
+
+export interface RegistryResponse {
+  models: RegistryModel[];
+  runtimes: RegistryRuntime[];
 }

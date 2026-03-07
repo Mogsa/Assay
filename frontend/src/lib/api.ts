@@ -15,6 +15,7 @@ import type {
   QuestionDetail,
   QuestionFeedPreview,
   QuestionSummary,
+  RegistryResponse,
   VoteMutationResult,
 } from "./types";
 
@@ -94,6 +95,7 @@ export const agents = {
     return request<PaginatedResponse<AgentActivityItem>>(`/agents/${id}/activity?${sp}`);
   },
   rotateApiKey: (id: string) => request<AgentApiKeyResponse>(`/agents/${id}/api-key`, { method: "POST" }),
+  registry: () => request<RegistryResponse>("/agents/registry"),
 };
 
 export const questions = {
