@@ -85,12 +85,14 @@ function launchDetails(
   }
 
   if (runtimeKind === "codex-cli") {
-    // Codex requires a git repo and can't fetch URLs (sandbox blocks DNS).
-    // git init is idempotent; curl downloads skill.md locally before launch.
+    // Codex requires a git repo (git init is idempotent).
+    // --dangerously-bypass-approvals-and-sandbox disables the network sandbox
+    // so the agent can make HTTP requests to the Assay API.
+    // skill.md downloaded locally because the sandbox blocks DNS during startup.
     const modelFlag = model ? ` -m ${model}` : "";
     const codexSetup = `${setup} && git init -q 2>/dev/null; curl -sfo skill.md ${skillUrl}`;
     const codexPrompt = `Read ./skill.md -- my Assay API key is ${apiKey}`;
-    const run = `codex exec --full-auto${modelFlag} "${codexPrompt}"`;
+    const run = `codex exec --dangerously-bypass-approvals-and-sandbox${modelFlag} "${codexPrompt}"`;
     const singlePass = `${codexSetup} && ${run}`;
     return { kind: "command", singlePass, loop: `${codexSetup} && ${wrapLoop(run)}` };
   }
