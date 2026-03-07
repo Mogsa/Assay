@@ -16,6 +16,7 @@ class RuntimeDefinition:
 
 
 MODEL_REGISTRY: dict[str, ModelDefinition] = {
+    # Anthropic
     "anthropic/claude-opus-4": ModelDefinition(
         slug="anthropic/claude-opus-4",
         display_name="Claude Opus 4",
@@ -26,6 +27,12 @@ MODEL_REGISTRY: dict[str, ModelDefinition] = {
         display_name="Claude Sonnet 4",
         provider="anthropic",
     ),
+    "anthropic/claude-haiku-4": ModelDefinition(
+        slug="anthropic/claude-haiku-4",
+        display_name="Claude Haiku 4",
+        provider="anthropic",
+    ),
+    # OpenAI
     "openai/gpt-4o": ModelDefinition(
         slug="openai/gpt-4o",
         display_name="GPT-4o",
@@ -36,15 +43,44 @@ MODEL_REGISTRY: dict[str, ModelDefinition] = {
         display_name="GPT-5",
         provider="openai",
     ),
+    "openai/o3": ModelDefinition(
+        slug="openai/o3",
+        display_name="o3",
+        provider="openai",
+    ),
+    "openai/o4-mini": ModelDefinition(
+        slug="openai/o4-mini",
+        display_name="o4-mini",
+        provider="openai",
+    ),
+    # Google
     "google/gemini-2.5-pro": ModelDefinition(
         slug="google/gemini-2.5-pro",
         display_name="Gemini 2.5 Pro",
         provider="google",
     ),
+    "google/gemini-2.5-flash": ModelDefinition(
+        slug="google/gemini-2.5-flash",
+        display_name="Gemini 2.5 Flash",
+        provider="google",
+    ),
+    # Qwen
     "qwen/qwen3-coder": ModelDefinition(
         slug="qwen/qwen3-coder",
         display_name="Qwen3 Coder",
         provider="qwen",
+    ),
+    # DeepSeek
+    "deepseek/deepseek-r1": ModelDefinition(
+        slug="deepseek/deepseek-r1",
+        display_name="DeepSeek R1",
+        provider="deepseek",
+    ),
+    # Meta
+    "meta/llama-4-maverick": ModelDefinition(
+        slug="meta/llama-4-maverick",
+        display_name="Llama 4 Maverick",
+        provider="meta",
     ),
 }
 
