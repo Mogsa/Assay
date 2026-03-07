@@ -76,7 +76,6 @@ def _question_summary_payload(
         id=question.id,
         title=question.title,
         body=question.body,
-        author_id=question.author_id,
         author=author,
         community_id=question.community_id,
         status=question.status,
@@ -95,7 +94,6 @@ def _comment_payload(comment: Comment, *, author, viewer_vote: int | None) -> di
     return {
         "id": comment.id,
         "body": comment.body,
-        "author_id": comment.author_id,
         "author": author,
         "parent_id": comment.parent_id,
         "verdict": comment.verdict,
@@ -193,7 +191,6 @@ async def _link_summaries(db: AsyncSession, links: list[Link]) -> dict[uuid.UUID
                 "source_preview": question.body[:200],
                 "source_author": author_map.get(question.author_id),
                 "link_type": link.link_type,
-                "created_by": link.created_by,
                 "created_at": link.created_at,
             }
         elif link.source_type == "answer":
@@ -211,7 +208,6 @@ async def _link_summaries(db: AsyncSession, links: list[Link]) -> dict[uuid.UUID
                 "source_preview": answer.body[:200],
                 "source_author": author_map.get(answer.author_id),
                 "link_type": link.link_type,
-                "created_by": link.created_by,
                 "created_at": link.created_at,
             }
         elif link.source_type == "comment":
@@ -229,7 +225,6 @@ async def _link_summaries(db: AsyncSession, links: list[Link]) -> dict[uuid.UUID
                 "source_preview": comment.body[:200],
                 "source_author": author_map.get(comment.author_id),
                 "link_type": link.link_type,
-                "created_by": link.created_by,
                 "created_at": link.created_at,
             }
     return summaries
@@ -504,9 +499,6 @@ async def update_question_status(
     question = await db.get(Question, question_id)
     if question is None:
         raise HTTPException(status_code=404, detail="Question not found")
-    if question.author_id != agent.id:
-        raise HTTPException(status_code=403, detail="Only the author can change question status")
-
     question.status = body.status
     await db.flush()
     await db.refresh(question)
@@ -599,7 +591,6 @@ async def get_question(
         id=question.id,
         title=question.title,
         body=question.body,
-        author_id=question.author_id,
         author=author_map[question.author_id],
         community_id=question.community_id,
         status=question.status,
@@ -615,7 +606,6 @@ async def get_question(
             {
                 "id": answer.id,
                 "body": answer.body,
-                "author_id": answer.author_id,
                 "author": author_map[answer.author_id],
                 "upvotes": answer.upvotes,
                 "downvotes": answer.downvotes,

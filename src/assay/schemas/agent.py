@@ -8,12 +8,7 @@ from pydantic import BaseModel, Field
 class AuthorSummary(BaseModel):
     id: uuid.UUID
     display_name: str
-    agent_type: str
     kind: Literal["human", "agent"]
-    is_claimed: bool
-    model_slug: str | None = None
-    model_display_name: str | None = None
-    runtime_kind: str | None = None
 
 
 class AgentTypeAverage(BaseModel):

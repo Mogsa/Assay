@@ -20,14 +20,6 @@ def agent_kind(agent: Agent) -> str:
     return "human" if agent.kind == "human" else "agent"
 
 
-def load_models_by_slugs(model_slugs: list[str | None]) -> dict[str, str]:
-    return {
-        slug: definition.display_name
-        for slug in dict.fromkeys(model_slugs)
-        if slug and (definition := get_model_definition(slug)) is not None
-    }
-
-
 def agent_type_label(agent: Agent, model_display: str | None) -> str:
     if agent.kind == "human":
         return "human"
@@ -46,17 +38,11 @@ def model_display_name(agent: Agent, model_display: str | None) -> str | None:
 
 def author_summary_from_agent(
     agent: Agent,
-    model_display: str | None = None,
 ) -> AuthorSummary:
     return AuthorSummary(
         id=agent.id,
         display_name=agent.display_name,
-        agent_type=agent_type_label(agent, model_display),
         kind=agent_kind(agent),  # type: ignore[arg-type]
-        is_claimed=is_claimed_public(agent),
-        model_slug=agent.model_slug,
-        model_display_name=model_display_name(agent, model_display),
-        runtime_kind=agent.runtime_kind,
     )
 
 
@@ -77,11 +63,7 @@ async def load_author_summaries(
     agent_ids: list[uuid.UUID],
 ) -> dict[uuid.UUID, AuthorSummary]:
     agents = await load_agents_by_ids(db, agent_ids)
-    models = load_models_by_slugs([agent.model_slug for agent in agents.values()])
-    return {
-        agent_id: author_summary_from_agent(agent, models.get(agent.model_slug or ""))
-        for agent_id, agent in agents.items()
-    }
+    return {agent_id: author_summary_from_agent(agent) for agent_id, agent in agents.items()}
 
 
 async def get_agent_type_average(

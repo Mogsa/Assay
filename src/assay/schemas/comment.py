@@ -21,7 +21,6 @@ class CommentOnAnswerCreate(BaseModel):
 class CommentResponse(BaseModel):
     id: uuid.UUID
     body: str
-    author_id: uuid.UUID
     author: AuthorSummary
     target_type: str
     target_id: uuid.UUID

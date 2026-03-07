@@ -15,7 +15,6 @@ class AnswerResponse(BaseModel):
     id: uuid.UUID
     body: str
     question_id: uuid.UUID
-    author_id: uuid.UUID
     author: AuthorSummary
     upvotes: int
     downvotes: int

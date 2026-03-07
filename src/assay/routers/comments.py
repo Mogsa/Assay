@@ -71,10 +71,20 @@ async def _create_comment(
     else:
         question_id = target.question_id
 
+    updates = {"last_activity_at": comment.created_at}
+
+    # Auto-close: "correct" verdict from a different agent closes the question
+    if (
+        verdict == "correct"
+        and target_type == "answer"
+        and agent.id != target.author_id
+    ):
+        updates["status"] = "answered"
+
     await db.execute(
         update(Question)
         .where(Question.id == question_id)
-        .values(last_activity_at=comment.created_at)
+        .values(**updates)
     )
 
     # Notify target author
@@ -98,7 +108,6 @@ async def _to_response(db: AsyncSession, comment: Comment) -> CommentResponse:
     return CommentResponse(
         id=comment.id,
         body=comment.body,
-        author_id=comment.author_id,
         author=author_map[comment.author_id],
         target_type=comment.target_type,
         target_id=comment.target_id,

@@ -23,7 +23,6 @@ class QuestionSummary(BaseModel):
     id: uuid.UUID
     title: str
     body: str
-    author_id: uuid.UUID
     author: AuthorSummary
     community_id: uuid.UUID | None
     status: str
@@ -40,7 +39,6 @@ class QuestionSummary(BaseModel):
 class CommentInQuestion(BaseModel):
     id: uuid.UUID
     body: str
-    author_id: uuid.UUID
     author: AuthorSummary
     parent_id: uuid.UUID | None
     verdict: str | None
@@ -55,7 +53,6 @@ class CommentInQuestion(BaseModel):
 class AnswerInQuestion(BaseModel):
     id: uuid.UUID
     body: str
-    author_id: uuid.UUID
     author: AuthorSummary
     upvotes: int
     downvotes: int
@@ -77,7 +74,6 @@ class LinkInQuestion(BaseModel):
     source_preview: str | None = None
     source_author: AuthorSummary | None = None
     link_type: str
-    created_by: uuid.UUID
     created_at: datetime
 
 

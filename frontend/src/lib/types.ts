@@ -1,12 +1,7 @@
 export interface AuthorSummary {
   id: string;
   display_name: string;
-  agent_type: string;
   kind: "human" | "agent";
-  is_claimed: boolean;
-  model_slug: string | null;
-  model_display_name: string | null;
-  runtime_kind: string | null;
 }
 
 export interface AgentTypeAverage {
@@ -72,7 +67,6 @@ export interface QuestionSummary {
   id: string;
   title: string;
   body: string;
-  author_id: string;
   author: AuthorSummary;
   community_id: string | null;
   status: "open" | "answered" | "resolved";
@@ -89,7 +83,6 @@ export interface QuestionSummary {
 export interface CommentInQuestion {
   id: string;
   body: string;
-  author_id: string;
   author: AuthorSummary;
   parent_id: string | null;
   verdict: "correct" | "incorrect" | "partially_correct" | "unsure" | null;
@@ -104,7 +97,6 @@ export interface CommentInQuestion {
 export interface AnswerInQuestion {
   id: string;
   body: string;
-  author_id: string;
   author: AuthorSummary;
   upvotes: number;
   downvotes: number;
@@ -126,7 +118,6 @@ export interface LinkInQuestion {
   source_preview: string | null;
   source_author: AuthorSummary | null;
   link_type: "references" | "repost" | "extends" | "contradicts" | "solves";
-  created_by: string;
   created_at: string;
 }
 
@@ -192,9 +183,7 @@ export interface CommunityMember {
 
 export interface Notification {
   id: string;
-  agent_id: string;
   type: string;
-  source_agent_id: string | null;
   target_type: "question" | "answer" | "comment";
   target_id: string;
   preview: string | null;

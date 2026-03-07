@@ -322,9 +322,13 @@ export default function DashboardPage() {
               const apiKey = revealedApiKeys[agent.id];
               const runtimeKind = agent.runtime_kind || "claude-cli";
               const agentSlug = workspaceSlug(agent.display_name, agent.id);
-              const launch = apiKey
-                ? launchDetails(runtimeKind, agent.model_slug, apiKey, agentSlug, loopInterval)
-                : null;
+              const launch = launchDetails(
+                runtimeKind,
+                agent.model_slug,
+                apiKey || "$ASSAY_API_KEY",
+                agentSlug,
+                loopInterval,
+              );
 
               return (
                 <div
@@ -366,92 +370,102 @@ export default function DashboardPage() {
                     </button>
                   </div>
 
-                  {/* Launch panel — shown when API key is visible */}
+                  {/* API key — only shown right after create/rotate */}
                   {apiKey && (
-                    <div className="mt-4 space-y-3 rounded border border-xsuccess/30 bg-xsuccess/5 p-4">
-                      <div>
-                        <p className="text-sm font-medium text-xsuccess">
-                          API Key (save this — shown once)
-                        </p>
-                        <div className="mt-1 flex items-center">
-                          <code className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
-                            {apiKey}
-                          </code>
-                          <CopyButton text={apiKey} />
-                        </div>
+                    <div className="mt-4 rounded border border-xsuccess/30 bg-xsuccess/5 p-4">
+                      <p className="text-sm font-medium text-xsuccess">
+                        API Key (save this — shown once)
+                      </p>
+                      <div className="mt-1 flex items-center">
+                        <code className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
+                          {apiKey}
+                        </code>
+                        <CopyButton text={apiKey} />
                       </div>
-                      {launch?.kind === "command" ? (
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-sm font-medium text-xtext-primary">
-                              Try it once
-                            </p>
-                            <div className="mt-1 flex items-center">
-                              <code className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
-                                {launch.singlePass}
-                              </code>
-                              <CopyButton text={launch.singlePass} />
-                            </div>
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-3">
-                              <p className="text-sm font-medium text-xtext-primary">
-                                Run autonomously
-                              </p>
-                              <label className="flex items-center gap-1.5 text-xs text-xtext-secondary">
-                                every
-                                <input
-                                  type="number"
-                                  min={60}
-                                  max={3600}
-                                  step={60}
-                                  value={loopInterval}
-                                  onChange={(e) => setLoopInterval(Math.max(60, Number(e.target.value) || 300))}
-                                  className="w-16 rounded border border-xborder bg-xbg-primary px-2 py-0.5 text-center text-xs text-xtext-primary focus:border-xaccent focus:outline-none"
-                                />
-                                sec
-                              </label>
-                            </div>
-                            <div className="mt-1 flex items-center">
-                              <code className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
-                                {launch.loop}
-                              </code>
-                              <CopyButton text={launch.loop} />
-                            </div>
-                          </div>
-                          <p className="text-xs text-xtext-secondary">
-                            See the{" "}
-                            <Link
-                              href="/agent-guide"
-                              className="text-xaccent hover:underline"
-                            >
-                              agent guide
-                            </Link>{" "}
-                            for tmux multi-agent setup.
-                          </p>
-                        </div>
-                      ) : (
-                        <div>
-                          <p className="text-sm font-medium text-xtext-primary">
-                            Manual setup required
-                          </p>
-                          <p className="mt-1 text-sm text-xtext-secondary">
-                            {launch?.message}
-                          </p>
-                          <p className="mt-2 text-xs text-xtext-secondary">
-                            See the{" "}
-                            <Link
-                              href="/agent-guide"
-                              className="text-xaccent hover:underline"
-                            >
-                              agent guide
-                            </Link>{" "}
-                            for setup details.
-                          </p>
-                        </div>
-                      )}
                     </div>
                   )}
+
+                  {/* Launch commands — always visible */}
+                  <div className="mt-4 space-y-3 rounded border border-xborder bg-xbg-primary/50 p-4">
+                    {launch.kind === "command" ? (
+                      <div className="space-y-3">
+                        {!apiKey && (
+                          <p className="text-xs text-xtext-secondary">
+                            Set your key first:{" "}
+                            <code className="rounded bg-xbg-primary px-1.5 py-0.5">
+                              export ASSAY_API_KEY=sk_...
+                            </code>
+                          </p>
+                        )}
+                        <div>
+                          <p className="text-sm font-medium text-xtext-primary">
+                            Try it once
+                          </p>
+                          <div className="mt-1 flex items-center">
+                            <code className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
+                              {launch.singlePass}
+                            </code>
+                            <CopyButton text={launch.singlePass} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-3">
+                            <p className="text-sm font-medium text-xtext-primary">
+                              Run autonomously
+                            </p>
+                            <label className="flex items-center gap-1.5 text-xs text-xtext-secondary">
+                              every
+                              <input
+                                type="number"
+                                min={60}
+                                max={3600}
+                                step={60}
+                                value={loopInterval}
+                                onChange={(e) => setLoopInterval(Math.max(60, Number(e.target.value) || 300))}
+                                className="w-16 rounded border border-xborder bg-xbg-primary px-2 py-0.5 text-center text-xs text-xtext-primary focus:border-xaccent focus:outline-none"
+                              />
+                              sec
+                            </label>
+                          </div>
+                          <div className="mt-1 flex items-center">
+                            <code className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
+                              {launch.loop}
+                            </code>
+                            <CopyButton text={launch.loop} />
+                          </div>
+                        </div>
+                        <p className="text-xs text-xtext-secondary">
+                          See the{" "}
+                          <Link
+                            href="/agent-guide"
+                            className="text-xaccent hover:underline"
+                          >
+                            agent guide
+                          </Link>{" "}
+                          for tmux multi-agent setup.
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-sm font-medium text-xtext-primary">
+                          Manual setup required
+                        </p>
+                        <p className="mt-1 text-sm text-xtext-secondary">
+                          {launch.message}
+                        </p>
+                        <p className="mt-2 text-xs text-xtext-secondary">
+                          See the{" "}
+                          <Link
+                            href="/agent-guide"
+                            className="text-xaccent hover:underline"
+                          >
+                            agent guide
+                          </Link>{" "}
+                          for setup details.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}

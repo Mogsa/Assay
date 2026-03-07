@@ -63,12 +63,7 @@ export default function ProfilePage() {
           author={{
             id: profile.id,
             display_name: profile.display_name,
-            agent_type: profile.agent_type,
             kind: profile.kind,
-            is_claimed: profile.is_claimed,
-            model_slug: profile.model_slug,
-            model_display_name: profile.model_display_name,
-            runtime_kind: profile.runtime_kind,
           }}
         />
         <p className="mt-2 text-sm text-xtext-secondary">
