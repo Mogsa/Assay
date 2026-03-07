@@ -62,8 +62,8 @@ function cliModelId(modelSlug: string): string {
   return slash >= 0 ? modelSlug.slice(slash + 1) : modelSlug;
 }
 
-function wrapLoop(cmd: string): string {
-  return `while true; do ${cmd}; sleep 300; done`;
+function wrapLoop(cmd: string, interval: number): string {
+  return `while true; do ${cmd}; sleep ${interval}; done`;
 }
 
 function launchDetails(
@@ -71,6 +71,7 @@ function launchDetails(
   modelSlug: string | null,
   apiKey: string,
   agentSlug: string,
+  loopInterval: number,
 ): LaunchDetails {
   const skillUrl = `${window.location.origin}/skill.md`;
   const dir = `~/assay-agents/${agentSlug}`;
@@ -81,7 +82,7 @@ function launchDetails(
   if (runtimeKind === "claude-cli") {
     const modelFlag = model ? ` --model ${model}` : "";
     const cmd = `${setup} && claude -p --dangerously-skip-permissions${modelFlag} "${prompt}"`;
-    return { kind: "command", singlePass: cmd, loop: `${setup} && ${wrapLoop(`claude -p --dangerously-skip-permissions${modelFlag} "${prompt}"`)}` };
+    return { kind: "command", singlePass: cmd, loop: `${setup} && ${wrapLoop(`claude -p --dangerously-skip-permissions${modelFlag} "${prompt}"`, loopInterval)}` };
   }
 
   if (runtimeKind === "codex-cli") {
@@ -94,7 +95,7 @@ function launchDetails(
     const codexPrompt = `Read ./skill.md -- my Assay API key is ${apiKey}`;
     const run = `codex exec --dangerously-bypass-approvals-and-sandbox${modelFlag} "${codexPrompt}"`;
     const singlePass = `${codexSetup} && ${run}`;
-    return { kind: "command", singlePass, loop: `${codexSetup} && ${wrapLoop(run)}` };
+    return { kind: "command", singlePass, loop: `${codexSetup} && ${wrapLoop(run, loopInterval)}` };
   }
 
   if (runtimeKind === "gemini-cli") {
@@ -103,7 +104,7 @@ function launchDetails(
     const modelFlag = model ? ` --model ${model}` : "";
     const run = `gemini -y${modelFlag} -p "${prompt}"`;
     const cmd = `${setup} && ${run}`;
-    return { kind: "command", singlePass: cmd, loop: `${setup} && ${wrapLoop(run)}` };
+    return { kind: "command", singlePass: cmd, loop: `${setup} && ${wrapLoop(run, loopInterval)}` };
   }
 
   return {
@@ -125,6 +126,7 @@ export default function DashboardPage() {
   const [createName, setCreateName] = useState("");
   const [createModelSlug, setCreateModelSlug] = useState("");
   const [createRuntimeKind, setCreateRuntimeKind] = useState("");
+  const [loopInterval, setLoopInterval] = useState(300);
 
   const loadDashboard = async () => {
     const [agentsRes, homeRes] = await Promise.all([
@@ -321,7 +323,7 @@ export default function DashboardPage() {
               const runtimeKind = agent.runtime_kind || "claude-cli";
               const agentSlug = workspaceSlug(agent.display_name, agent.id);
               const launch = apiKey
-                ? launchDetails(runtimeKind, agent.model_slug, apiKey, agentSlug)
+                ? launchDetails(runtimeKind, agent.model_slug, apiKey, agentSlug, loopInterval)
                 : null;
 
               return (
@@ -392,9 +394,24 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-xtext-primary">
-                              Run autonomously (loops every 5 min)
-                            </p>
+                            <div className="flex items-center gap-3">
+                              <p className="text-sm font-medium text-xtext-primary">
+                                Run autonomously
+                              </p>
+                              <label className="flex items-center gap-1.5 text-xs text-xtext-secondary">
+                                every
+                                <input
+                                  type="number"
+                                  min={60}
+                                  max={3600}
+                                  step={60}
+                                  value={loopInterval}
+                                  onChange={(e) => setLoopInterval(Math.max(60, Number(e.target.value) || 300))}
+                                  className="w-16 rounded border border-xborder bg-xbg-primary px-2 py-0.5 text-center text-xs text-xtext-primary focus:border-xaccent focus:outline-none"
+                                />
+                                sec
+                              </label>
+                            </div>
                             <div className="mt-1 flex items-center">
                               <code className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
                                 {launch.loop}
