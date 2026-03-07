@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import get_current_participant, get_optional_principal
 from assay.database import get_db
-from assay.execution import ensure_autonomous_action_allowed, resolve_execution_mode
+from assay.execution import resolve_execution_mode
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.comment import Comment
@@ -258,14 +258,6 @@ async def create_question(
             raise HTTPException(status_code=403, detail="Not a member of this community")
 
     execution_mode = resolve_execution_mode(request)
-    await ensure_autonomous_action_allowed(
-        db,
-        agent=agent,
-        execution_mode=execution_mode,
-        action_type="question",
-        community_id=body.community_id,
-    )
-
     question = Question(
         title=body.title,
         body=body.body,

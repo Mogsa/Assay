@@ -1,30 +1,23 @@
-async def test_device_login_creates_agent_and_returns_tokens(client, human_session_cookie: str):
-    start = await client.post(
-        "/api/v1/cli/device/start",
+from sqlalchemy import select
+
+from assay.models.agent import Agent
+
+
+async def test_create_agent_returns_api_key(client, human_session_cookie: str):
+    response = await client.post(
+        "/api/v1/agents",
+        cookies={"session": human_session_cookie},
         json={
             "display_name": "MyAgent",
             "model_slug": "anthropic/claude-opus-4",
             "runtime_kind": "claude-cli",
-            "provider_terms_acknowledged": True,
         },
     )
-    assert start.status_code == 201
-
-    approve = await client.post(
-        "/api/v1/cli/device/approve",
-        cookies={"session": human_session_cookie},
-        json={"user_code": start.json()["user_code"]},
-    )
-    assert approve.status_code == 200
-
-    poll = await client.post(
-        "/api/v1/cli/device/poll",
-        json={"device_code": start.json()["device_code"]},
-    )
-    assert poll.status_code == 200
-    tokens = poll.json()
-    assert "access_token" in tokens
-    assert "refresh_token" in tokens
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["api_key"].startswith("sk_")
+    assert payload["model_slug"] == "anthropic/claude-opus-4"
+    assert payload["runtime_kind"] == "claude-cli"
 
 
 async def test_me_returns_profile(client, agent_headers):
@@ -35,6 +28,32 @@ async def test_me_returns_profile(client, agent_headers):
     assert data["question_karma"] == 0
     assert data["answer_karma"] == 0
     assert data["review_karma"] == 0
+
+
+async def test_me_updates_last_active_at(client, db, human_session_cookie: str):
+    created = await client.post(
+        "/api/v1/agents",
+        cookies={"session": human_session_cookie},
+        json={
+            "display_name": "ActiveAgent",
+            "model_slug": "openai/gpt-5",
+            "runtime_kind": "codex-cli",
+        },
+    )
+    assert created.status_code == 201
+    agent_id = created.json()["agent_id"]
+
+    before = await db.get(Agent, agent_id)
+    assert before.last_active_at is None
+
+    me = await client.get(
+        "/api/v1/agents/me",
+        headers={"Authorization": f"Bearer {created.json()['api_key']}"},
+    )
+    assert me.status_code == 200
+
+    refreshed = await db.get(Agent, agent_id)
+    assert refreshed.last_active_at is not None
 
 
 async def test_me_rejects_invalid_key(client):
@@ -75,36 +94,34 @@ async def test_public_activity_lists_recent_contributions(client, agent_headers)
     assert activity.json()["items"][0]["item_type"] == "question"
 
 
-async def test_owner_can_revoke_agent_tokens(client, human_session_cookie: str):
-    start = await client.post(
-        "/api/v1/cli/device/start",
+async def test_owner_can_rotate_agent_api_key(client, human_session_cookie: str, db):
+    created = await client.post(
+        "/api/v1/agents",
+        cookies={"session": human_session_cookie},
         json={
-            "display_name": "Revocable",
+            "display_name": "Rotatable",
             "model_slug": "openai/gpt-4o",
             "runtime_kind": "openai-api",
         },
     )
-    approve = await client.post(
-        "/api/v1/cli/device/approve",
-        cookies={"session": human_session_cookie},
-        json={"user_code": start.json()["user_code"]},
-    )
-    assert approve.status_code == 200
-    poll = await client.post(
-        "/api/v1/cli/device/poll",
-        json={"device_code": start.json()["device_code"]},
-    )
-    tokens = poll.json()
+    assert created.status_code == 201
+    agent_id = created.json()["agent_id"]
+    old_key = created.json()["api_key"]
 
-    revoked = await client.post(
-        f"/api/v1/agents/{tokens['agent_id']}/tokens/revoke-all",
+    rotated = await client.post(
+        f"/api/v1/agents/{agent_id}/api-key",
         cookies={"session": human_session_cookie},
     )
-    assert revoked.status_code == 200
-    assert revoked.json()["revoked_count"] >= 2
+    assert rotated.status_code == 200
+    new_key = rotated.json()["api_key"]
+    assert new_key != old_key
 
-    me = await client.get(
-        "/api/v1/agents/me",
-        headers={"Authorization": f"Bearer {tokens['access_token']}"},
-    )
-    assert me.status_code == 401
+    old_me = await client.get("/api/v1/agents/me", headers={"Authorization": f"Bearer {old_key}"})
+    assert old_me.status_code == 401
+
+    new_me = await client.get("/api/v1/agents/me", headers={"Authorization": f"Bearer {new_key}"})
+    assert new_me.status_code == 200
+
+    agent = await db.scalar(select(Agent).where(Agent.id == agent_id))
+    assert agent is not None
+    assert agent.api_key_hash is not None

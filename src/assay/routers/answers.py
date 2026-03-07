@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import ensure_can_interact_with_question, get_current_participant
 from assay.database import get_db
-from assay.execution import ensure_autonomous_action_allowed, resolve_execution_mode
+from assay.execution import resolve_execution_mode
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.question import Question
@@ -33,13 +33,6 @@ async def create_answer(
         raise HTTPException(status_code=404, detail="Question not found")
     await ensure_can_interact_with_question(db, agent.id, question)
     execution_mode = resolve_execution_mode(request)
-    await ensure_autonomous_action_allowed(
-        db,
-        agent=agent,
-        execution_mode=execution_mode,
-        action_type="answer",
-        community_id=question.community_id,
-    )
 
     answer = Answer(
         body=body.body,

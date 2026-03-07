@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import get_current_participant
 from assay.database import get_db
-from assay.execution import ensure_autonomous_action_allowed, resolve_execution_mode
+from assay.execution import resolve_execution_mode
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.comment import Comment
@@ -53,19 +53,6 @@ async def _create_comment(
         raise HTTPException(status_code=400, detail="Verdicts only apply to answer comments")
 
     execution_mode = resolve_execution_mode(request)
-    if target_type == "question":
-        community_id = target.community_id
-    else:
-        question = await db.get(Question, target.question_id)
-        community_id = question.community_id if question is not None else None
-    await ensure_autonomous_action_allowed(
-        db,
-        agent=agent,
-        execution_mode=execution_mode,
-        action_type="comment",
-        community_id=community_id,
-    )
-
     comment = Comment(
         body=body,
         author_id=agent.id,

@@ -28,27 +28,18 @@ async def _connect_agent(client: AsyncClient, name: str) -> tuple[uuid.UUID, dic
     )
     session_cookie = signup.cookies.get("session")
 
-    start = await client.post(
-        "/api/v1/cli/device/start",
+    created = await client.post(
+        "/api/v1/agents",
+        cookies={"session": session_cookie},
         json={
             "display_name": name,
             "model_slug": "anthropic/claude-opus-4",
             "runtime_kind": "claude-cli",
-            "provider_terms_acknowledged": True,
         },
     )
-    await client.post(
-        "/api/v1/cli/device/approve",
-        cookies={"session": session_cookie},
-        json={"user_code": start.json()["user_code"]},
-    )
-    poll = await client.post(
-        "/api/v1/cli/device/poll",
-        json={"device_code": start.json()["device_code"]},
-    )
-    data = poll.json()
+    data = created.json()
 
-    return uuid.UUID(data["agent_id"]), {"Authorization": f"Bearer {data['access_token']}"}
+    return uuid.UUID(data["agent_id"]), {"Authorization": f"Bearer {data['api_key']}"}
 
 
 async def test_list_notifications(client: AsyncClient, create_notification):

@@ -173,7 +173,7 @@ Open the generated file and write:
 ```python
 """api key simplification
 
-Adds API-key auth columns, drops old claim columns.
+Adds `last_active_at` and removes agent-side coupling to catalog tables.
 """
 from alembic import op
 import sqlalchemy as sa
@@ -182,31 +182,34 @@ import sqlalchemy as sa
 # (keep the generated ones)
 
 def upgrade() -> None:
-    # api_key_hash and owner_id already exist on main (from initial + stage2 migrations)
-    # Add columns that are genuinely new
-    op.add_column("agents", sa.Column("kind", sa.String(16), server_default="agent", nullable=False))
-    op.add_column("agents", sa.Column("model_slug", sa.String(128), nullable=True))
-    op.add_column("agents", sa.Column("runtime_kind", sa.String(64), nullable=True))
+    # kind, model_slug, runtime_kind, api_key_hash, owner_id already exist on current head.
+    # The actual new field is last_active_at.
     op.add_column("agents", sa.Column("last_active_at", sa.DateTime(timezone=True), nullable=True))
 
-    # Drop old claim columns (present on main from stage 2)
-    op.drop_column("agents", "claim_token_hash")
-    op.drop_column("agents", "claim_token_expires_at")
-    op.drop_column("agents", "claim_status")
+    # Remove FK coupling to catalog tables before deleting those tables later.
+    op.drop_constraint("fk_agents_model_slug", "agents", type_="foreignkey")
+    op.drop_constraint("fk_agents_runtime_kind", "agents", type_="foreignkey")
 
 
 def downgrade() -> None:
-    op.add_column("agents", sa.Column("claim_status", sa.String(16), server_default="unclaimed"))
-    op.add_column("agents", sa.Column("claim_token_expires_at", sa.DateTime(timezone=True)))
-    op.add_column("agents", sa.Column("claim_token_hash", sa.String(64)))
-
     op.drop_column("agents", "last_active_at")
-    op.drop_column("agents", "runtime_kind")
-    op.drop_column("agents", "model_slug")
-    op.drop_column("agents", "kind")
+    op.create_foreign_key(
+        "fk_agents_model_slug",
+        "agents",
+        "model_catalog",
+        ["model_slug"],
+        ["slug"],
+    )
+    op.create_foreign_key(
+        "fk_agents_runtime_kind",
+        "agents",
+        "runtime_catalog",
+        ["runtime_kind"],
+        ["slug"],
+    )
 ```
 
-> **Note:** `claim_token_hash`, `claim_token_expires_at`, `claim_status` are on main from stage 2 migration `e5dd54458687`. `api_key_hash` and `owner_id` also already exist on main.
+> **Note:** On the current workspace head, `kind`, `model_slug`, `runtime_kind`, `api_key_hash`, and `owner_id` already exist. The real schema work here is adding `last_active_at` and dropping the agent-side catalog FKs. If you also want to physically drop obsolete tables, add a follow-up migration after the app no longer imports them.
 
 **Step 3: Run migration against test DB**
 
@@ -220,7 +223,7 @@ Expected: migration applies cleanly
 
 ```bash
 git add alembic/versions/*api_key_simplification*.py
-git commit -m "feat: migration — add kind, model_slug, runtime_kind, last_active_at; drop claim columns"
+git commit -m "feat: migration — add last_active_at and decouple agents from catalog FKs"
 ```
 
 ---
@@ -289,10 +292,10 @@ class Agent(Base):
     )
 ```
 
-**Key changes from main:**
-- Remove: `claim_token_hash`, `claim_token_expires_at`, `claim_status`
-- Already on main: `api_key_hash` (nullable), `owner_id` (self-FK to agents.id)
-- Add: `kind` (String(16), default="agent"), `model_slug` (no FK), `runtime_kind` (no FK), `last_active_at`
+**Key changes from current head:**
+- Already on head: `api_key_hash`, `owner_id`, `kind`, `model_slug`, `runtime_kind`
+- Remove the FK coupling from `model_slug` and `runtime_kind`
+- Add: `last_active_at`
 
 **Step 3: Run existing tests to check nothing breaks catastrophically**
 
@@ -313,7 +316,7 @@ git commit -m "feat: update Agent model — api_key_hash, owner_id, model_slug, 
 
 ## Task 4: Simplify Auth
 
-Strip auth.py down to: API key (for agents) + session cookie (for humans). Remove AgentAuthToken logic.
+Strip auth.py down to: API key (for agents) + session cookie (for humans). Remove AgentAuthToken logic and update `last_active_at` on successful API-key auth.
 
 **Files:**
 - Modify: `src/assay/auth.py`
@@ -845,8 +848,9 @@ pytest tests/ -v --timeout=60 2>&1 | tail -50
 Fix any failures. Common issues:
 - Tests that reference `agent_type` from `TEST_AGENT_TYPES` — update to use new pattern
 - Tests that import device auth models — remove those imports
-- `test_claims.py` — likely needs deletion (claim system removed)
+- `tests/test_claiming.py` — likely needs deletion (device claim flow removed)
 - `test_catalog_cli_auth.py` — delete (tests code that no longer exists)
+- `tests/test_migrations.py` — update expected Alembic head and replace device-flow assertions with create-agent/API-key assertions
 
 **Step 7: Commit**
 
@@ -883,7 +887,7 @@ This task has three parts: delete files, rewrite presentation/leaderboard, and r
 - `src/assay/cli_state.py`
 - `src/assay/autonomy/` (entire directory)
 - `tests/test_catalog_cli_auth.py`
-- `tests/test_claims.py`
+- `tests/test_claiming.py`
 - `tests/test_cli_state.py`
 - `tests/test_autonomy_runner.py`
 - `tests/test_runtime_policy.py`
@@ -999,7 +1003,7 @@ cat static/skill.md
 Target: <200 lines. Must contain:
 1. What Assay is (2-3 sentences)
 2. Auth: `Authorization: Bearer <your-api-key>` on every request
-3. Decision loop: fetch feed -> pick thread -> contribute -> exit
+3. Decision loop: fetch questions list -> pick thread -> contribute -> exit
 4. All endpoints with exact request/response JSON
 5. Quality bar: when to contribute vs abstain
 6. Single-pass rule: do one pass, then exit
@@ -1356,7 +1360,7 @@ git commit -m "feat: frontend agent creation page with model/runtime dropdowns"
 
 ## Task 11: Integration Test
 
-End-to-end: human signs up, creates agent, agent uses key to check feed, post answer, vote.
+End-to-end: human signs up, creates agent, agent uses key to check questions list, post answer, vote.
 
 **Files:**
 - Create: `tests/test_api_key_integration.py`

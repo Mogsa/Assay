@@ -28,7 +28,7 @@ async def rate_limited_client(db):
         app.dependency_overrides.clear()
 
 
-async def _claim_agent_for_rate_limit_test(client: AsyncClient) -> dict[str, str]:
+async def _create_agent_for_rate_limit_test(client: AsyncClient) -> dict[str, str]:
     signup_resp = await client.post(
         "/api/v1/auth/signup",
         json={
@@ -38,38 +38,37 @@ async def _claim_agent_for_rate_limit_test(client: AsyncClient) -> dict[str, str
         },
     )
     session_cookie = signup_resp.cookies.get("session")
-
-    start_resp = await client.post(
-        "/api/v1/cli/device/start",
+    create_resp = await client.post(
+        "/api/v1/agents",
+        cookies={"session": session_cookie},
         json={
             "display_name": "RateLimitedAgent",
             "model_slug": "anthropic/claude-opus-4",
             "runtime_kind": "claude-cli",
-            "provider_terms_acknowledged": True,
         },
     )
-    approve_resp = await client.post(
-        "/api/v1/cli/device/approve",
-        cookies={"session": session_cookie},
-        json={"user_code": start_resp.json()["user_code"]},
-    )
-    assert approve_resp.status_code == 200
-    poll_resp = await client.post(
-        "/api/v1/cli/device/poll",
-        json={"device_code": start_resp.json()["device_code"]},
-    )
-    assert poll_resp.status_code == 200
-    return {"Authorization": f"Bearer {poll_resp.json()['access_token']}"}
+    assert create_resp.status_code == 201
+    return {"Authorization": f"Bearer {create_resp.json()['api_key']}"}
 
 
 @pytest.mark.asyncio
-async def test_device_start_rate_limit_enforced_with_headers(db):
+async def test_create_agent_rate_limit_enforced_with_headers(db):
     async with rate_limited_client(db) as client:
+        signup_resp = await client.post(
+            "/api/v1/auth/signup",
+            json={
+                "email": "ratelimit-create@example.com",
+                "password": "securepass123",
+                "display_name": "RateLimitCreate",
+            },
+        )
+        session_cookie = signup_resp.cookies.get("session")
         responses = []
         for i in range(11):
             responses.append(
                 await client.post(
-                    "/api/v1/cli/device/start",
+                    "/api/v1/agents",
+                    cookies={"session": session_cookie},
                     json={
                         "display_name": f"Spam{i}",
                         "model_slug": "openai/gpt-4o",
@@ -88,7 +87,7 @@ async def test_device_start_rate_limit_enforced_with_headers(db):
 @pytest.mark.asyncio
 async def test_create_question_rate_limit_enforced(db):
     async with rate_limited_client(db) as client:
-        agent_headers = await _claim_agent_for_rate_limit_test(client)
+        agent_headers = await _create_agent_for_rate_limit_test(client)
         responses = []
         for i in range(3):
             responses.append(
@@ -106,7 +105,7 @@ async def test_create_question_rate_limit_enforced(db):
 @pytest.mark.asyncio
 async def test_list_questions_rate_limit_enforced(db):
     async with rate_limited_client(db) as client:
-        agent_headers = await _claim_agent_for_rate_limit_test(client)
+        agent_headers = await _create_agent_for_rate_limit_test(client)
         seed_resp = await client.post(
             "/api/v1/questions",
             json={"title": "Seed", "body": "Body"},

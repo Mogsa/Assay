@@ -7,7 +7,7 @@ from fastapi import Depends
 
 from assay.database import get_db
 from assay.models.agent import Agent
-from assay.models.model_catalog import ModelCatalog
+from assay.models_registry import get_model_definition
 from assay.pagination import decode_cursor, encode_cursor
 from assay.presentation import build_agent_profile
 
@@ -32,67 +32,74 @@ async def leaderboard(
         avg_question = func.avg(Agent.question_karma).label("avg_question_karma")
         avg_answer = func.avg(Agent.answer_karma).label("avg_answer_karma")
         avg_review = func.avg(Agent.review_karma).label("avg_review_karma")
-        sort_map = {
-            "question_karma": avg_question,
-            "answer_karma": avg_answer,
-            "review_karma": avg_review,
-        }
-        sort_col = sort_map[sort_by]
         stmt = (
             select(
                 Agent.model_slug.label("model_slug"),
-                ModelCatalog.display_name.label("agent_type"),
                 func.count(Agent.id).label("agent_count"),
                 avg_question,
                 avg_answer,
                 avg_review,
             )
-            .join(ModelCatalog, ModelCatalog.slug == Agent.model_slug)
             .where(
                 Agent.is_active == True,  # noqa: E712
                 Agent.kind == "agent",
                 Agent.owner_id.is_not(None),
-                ModelCatalog.is_canonical == True,  # noqa: E712
+                Agent.model_slug.is_not(None),
             )
-            .group_by(Agent.model_slug, ModelCatalog.display_name)
-            .order_by(sort_col.desc(), ModelCatalog.display_name.asc())
+            .group_by(Agent.model_slug)
         )
         if filter_model_slug:
             stmt = stmt.where(Agent.model_slug == filter_model_slug)
-        if cursor:
-            try:
-                decoded = decode_cursor(cursor)
-                stmt = stmt.having(
-                    tuple_(sort_col, ModelCatalog.display_name)
-                    < tuple_(float(decoded["karma"]), decoded["agent_type"])
-                )
-            except (KeyError, TypeError, ValueError) as exc:
-                raise HTTPException(status_code=400, detail="Invalid cursor") from exc
 
-        result = await db.execute(stmt.limit(limit + 1))
+        result = await db.execute(stmt)
         rows = result.mappings().all()
-        has_more = len(rows) > limit
-        items = rows[:limit]
-        next_cursor = None
-        if has_more and items:
-            last = items[-1]
-            next_cursor = encode_cursor(
-                {"karma": str(last[sort_col.key]), "agent_type": last["agent_type"]}
-            )
-
-        return {
-            "items": [
+        items = []
+        for row in rows:
+            definition = get_model_definition(row["model_slug"])
+            if definition is None:
+                continue
+            items.append(
                 {
-                    "agent_type": row["agent_type"],
+                    "agent_type": definition.display_name,
                     "model_slug": row["model_slug"],
-                    "model_display_name": row["agent_type"],
-                    "agent_count": row["agent_count"],
+                    "model_display_name": definition.display_name,
+                    "agent_count": int(row["agent_count"] or 0),
                     "avg_question_karma": float(row["avg_question_karma"] or 0),
                     "avg_answer_karma": float(row["avg_answer_karma"] or 0),
                     "avg_review_karma": float(row["avg_review_karma"] or 0),
                 }
-                for row in items
-            ],
+            )
+
+        sort_key = {
+            "question_karma": "avg_question_karma",
+            "answer_karma": "avg_answer_karma",
+            "review_karma": "avg_review_karma",
+        }[sort_by]
+        items.sort(key=lambda row: (-row[sort_key], row["agent_type"]))
+
+        if cursor:
+            try:
+                decoded = decode_cursor(cursor)
+                items = [
+                    row
+                    for row in items
+                    if (row[sort_key], row["agent_type"])
+                    < (float(decoded["karma"]), decoded["agent_type"])
+                ]
+            except (KeyError, TypeError, ValueError) as exc:
+                raise HTTPException(status_code=400, detail="Invalid cursor") from exc
+
+        has_more = len(items) > limit
+        items = items[:limit]
+        next_cursor = None
+        if has_more and items:
+            last = items[-1]
+            next_cursor = encode_cursor(
+                {"karma": str(last[sort_key]), "agent_type": last["agent_type"]}
+            )
+
+        return {
+            "items": items,
             "has_more": has_more,
             "next_cursor": next_cursor,
         }

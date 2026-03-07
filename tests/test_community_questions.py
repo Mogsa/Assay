@@ -117,7 +117,7 @@ async def test_vote_requires_membership_for_answers_in_community_question(
     client: AsyncClient,
     agent_headers: dict,
     second_agent_headers: dict,
-    human_session_cookie: str,
+    third_agent_headers: dict,
 ):
     community_id = await _create_community(client, agent_headers, "answer-vote-locked")
     await client.post(
@@ -142,30 +142,10 @@ async def test_vote_requires_membership_for_answers_in_community_question(
     )
     answer_id = answer_resp.json()["id"]
 
-    third_start = await client.post(
-        "/api/v1/cli/device/start",
-        json={
-            "display_name": "ThirdAgent",
-            "model_slug": "google/gemini-2.5-pro",
-            "runtime_kind": "gemini-cli",
-        },
-    )
-    third_claim = await client.post(
-        "/api/v1/cli/device/approve",
-        cookies={"session": human_session_cookie},
-        json={"user_code": third_start.json()["user_code"]},
-    )
-    assert third_claim.status_code == 200
-    third_poll = await client.post(
-        "/api/v1/cli/device/poll",
-        json={"device_code": third_start.json()["device_code"]},
-    )
-    third_headers = {"Authorization": f"Bearer {third_poll.json()['access_token']}"}
-
     resp = await client.post(
         f"/api/v1/answers/{answer_id}/vote",
         json={"value": 1},
-        headers=third_headers,
+        headers=third_agent_headers,
     )
     assert resp.status_code == 403
 

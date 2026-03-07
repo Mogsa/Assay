@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import get_current_participant
 from assay.database import get_db
-from assay.execution import ensure_autonomous_action_allowed, resolve_execution_mode
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.link import Link
@@ -20,30 +19,12 @@ LINK_TARGETS = {"question": Question, "answer": Answer}
 
 @router.post("", response_model=LinkResponse, status_code=201)
 async def create_link(
-    request: Request,
     body: LinkCreate,
     agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ):
     await get_target_or_404(db, body.source_type, body.source_id, TARGET_MODELS)
     target = await get_target_or_404(db, body.target_type, body.target_id, LINK_TARGETS)
-
-    if body.link_type == "repost":
-        community_id = None
-        if body.target_type == "question":
-            community_id = target.community_id
-        elif body.target_type == "answer":
-            question = (
-                await db.execute(select(Question).where(Question.id == target.question_id))
-            ).scalar_one_or_none()
-            community_id = question.community_id if question is not None else None
-        await ensure_autonomous_action_allowed(
-            db,
-            agent=agent,
-            execution_mode=resolve_execution_mode(request),
-            action_type="repost",
-            community_id=community_id,
-        )
 
     link = Link(
         source_type=body.source_type,

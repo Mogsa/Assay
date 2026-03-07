@@ -3,32 +3,27 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_agents_mine_lists_connected_agents(client: AsyncClient):
+async def test_agents_mine_lists_created_agents(client: AsyncClient):
     signup_resp = await client.post(
         "/api/v1/auth/signup",
         json={"email": "multi@example.com", "password": "securepass123", "display_name": "Multi"},
     )
     cookie = signup_resp.cookies.get("session")
 
-    for display_name, model_slug, runtime_kind, ack in [
-        ("Bot1", "openai/gpt-4o", "openai-api", False),
-        ("Bot2", "anthropic/claude-opus-4", "claude-cli", True),
+    for display_name, model_slug, runtime_kind in [
+        ("Bot1", "openai/gpt-4o", "openai-api"),
+        ("Bot2", "anthropic/claude-opus-4", "claude-cli"),
     ]:
-        start = await client.post(
-            "/api/v1/cli/device/start",
+        response = await client.post(
+            "/api/v1/agents",
+            cookies={"session": cookie},
             json={
                 "display_name": display_name,
                 "model_slug": model_slug,
                 "runtime_kind": runtime_kind,
-                "provider_terms_acknowledged": ack,
             },
         )
-        approve = await client.post(
-            "/api/v1/cli/device/approve",
-            cookies={"session": cookie},
-            json={"user_code": start.json()["user_code"]},
-        )
-        assert approve.status_code == 200
+        assert response.status_code == 201
 
     resp = await client.get("/api/v1/agents/mine", cookies={"session": cookie})
     assert resp.status_code == 200
@@ -44,77 +39,38 @@ async def test_agents_mine_rejects_bearer_auth(client: AsyncClient, agent_header
 
 
 @pytest.mark.asyncio
-async def test_device_approval_can_link_existing_agent(client: AsyncClient, human_session_cookie: str):
-    start = await client.post(
-        "/api/v1/cli/device/start",
+async def test_agents_mine_only_returns_owned_agents(client: AsyncClient):
+    first_signup = await client.post(
+        "/api/v1/auth/signup",
+        json={"email": "first@example.com", "password": "securepass123", "display_name": "First"},
+    )
+    second_signup = await client.post(
+        "/api/v1/auth/signup",
+        json={"email": "second@example.com", "password": "securepass123", "display_name": "Second"},
+    )
+    first_cookie = first_signup.cookies.get("session")
+    second_cookie = second_signup.cookies.get("session")
+
+    await client.post(
+        "/api/v1/agents",
+        cookies={"session": first_cookie},
         json={
-            "display_name": "Existing",
+            "display_name": "FirstAgent",
             "model_slug": "openai/gpt-5",
             "runtime_kind": "codex-cli",
         },
     )
-    approve = await client.post(
-        "/api/v1/cli/device/approve",
-        cookies={"session": human_session_cookie},
-        json={"user_code": start.json()["user_code"]},
-    )
-    assert approve.status_code == 200
-    poll = await client.post(
-        "/api/v1/cli/device/poll",
-        json={"device_code": start.json()["device_code"]},
-    )
-    agent_id = poll.json()["agent_id"]
-
-    second_start = await client.post(
-        "/api/v1/cli/device/start",
+    await client.post(
+        "/api/v1/agents",
+        cookies={"session": second_cookie},
         json={
-            "display_name": "Existing Again",
-            "model_slug": "openai/gpt-5",
-            "runtime_kind": "codex-cli",
-        },
-    )
-    linked = await client.post(
-        "/api/v1/cli/device/approve",
-        cookies={"session": human_session_cookie},
-        json={"user_code": second_start.json()["user_code"], "agent_id": agent_id},
-    )
-    assert linked.status_code == 200
-    assert linked.json()["agent_id"] == agent_id
-
-
-@pytest.mark.asyncio
-async def test_device_approval_rejects_model_runtime_mismatch(client: AsyncClient, human_session_cookie: str):
-    start = await client.post(
-        "/api/v1/cli/device/start",
-        json={
-            "display_name": "Mismatch",
-            "model_slug": "openai/gpt-5",
-            "runtime_kind": "codex-cli",
-        },
-    )
-    approve = await client.post(
-        "/api/v1/cli/device/approve",
-        cookies={"session": human_session_cookie},
-        json={"user_code": start.json()["user_code"]},
-    )
-    assert approve.status_code == 200
-    poll = await client.post(
-        "/api/v1/cli/device/poll",
-        json={"device_code": start.json()["device_code"]},
-    )
-    agent_id = poll.json()["agent_id"]
-
-    second_start = await client.post(
-        "/api/v1/cli/device/start",
-        json={
-            "display_name": "Mismatch Again",
+            "display_name": "SecondAgent",
             "model_slug": "openai/gpt-4o",
             "runtime_kind": "openai-api",
         },
     )
-    linked = await client.post(
-        "/api/v1/cli/device/approve",
-        cookies={"session": human_session_cookie},
-        json={"user_code": second_start.json()["user_code"], "agent_id": agent_id},
-    )
-    assert linked.status_code == 400
+
+    mine = await client.get("/api/v1/agents/mine", cookies={"session": first_cookie})
+    assert mine.status_code == 200
+    names = [a["display_name"] for a in mine.json()["agents"]]
+    assert names == ["FirstAgent"]

@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.database import get_db
 from assay.models.agent import Agent
-from assay.models.agent_auth_token import AgentAuthToken
 from assay.models.community_member import CommunityMember
 from assay.models.question import Question
 from assay.models.session import Session
@@ -27,22 +26,9 @@ async def _get_agent_from_bearer(
     result = await db.execute(select(Agent).where(Agent.api_key_hash == bearer_hash))
     agent = result.scalar_one_or_none()
     if agent is not None:
+        agent.last_active_at = datetime.now(timezone.utc)
         return agent
-
-    token_result = await db.execute(
-        select(AgentAuthToken).where(
-            AgentAuthToken.token_hash == bearer_hash,
-            AgentAuthToken.token_kind == "access",
-            AgentAuthToken.revoked_at.is_(None),
-            AgentAuthToken.expires_at > datetime.now(timezone.utc),
-        )
-    )
-    token = token_result.scalar_one_or_none()
-    if token is None:
-        return None
-
-    agent_result = await db.execute(select(Agent).where(Agent.id == token.agent_id))
-    return agent_result.scalar_one_or_none()
+    return None
 
 
 async def _get_agent_from_session(request: Request, db: AsyncSession) -> Agent | None:

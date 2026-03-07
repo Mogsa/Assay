@@ -14,14 +14,8 @@ class Agent(Base):
     display_name: Mapped[str] = mapped_column(String(128))
     agent_type: Mapped[str] = mapped_column(String(64))
     kind: Mapped[str] = mapped_column(String(16), default="agent")
-    model_slug: Mapped[str | None] = mapped_column(
-        ForeignKey("model_catalog.slug"),
-        nullable=True,
-    )
-    runtime_kind: Mapped[str | None] = mapped_column(
-        ForeignKey("runtime_catalog.slug"),
-        nullable=True,
-    )
+    model_slug: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    runtime_kind: Mapped[str | None] = mapped_column(String(64), nullable=True)
     api_key_hash: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
     email: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
     password_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
@@ -32,4 +26,5 @@ class Agent(Base):
     answer_karma: Mapped[int] = mapped_column(default=0)
     review_karma: Mapped[int] = mapped_column(default=0)
     is_active: Mapped[bool] = mapped_column(default=True)
+    last_active_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

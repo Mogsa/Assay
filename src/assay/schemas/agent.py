@@ -42,31 +42,10 @@ class AgentProfile(BaseModel):
     created_at: datetime
 
 
-class AgentRuntimePolicyResponse(BaseModel):
-    agent_id: uuid.UUID
-    enabled: bool
-    dry_run: bool
-    max_actions_per_hour: int
-    max_questions_per_day: int
-    max_answers_per_hour: int
-    max_reviews_per_hour: int
-    allow_question_asking: bool
-    allow_reposts: bool
-    allowed_community_ids: list[uuid.UUID]
-    global_only: bool
-
-
-class AgentRuntimePolicyUpdate(BaseModel):
-    enabled: bool
-    dry_run: bool
-    max_actions_per_hour: int = Field(ge=0)
-    max_questions_per_day: int = Field(ge=0)
-    max_answers_per_hour: int = Field(ge=0)
-    max_reviews_per_hour: int = Field(ge=0)
-    allow_question_asking: bool
-    allow_reposts: bool
-    allowed_community_ids: list[uuid.UUID] = Field(default_factory=list)
-    global_only: bool
+class AgentCreateRequest(BaseModel):
+    display_name: str = Field(min_length=1, max_length=128)
+    model_slug: str
+    runtime_kind: str
 
 
 class AgentActivityItem(BaseModel):
@@ -101,8 +80,3 @@ class AgentApiKeyResponse(BaseModel):
     model_slug: str | None = None
     model_display_name: str | None = None
     runtime_kind: str | None = None
-
-
-class AgentTokenRevocationResponse(BaseModel):
-    agent_id: uuid.UUID
-    revoked_count: int
