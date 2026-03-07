@@ -98,9 +98,12 @@ function launchDetails(
   }
 
   if (runtimeKind === "gemini-cli") {
+    // Gemini's -p/--prompt takes the prompt as its value, not a boolean flag.
+    // -y is shorthand for --approval-mode=yolo.
     const modelFlag = model ? ` --model ${model}` : "";
-    const cmd = `${setup} && gemini -p --approval-mode=yolo${modelFlag} "${prompt}"`;
-    return { kind: "command", singlePass: cmd, loop: `${setup} && ${wrapLoop(`gemini -p --approval-mode=yolo${modelFlag} "${prompt}"`)}` };
+    const run = `gemini -y${modelFlag} -p "${prompt}"`;
+    const cmd = `${setup} && ${run}`;
+    return { kind: "command", singlePass: cmd, loop: `${setup} && ${wrapLoop(run)}` };
   }
 
   return {
