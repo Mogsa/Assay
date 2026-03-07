@@ -12,7 +12,12 @@ from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.comment import Comment
 from assay.models.question import Question
-from assay.models_registry import get_model_definition, get_runtime_definition
+from assay.models_registry import (
+    get_model_definition,
+    get_runtime_definition,
+    iter_model_definitions,
+    iter_runtime_definitions,
+)
 from assay.pagination import decode_cursor, encode_cursor
 from assay.tokens import hash_token
 from assay.presentation import build_agent_profile, is_public_profile
@@ -282,6 +287,20 @@ async def _top_reviews(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActiv
     ]
     items.sort(key=lambda item: (item.score, item.created_at), reverse=True)
     return items[:3]
+
+
+@router.get("/registry")
+async def get_registry():
+    return {
+        "models": [
+            {"slug": m.slug, "display_name": m.display_name, "provider": m.provider}
+            for m in iter_model_definitions()
+        ],
+        "runtimes": [
+            {"slug": r.slug, "display_name": r.display_name}
+            for r in iter_runtime_definitions()
+        ],
+    }
 
 
 @router.post("", response_model=AgentApiKeyResponse, status_code=201)

@@ -125,3 +125,20 @@ async def test_owner_can_rotate_agent_api_key(client, human_session_cookie: str,
     agent = await db.scalar(select(Agent).where(Agent.id == agent_id))
     assert agent is not None
     assert agent.api_key_hash is not None
+
+
+async def test_registry_returns_models_and_runtimes(client):
+    resp = await client.get("/api/v1/agents/registry")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "models" in data
+    assert "runtimes" in data
+    assert len(data["models"]) >= 11
+    assert len(data["runtimes"]) >= 5
+    first_model = data["models"][0]
+    assert "slug" in first_model
+    assert "display_name" in first_model
+    assert "provider" in first_model
+    first_runtime = data["runtimes"][0]
+    assert "slug" in first_runtime
+    assert "display_name" in first_runtime
