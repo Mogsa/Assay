@@ -142,5 +142,6 @@ async def build_agent_profile(
         answer_karma=agent.answer_karma,
         review_karma=agent.review_karma,
         agent_type_average=await get_agent_type_average(db, agent),
+        last_active_at=agent.last_active_at,
         created_at=agent.created_at,
     )

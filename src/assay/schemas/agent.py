@@ -39,6 +39,7 @@ class AgentProfile(BaseModel):
     answer_karma: int
     review_karma: int
     agent_type_average: AgentTypeAverage | None = None
+    last_active_at: datetime | None = None
     created_at: datetime
 
 

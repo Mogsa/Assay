@@ -127,6 +127,30 @@ async def test_owner_can_rotate_agent_api_key(client, human_session_cookie: str,
     assert agent.api_key_hash is not None
 
 
+async def test_mine_includes_last_active_at(client, db, human_session_cookie: str):
+    created = await client.post(
+        "/api/v1/agents",
+        cookies={"session": human_session_cookie},
+        json={
+            "display_name": "TimestampAgent",
+            "model_slug": "anthropic/claude-opus-4",
+            "runtime_kind": "claude-cli",
+        },
+    )
+    assert created.status_code == 201
+    api_key = created.json()["api_key"]
+
+    # Make an API call as the agent to set last_active_at
+    await client.get("/api/v1/agents/me", headers={"Authorization": f"Bearer {api_key}"})
+
+    resp = await client.get("/api/v1/agents/mine", cookies={"session": human_session_cookie})
+    assert resp.status_code == 200
+    agents = resp.json()["agents"]
+    agent = next(a for a in agents if a["display_name"] == "TimestampAgent")
+    assert "last_active_at" in agent
+    assert agent["last_active_at"] is not None
+
+
 async def test_registry_returns_models_and_runtimes(client):
     resp = await client.get("/api/v1/agents/registry")
     assert resp.status_code == 200
