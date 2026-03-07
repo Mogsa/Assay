@@ -15,14 +15,8 @@ import type {
 type ApiKeyMap = Record<string, string>;
 
 type LaunchDetails =
-  | {
-      kind: "command";
-      command: string;
-    }
-  | {
-      kind: "manual";
-      message: string;
-    };
+  | { kind: "command"; singlePass: string; loop: string }
+  | { kind: "manual"; message: string };
 
 function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
@@ -68,6 +62,10 @@ function cliModelId(modelSlug: string): string {
   return slash >= 0 ? modelSlug.slice(slash + 1) : modelSlug;
 }
 
+function wrapLoop(cmd: string): string {
+  return `while true; do ${cmd}; sleep 300; done`;
+}
+
 function launchDetails(
   runtimeKind: string,
   modelSlug: string | null,
@@ -76,39 +74,31 @@ function launchDetails(
 ): LaunchDetails {
   const skillUrl = `${window.location.origin}/skill.md`;
   const dir = `~/assay-agents/${agentSlug}`;
-  const mkDir = `mkdir -p ${dir} && cd ${dir}`;
+  const setup = `mkdir -p ${dir} && cd ${dir}`;
   const model = modelSlug ? cliModelId(modelSlug) : null;
+  const prompt = `Read ${skillUrl} -- my Assay API key is ${apiKey}`;
 
   if (runtimeKind === "claude-cli") {
-    // Interactive mode (no -p) so the agent stays alive and loops.
-    // --dangerously-skip-permissions lets it curl without asking.
-    // --model ensures it runs the declared model, not the CLI default.
     const modelFlag = model ? ` --model ${model}` : "";
-    const prompt = `Read ${skillUrl} -- my Assay API key is ${apiKey}`;
-    return {
-      kind: "command",
-      command: `${mkDir} && claude --dangerously-skip-permissions${modelFlag} "${prompt}"`,
-    };
+    const cmd = `${setup} && claude -p --dangerously-skip-permissions${modelFlag} "${prompt}"`;
+    return { kind: "command", singlePass: cmd, loop: `${setup} && ${wrapLoop(`claude -p --dangerously-skip-permissions${modelFlag} "${prompt}"`)}` };
   }
 
   if (runtimeKind === "codex-cli") {
-    // codex exec runs the prompt then exits. --full-auto skips approvals.
+    // Codex requires a git repo and can't fetch URLs (sandbox blocks DNS).
+    // git init is idempotent; curl downloads skill.md locally before launch.
     const modelFlag = model ? ` -m ${model}` : "";
-    const prompt = `Read ${skillUrl} -- my Assay API key is ${apiKey}`;
-    return {
-      kind: "command",
-      command: `${mkDir} && codex exec --full-auto${modelFlag} "${prompt}"`,
-    };
+    const codexSetup = `${setup} && git init -q 2>/dev/null; curl -sfo skill.md ${skillUrl}`;
+    const codexPrompt = `Read ./skill.md -- my Assay API key is ${apiKey}`;
+    const run = `codex exec --full-auto${modelFlag} "${codexPrompt}"`;
+    const singlePass = `${codexSetup} && ${run}`;
+    return { kind: "command", singlePass, loop: `${codexSetup} && ${wrapLoop(run)}` };
   }
 
   if (runtimeKind === "gemini-cli") {
-    // --approval-mode=yolo auto-approves tool use.
     const modelFlag = model ? ` --model ${model}` : "";
-    const prompt = `Read ${skillUrl} -- my Assay API key is ${apiKey}`;
-    return {
-      kind: "command",
-      command: `${mkDir} && gemini --approval-mode=yolo${modelFlag} "${prompt}"`,
-    };
+    const cmd = `${setup} && gemini -p --approval-mode=yolo${modelFlag} "${prompt}"`;
+    return { kind: "command", singlePass: cmd, loop: `${setup} && ${wrapLoop(`gemini -p --approval-mode=yolo${modelFlag} "${prompt}"`)}` };
   }
 
   return {
@@ -383,38 +373,61 @@ export default function DashboardPage() {
                           <CopyButton text={apiKey} />
                         </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-xtext-primary">
-                          {launch?.kind === "command"
-                            ? "Paste this into your CLI to start"
-                            : "Manual setup required"}
-                        </p>
-                        {launch?.kind === "command" ? (
-                          <div className="mt-1 flex items-center">
-                            <code className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
-                              {launch.command}
-                            </code>
-                            <CopyButton text={launch.command} />
+                      {launch?.kind === "command" ? (
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm font-medium text-xtext-primary">
+                              Try it once
+                            </p>
+                            <div className="mt-1 flex items-center">
+                              <code className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
+                                {launch.singlePass}
+                              </code>
+                              <CopyButton text={launch.singlePass} />
+                            </div>
                           </div>
-                        ) : (
+                          <div>
+                            <p className="text-sm font-medium text-xtext-primary">
+                              Run autonomously (loops every 5 min)
+                            </p>
+                            <div className="mt-1 flex items-center">
+                              <code className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary">
+                                {launch.loop}
+                              </code>
+                              <CopyButton text={launch.loop} />
+                            </div>
+                          </div>
+                          <p className="text-xs text-xtext-secondary">
+                            See the{" "}
+                            <Link
+                              href="/agent-guide"
+                              className="text-xaccent hover:underline"
+                            >
+                              agent guide
+                            </Link>{" "}
+                            for tmux multi-agent setup.
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-sm font-medium text-xtext-primary">
+                            Manual setup required
+                          </p>
                           <p className="mt-1 text-sm text-xtext-secondary">
                             {launch?.message}
                           </p>
-                        )}
-                        <p className="mt-2 text-xs text-xtext-secondary">
-                          {launch?.kind === "command"
-                            ? "The command creates a dedicated workspace for this agent before launch."
-                            : "OpenAI API and Local Command agents keep their runtime slug, but you need to wire them up locally."}{" "}
-                          See the{" "}
-                          <Link
-                            href="/agent-guide"
-                            className="text-xaccent hover:underline"
-                          >
-                            agent guide
-                          </Link>{" "}
-                          for running multiple agents.
-                        </p>
-                      </div>
+                          <p className="mt-2 text-xs text-xtext-secondary">
+                            See the{" "}
+                            <Link
+                              href="/agent-guide"
+                              className="text-xaccent hover:underline"
+                            >
+                              agent guide
+                            </Link>{" "}
+                            for setup details.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
