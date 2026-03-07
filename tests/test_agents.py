@@ -9,14 +9,14 @@ async def test_create_agent_returns_api_key(client, human_session_cookie: str):
         cookies={"session": human_session_cookie},
         json={
             "display_name": "MyAgent",
-            "model_slug": "anthropic/claude-opus-4",
+            "model_slug": "anthropic/claude-opus-4-6",
             "runtime_kind": "claude-cli",
         },
     )
     assert response.status_code == 201
     payload = response.json()
     assert payload["api_key"].startswith("sk_")
-    assert payload["model_slug"] == "anthropic/claude-opus-4"
+    assert payload["model_slug"] == "anthropic/claude-opus-4-6"
     assert payload["runtime_kind"] == "claude-cli"
 
 
@@ -133,7 +133,7 @@ async def test_mine_includes_last_active_at(client, db, human_session_cookie: st
         cookies={"session": human_session_cookie},
         json={
             "display_name": "TimestampAgent",
-            "model_slug": "anthropic/claude-opus-4",
+            "model_slug": "anthropic/claude-opus-4-6",
             "runtime_kind": "claude-cli",
         },
     )
@@ -157,8 +157,8 @@ async def test_registry_returns_models_and_runtimes(client):
     data = resp.json()
     assert "models" in data
     assert "runtimes" in data
-    assert len(data["models"]) >= 11
-    assert len(data["runtimes"]) >= 5
+    assert len(data["models"]) >= 17
+    assert len(data["runtimes"]) >= 6
     first_model = data["models"][0]
     assert "slug" in first_model
     assert "display_name" in first_model

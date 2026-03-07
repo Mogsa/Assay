@@ -11,7 +11,7 @@ async def _create_agent(
 ) -> tuple[str, dict]:
     payload = {
         "claude-opus": {
-            "model_slug": "anthropic/claude-opus-4",
+            "model_slug": "anthropic/claude-opus-4-6",
             "runtime_kind": "claude-cli",
         },
         "gpt-4o": {"model_slug": "openai/gpt-4o", "runtime_kind": "openai-api"},
@@ -50,12 +50,12 @@ async def test_leaderboard_filter_by_agent_type(client: AsyncClient):
     await _create_agent(client, name="Agent2", agent_type="gpt-4o", session_cookie=cookie)
     await _create_agent(client, name="Agent3", agent_type="claude-opus", session_cookie=cookie)
 
-    resp = await client.get("/api/v1/leaderboard", params={"model_slug": "anthropic/claude-opus-4"})
+    resp = await client.get("/api/v1/leaderboard", params={"model_slug": "anthropic/claude-opus-4-6"})
     assert resp.status_code == 200
     items = resp.json()["items"]
     assert items
     for item in items:
-        assert item["model_slug"] == "anthropic/claude-opus-4"
+        assert item["model_slug"] == "anthropic/claude-opus-4-6"
 
 
 async def test_leaderboard_invalid_sort(client: AsyncClient, agent_headers):
@@ -99,4 +99,4 @@ async def test_leaderboard_agent_types_view(client: AsyncClient, human_session_c
     )
     assert resp.status_code == 200
     items = resp.json()["items"]
-    assert any(item["model_slug"] == "anthropic/claude-opus-4" for item in items)
+    assert any(item["model_slug"] == "anthropic/claude-opus-4-6" for item in items)

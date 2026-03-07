@@ -17,30 +17,50 @@ class RuntimeDefinition:
 
 MODEL_REGISTRY: dict[str, ModelDefinition] = {
     # Anthropic
-    "anthropic/claude-opus-4": ModelDefinition(
-        slug="anthropic/claude-opus-4",
-        display_name="Claude Opus 4",
+    "anthropic/claude-opus-4-6": ModelDefinition(
+        slug="anthropic/claude-opus-4-6",
+        display_name="Claude Opus 4.6",
         provider="anthropic",
     ),
-    "anthropic/claude-sonnet-4": ModelDefinition(
-        slug="anthropic/claude-sonnet-4",
-        display_name="Claude Sonnet 4",
+    "anthropic/claude-sonnet-4-6": ModelDefinition(
+        slug="anthropic/claude-sonnet-4-6",
+        display_name="Claude Sonnet 4.6",
         provider="anthropic",
     ),
-    "anthropic/claude-haiku-4": ModelDefinition(
-        slug="anthropic/claude-haiku-4",
-        display_name="Claude Haiku 4",
+    "anthropic/claude-haiku-4-5": ModelDefinition(
+        slug="anthropic/claude-haiku-4-5",
+        display_name="Claude Haiku 4.5",
         provider="anthropic",
     ),
     # OpenAI
-    "openai/gpt-4o": ModelDefinition(
-        slug="openai/gpt-4o",
-        display_name="GPT-4o",
+    "openai/gpt-5.4": ModelDefinition(
+        slug="openai/gpt-5.4",
+        display_name="GPT-5.4",
+        provider="openai",
+    ),
+    "openai/gpt-5.3": ModelDefinition(
+        slug="openai/gpt-5.3",
+        display_name="GPT-5.3",
         provider="openai",
     ),
     "openai/gpt-5": ModelDefinition(
         slug="openai/gpt-5",
         display_name="GPT-5",
+        provider="openai",
+    ),
+    "openai/gpt-5-mini": ModelDefinition(
+        slug="openai/gpt-5-mini",
+        display_name="GPT-5 Mini",
+        provider="openai",
+    ),
+    "openai/gpt-4o": ModelDefinition(
+        slug="openai/gpt-4o",
+        display_name="GPT-4o",
+        provider="openai",
+    ),
+    "openai/codex": ModelDefinition(
+        slug="openai/codex",
+        display_name="Codex",
         provider="openai",
     ),
     "openai/o3": ModelDefinition(
@@ -54,6 +74,16 @@ MODEL_REGISTRY: dict[str, ModelDefinition] = {
         provider="openai",
     ),
     # Google
+    "google/gemini-3.1-pro": ModelDefinition(
+        slug="google/gemini-3.1-pro",
+        display_name="Gemini 3.1 Pro",
+        provider="google",
+    ),
+    "google/gemini-3.1-flash": ModelDefinition(
+        slug="google/gemini-3.1-flash",
+        display_name="Gemini 3.1 Flash",
+        provider="google",
+    ),
     "google/gemini-2.5-pro": ModelDefinition(
         slug="google/gemini-2.5-pro",
         display_name="Gemini 2.5 Pro",
@@ -65,22 +95,16 @@ MODEL_REGISTRY: dict[str, ModelDefinition] = {
         provider="google",
     ),
     # Qwen
-    "qwen/qwen3-coder": ModelDefinition(
-        slug="qwen/qwen3-coder",
-        display_name="Qwen3 Coder",
+    "qwen/qwen3-coder-plus": ModelDefinition(
+        slug="qwen/qwen3-coder-plus",
+        display_name="Qwen3 Coder Plus",
         provider="qwen",
     ),
-    # DeepSeek
-    "deepseek/deepseek-r1": ModelDefinition(
-        slug="deepseek/deepseek-r1",
-        display_name="DeepSeek R1",
-        provider="deepseek",
-    ),
-    # Meta
-    "meta/llama-4-maverick": ModelDefinition(
-        slug="meta/llama-4-maverick",
-        display_name="Llama 4 Maverick",
-        provider="meta",
+    # MiniMax
+    "minimax/minimax-m2.5": ModelDefinition(
+        slug="minimax/minimax-m2.5",
+        display_name="MiniMax M2.5",
+        provider="minimax",
     ),
 }
 
@@ -88,6 +112,7 @@ RUNTIME_REGISTRY: dict[str, RuntimeDefinition] = {
     "claude-cli": RuntimeDefinition(slug="claude-cli", display_name="Claude Code"),
     "codex-cli": RuntimeDefinition(slug="codex-cli", display_name="Codex CLI"),
     "gemini-cli": RuntimeDefinition(slug="gemini-cli", display_name="Gemini CLI"),
+    "open-code": RuntimeDefinition(slug="open-code", display_name="OpenCode"),
     "openai-api": RuntimeDefinition(slug="openai-api", display_name="OpenAI API"),
     "local-command": RuntimeDefinition(slug="local-command", display_name="Local Command"),
 }

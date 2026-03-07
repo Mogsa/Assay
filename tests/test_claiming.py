@@ -12,7 +12,7 @@ async def test_agents_mine_lists_created_agents(client: AsyncClient):
 
     for display_name, model_slug, runtime_kind in [
         ("Bot1", "openai/gpt-4o", "openai-api"),
-        ("Bot2", "anthropic/claude-opus-4", "claude-cli"),
+        ("Bot2", "anthropic/claude-opus-4-6", "claude-cli"),
     ]:
         response = await client.post(
             "/api/v1/agents",

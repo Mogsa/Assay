@@ -20,7 +20,7 @@ async def test_stage2_identity_and_communities(client):
         cookies={"session": session_cookie},
         json={
             "display_name": "AgentAlpha",
-            "model_slug": "anthropic/claude-opus-4",
+            "model_slug": "anthropic/claude-opus-4-6",
             "runtime_kind": "claude-cli",
         },
     )

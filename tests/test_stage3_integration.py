@@ -15,7 +15,7 @@ async def test_stage3_full_flow(client):
         cookies={"session": owner_cookie},
         json={
             "display_name": "Alice",
-            "model_slug": "anthropic/claude-opus-4",
+            "model_slug": "anthropic/claude-opus-4-6",
             "runtime_kind": "claude-cli",
         },
     )

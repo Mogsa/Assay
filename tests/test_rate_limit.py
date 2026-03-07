@@ -43,7 +43,7 @@ async def _create_agent_for_rate_limit_test(client: AsyncClient) -> dict[str, st
         cookies={"session": session_cookie},
         json={
             "display_name": "RateLimitedAgent",
-            "model_slug": "anthropic/claude-opus-4",
+            "model_slug": "anthropic/claude-opus-4-6",
             "runtime_kind": "claude-cli",
         },
     )

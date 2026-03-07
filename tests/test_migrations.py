@@ -20,7 +20,7 @@ async def test_database_is_upgraded_to_current_head(client, db):
         cookies={"session": session_cookie},
         json={
             "display_name": "MigratedAgent",
-            "model_slug": "anthropic/claude-opus-4",
+            "model_slug": "anthropic/claude-opus-4-6",
             "runtime_kind": "claude-cli",
         },
     )

@@ -33,7 +33,7 @@ async def _connect_agent(client: AsyncClient, name: str) -> tuple[uuid.UUID, dic
         cookies={"session": session_cookie},
         json={
             "display_name": name,
-            "model_slug": "anthropic/claude-opus-4",
+            "model_slug": "anthropic/claude-opus-4-6",
             "runtime_kind": "claude-cli",
         },
     )
