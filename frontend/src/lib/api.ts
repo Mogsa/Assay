@@ -1,16 +1,10 @@
 import type {
   AgentActivityItem,
+  AgentApiKeyResponse,
   AgentProfile,
-  AgentRuntimePolicy,
   AgentTypeLeaderboardEntry,
-  CatalogModel,
-  CatalogRuntime,
-  CliDeviceApprovalResponse,
-  CliDeviceStartResponse,
-  CliDeviceTokenResponse,
   Community,
   CommunityMember,
-  CustomModelInput,
   EditHistoryEntry,
   Flag,
   HomeData,
@@ -88,76 +82,18 @@ export const auth = {
 export const agents = {
   me: () => request<AgentProfile>("/agents/me"),
   mine: () => request<{ agents: AgentProfile[] }>("/agents/mine"),
+  create: (display_name: string, model_slug: string, runtime_kind: string) =>
+    request<AgentApiKeyResponse>("/agents", {
+      method: "POST",
+      body: JSON.stringify({ display_name, model_slug, runtime_kind }),
+    }),
   get: (id: string) => request<PublicAgentProfile>(`/agents/${id}`),
   activity: (id: string, cursor?: string) => {
     const sp = new URLSearchParams();
     if (cursor) sp.set("cursor", cursor);
     return request<PaginatedResponse<AgentActivityItem>>(`/agents/${id}/activity?${sp}`);
   },
-  runtimePolicy: (id: string) => request<AgentRuntimePolicy>(`/agents/${id}/runtime-policy`),
-  updateRuntimePolicy: (id: string, body: Omit<AgentRuntimePolicy, "agent_id">) =>
-    request<AgentRuntimePolicy>(`/agents/${id}/runtime-policy`, {
-      method: "PUT",
-      body: JSON.stringify(body),
-    }),
-  rotateApiKey: (id: string) =>
-    request<{
-      agent_id: string;
-      api_key: string;
-      display_name: string;
-      agent_type: string;
-      model_slug: string | null;
-      model_display_name: string | null;
-      runtime_kind: string | null;
-    }>(`/agents/${id}/api-key`, { method: "POST" }),
-  revokeTokens: (id: string) =>
-    request<{ agent_id: string; revoked_count: number }>(`/agents/${id}/tokens/revoke-all`, {
-      method: "POST",
-    }),
-};
-
-export const catalog = {
-  models: () => request<CatalogModel[]>("/catalog/models"),
-  runtimes: () => request<CatalogRuntime[]>("/catalog/runtimes"),
-  runtimesForModel: (modelSlug: string) =>
-    request<CatalogRuntime[]>(`/catalog/models/${encodeURIComponent(modelSlug)}/runtimes`),
-};
-
-export const cliAuth = {
-  startDevice: (
-    display_name: string,
-    runtime_kind: string,
-    opts: {
-      model_slug?: string;
-      custom_model?: CustomModelInput;
-      provider_terms_acknowledged?: boolean;
-    },
-  ) =>
-    request<CliDeviceStartResponse>("/cli/device/start", {
-      method: "POST",
-      body: JSON.stringify({
-        display_name,
-        runtime_kind,
-        model_slug: opts.model_slug || null,
-        custom_model: opts.custom_model || null,
-        provider_terms_acknowledged: opts.provider_terms_acknowledged || false,
-      }),
-    }),
-  approveDevice: (user_code: string, agent_id?: string) =>
-    request<CliDeviceApprovalResponse>("/cli/device/approve", {
-      method: "POST",
-      body: JSON.stringify({ user_code, agent_id: agent_id || null }),
-    }),
-  pollDevice: (device_code: string) =>
-    request<CliDeviceTokenResponse | { status: string }>("/cli/device/poll", {
-      method: "POST",
-      body: JSON.stringify({ device_code }),
-    }),
-  refreshToken: (refresh_token: string) =>
-    request<CliDeviceTokenResponse>("/cli/token/refresh", {
-      method: "POST",
-      body: JSON.stringify({ refresh_token }),
-    }),
+  rotateApiKey: (id: string) => request<AgentApiKeyResponse>(`/agents/${id}/api-key`, { method: "POST" }),
 };
 
 export const questions = {

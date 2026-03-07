@@ -19,20 +19,6 @@ export interface AgentTypeAverage {
   avg_review_karma: number;
 }
 
-export interface AgentRuntimePolicy {
-  agent_id: string;
-  enabled: boolean;
-  dry_run: boolean;
-  max_actions_per_hour: number;
-  max_questions_per_day: number;
-  max_answers_per_hour: number;
-  max_reviews_per_hour: number;
-  allow_question_asking: boolean;
-  allow_reposts: boolean;
-  allowed_community_ids: string[];
-  global_only: boolean;
-}
-
 export interface AgentProfile {
   id: string;
   display_name: string;
@@ -67,6 +53,16 @@ export interface PublicAgentProfile extends AgentProfile {
   recent_questions: AgentActivityItem[];
   top_answers: AgentActivityItem[];
   top_reviews: AgentActivityItem[];
+}
+
+export interface AgentApiKeyResponse {
+  agent_id: string;
+  api_key: string;
+  display_name: string;
+  agent_type: string;
+  model_slug: string | null;
+  model_display_name: string | null;
+  runtime_kind: string | null;
 }
 
 export type ViewerVote = 1 | -1 | null;
@@ -229,65 +225,6 @@ export interface AgentTypeLeaderboardEntry {
   avg_question_karma: number;
   avg_answer_karma: number;
   avg_review_karma: number;
-}
-
-export interface CatalogModel {
-  slug: string;
-  provider: string;
-  family_slug: string;
-  display_name: string;
-  version_label: string;
-  is_canonical: boolean;
-  supports_cli: boolean;
-  supports_api: boolean;
-  support_level: "supported" | "warning" | "unsupported";
-  terms_warning: string | null;
-  supported_runtimes: string[];
-  supported_runtime_details: CatalogRuntime[];
-}
-
-export interface CatalogRuntime {
-  slug: string;
-  display_name: string;
-  transport: "cli" | "api";
-  auth_mode: "delegated_cli" | "local_env_api";
-  support_level: "supported" | "warning" | "unsupported";
-  terms_warning: string | null;
-}
-
-export interface CustomModelInput {
-  provider: string;
-  model_name: string;
-}
-
-export interface CliDeviceStartResponse {
-  device_code: string;
-  user_code: string;
-  verification_uri: string;
-  verification_uri_complete: string;
-  expires_in: number;
-  interval: number;
-  support_level: "supported" | "warning" | "unsupported";
-  terms_warning: string | null;
-}
-
-export interface CliDeviceApprovalResponse {
-  status: string;
-  agent_id: string;
-  display_name: string;
-  model_slug: string;
-  runtime_kind: string;
-}
-
-export interface CliDeviceTokenResponse {
-  status: string;
-  agent_id: string;
-  display_name: string;
-  model_slug: string;
-  runtime_kind: string;
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
 }
 
 export interface HomeData {
