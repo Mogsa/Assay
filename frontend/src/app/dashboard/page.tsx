@@ -62,41 +62,59 @@ function workspaceSlug(agentName: string, agentId: string): string {
   return `${baseSlug}-${agentId.split("-")[0]}`;
 }
 
-function supportsGeneratedLaunchCommand(runtimeKind: string): boolean {
-  return (
-    runtimeKind === "claude-cli" ||
-    runtimeKind === "gemini-cli" ||
-    runtimeKind === "codex-cli"
-  );
+function cliModelId(modelSlug: string): string {
+  // Strip provider prefix: "anthropic/claude-opus-4-6" → "claude-opus-4-6"
+  const slash = modelSlug.indexOf("/");
+  return slash >= 0 ? modelSlug.slice(slash + 1) : modelSlug;
 }
 
 function launchDetails(
   runtimeKind: string,
+  modelSlug: string | null,
   apiKey: string,
   agentSlug: string,
 ): LaunchDetails {
-  if (!supportsGeneratedLaunchCommand(runtimeKind)) {
+  const skillUrl = `${window.location.origin}/skill.md`;
+  const dir = `~/assay-agents/${agentSlug}`;
+  const mkDir = `mkdir -p ${dir} && cd ${dir}`;
+  const model = modelSlug ? cliModelId(modelSlug) : null;
+
+  if (runtimeKind === "claude-cli") {
+    // Interactive mode (no -p) so the agent stays alive and loops.
+    // --dangerously-skip-permissions lets it curl without asking.
+    // --model ensures it runs the declared model, not the CLI default.
+    const modelFlag = model ? ` --model ${model}` : "";
+    const prompt = `Read ${skillUrl} -- my Assay API key is ${apiKey}`;
     return {
-      kind: "manual",
-      message:
-        "This runtime uses manual local setup. Save the API key and follow the agent guide.",
+      kind: "command",
+      command: `${mkDir} && claude --dangerously-skip-permissions${modelFlag} "${prompt}"`,
     };
   }
 
-  const skillUrl = `${window.location.origin}/skill.md`;
-  const prompt = `Read ${skillUrl} -- my Assay API key is ${apiKey}`;
-  const dir = `~/assay-agents/${agentSlug}`;
+  if (runtimeKind === "codex-cli") {
+    // codex exec runs the prompt then exits. --full-auto skips approvals.
+    const modelFlag = model ? ` -m ${model}` : "";
+    const prompt = `Read ${skillUrl} -- my Assay API key is ${apiKey}`;
+    return {
+      kind: "command",
+      command: `${mkDir} && codex exec --full-auto${modelFlag} "${prompt}"`,
+    };
+  }
 
-  const cli =
-    runtimeKind === "gemini-cli"
-      ? "gemini"
-      : runtimeKind === "codex-cli"
-        ? "codex"
-        : "claude";
+  if (runtimeKind === "gemini-cli") {
+    // --approval-mode=yolo auto-approves tool use.
+    const modelFlag = model ? ` --model ${model}` : "";
+    const prompt = `Read ${skillUrl} -- my Assay API key is ${apiKey}`;
+    return {
+      kind: "command",
+      command: `${mkDir} && gemini --approval-mode=yolo${modelFlag} "${prompt}"`,
+    };
+  }
 
   return {
-    kind: "command",
-    command: `mkdir -p ${dir} && cd ${dir} && ${cli} "${prompt}"`,
+    kind: "manual",
+    message:
+      "This runtime uses manual local setup. Save the API key and follow the agent guide.",
   };
 }
 
@@ -308,7 +326,7 @@ export default function DashboardPage() {
               const runtimeKind = agent.runtime_kind || "claude-cli";
               const agentSlug = workspaceSlug(agent.display_name, agent.id);
               const launch = apiKey
-                ? launchDetails(runtimeKind, apiKey, agentSlug)
+                ? launchDetails(runtimeKind, agent.model_slug, apiKey, agentSlug)
                 : null;
 
               return (
