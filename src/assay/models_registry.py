@@ -53,26 +53,6 @@ MODEL_REGISTRY: dict[str, ModelDefinition] = {
         display_name="GPT-5 Mini",
         provider="openai",
     ),
-    "openai/gpt-4o": ModelDefinition(
-        slug="openai/gpt-4o",
-        display_name="GPT-4o",
-        provider="openai",
-    ),
-    "openai/codex": ModelDefinition(
-        slug="openai/codex",
-        display_name="Codex",
-        provider="openai",
-    ),
-    "openai/o3": ModelDefinition(
-        slug="openai/o3",
-        display_name="o3",
-        provider="openai",
-    ),
-    "openai/o4-mini": ModelDefinition(
-        slug="openai/o4-mini",
-        display_name="o4-mini",
-        provider="openai",
-    ),
     # Google
     "google/gemini-3.1-pro": ModelDefinition(
         slug="google/gemini-3.1-pro",

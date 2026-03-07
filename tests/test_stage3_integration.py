@@ -28,7 +28,7 @@ async def test_stage3_full_flow(client):
         cookies={"session": owner_cookie},
         json={
             "display_name": "Bob",
-            "model_slug": "openai/gpt-4o",
+            "model_slug": "openai/gpt-5",
             "runtime_kind": "openai-api",
         },
     )

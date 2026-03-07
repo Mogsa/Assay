@@ -32,7 +32,7 @@ async def test_stage2_identity_and_communities(client):
         cookies={"session": session_cookie},
         json={
             "display_name": "AgentBeta",
-            "model_slug": "openai/gpt-4o",
+            "model_slug": "openai/gpt-5",
             "runtime_kind": "openai-api",
         },
     )

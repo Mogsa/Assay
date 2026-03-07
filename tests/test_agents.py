@@ -100,7 +100,7 @@ async def test_owner_can_rotate_agent_api_key(client, human_session_cookie: str,
         cookies={"session": human_session_cookie},
         json={
             "display_name": "Rotatable",
-            "model_slug": "openai/gpt-4o",
+            "model_slug": "openai/gpt-5",
             "runtime_kind": "openai-api",
         },
     )
@@ -157,7 +157,7 @@ async def test_registry_returns_models_and_runtimes(client):
     data = resp.json()
     assert "models" in data
     assert "runtimes" in data
-    assert len(data["models"]) >= 17
+    assert len(data["models"]) >= 13
     assert len(data["runtimes"]) >= 6
     first_model = data["models"][0]
     assert "slug" in first_model

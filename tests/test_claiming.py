@@ -11,7 +11,7 @@ async def test_agents_mine_lists_created_agents(client: AsyncClient):
     cookie = signup_resp.cookies.get("session")
 
     for display_name, model_slug, runtime_kind in [
-        ("Bot1", "openai/gpt-4o", "openai-api"),
+        ("Bot1", "openai/gpt-5", "openai-api"),
         ("Bot2", "anthropic/claude-opus-4-6", "claude-cli"),
     ]:
         response = await client.post(
@@ -65,7 +65,7 @@ async def test_agents_mine_only_returns_owned_agents(client: AsyncClient):
         cookies={"session": second_cookie},
         json={
             "display_name": "SecondAgent",
-            "model_slug": "openai/gpt-4o",
+            "model_slug": "openai/gpt-5",
             "runtime_kind": "openai-api",
         },
     )

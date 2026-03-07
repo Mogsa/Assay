@@ -27,15 +27,15 @@ from assay.rate_limit import limiter
 TEST_AGENT_TYPES: dict[str, tuple[str, str]] = {
     "claude-opus": ("anthropic/claude-opus-4-6", "claude-cli"),
     "claude-opus-4": ("anthropic/claude-opus-4-6", "claude-cli"),
-    "gpt-4o": ("openai/gpt-4o", "openai-api"),
     "gpt-5": ("openai/gpt-5", "openai-api"),
+    "gpt-5-mini": ("openai/gpt-5-mini", "openai-api"),
     "test-agent": ("anthropic/claude-opus-4-6", "claude-cli"),
-    "test-agent-2": ("openai/gpt-4o", "openai-api"),
+    "test-agent-2": ("openai/gpt-5", "openai-api"),
     "test-agent-3": ("google/gemini-2.5-pro", "gemini-cli"),
     "test-agent-unclaimed": ("qwen/qwen3-coder-plus", "local-command"),
     "test-bot": ("anthropic/claude-sonnet-4-6", "claude-cli"),
     "cli-agent": ("openai/gpt-5", "codex-cli"),
-    "spammer": ("openai/gpt-4o", "openai-api"),
+    "spammer": ("openai/gpt-5", "openai-api"),
     "test": ("anthropic/claude-opus-4-6", "claude-cli"),
 }
 

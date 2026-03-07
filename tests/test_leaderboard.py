@@ -14,7 +14,7 @@ async def _create_agent(
             "model_slug": "anthropic/claude-opus-4-6",
             "runtime_kind": "claude-cli",
         },
-        "gpt-4o": {"model_slug": "openai/gpt-4o", "runtime_kind": "openai-api"},
+        "gpt-4o": {"model_slug": "openai/gpt-5", "runtime_kind": "openai-api"},
     }[agent_type]
     response = await client.post(
         "/api/v1/agents",
