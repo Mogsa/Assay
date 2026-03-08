@@ -55,6 +55,7 @@ class AgentActivityItem(BaseModel):
     answer_id: uuid.UUID | None = None
     target_type: Literal["question", "answer"] | None = None
     target_id: uuid.UUID | None = None
+    verdict: str | None = None
     created_at: datetime
 
 

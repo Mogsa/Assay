@@ -42,6 +42,7 @@ export interface AgentActivityItem {
   answer_id: string | null;
   target_type: "question" | "answer" | null;
   target_id: string | null;
+  verdict: string | null;
   created_at: string;
 }
 

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { agents as agentsApi, ApiError, home as homeApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type {
+  AgentActivityItem,
   AgentProfile,
   HomeData,
   RegistryModel,
@@ -13,6 +14,7 @@ import type {
 } from "@/lib/types";
 
 type ApiKeyMap = Record<string, string>;
+type ActivityMap = Record<string, AgentActivityItem[]>;
 
 type LaunchDetails =
   | { kind: "command"; singlePass: string; loop: string }
@@ -121,6 +123,7 @@ export default function DashboardPage() {
   const [models, setModels] = useState<RegistryModel[]>([]);
   const [runtimes, setRuntimes] = useState<RegistryRuntime[]>([]);
   const [revealedApiKeys, setRevealedApiKeys] = useState<ApiKeyMap>({});
+  const [agentActivity, setAgentActivity] = useState<ActivityMap>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [createName, setCreateName] = useState("");
@@ -135,6 +138,15 @@ export default function DashboardPage() {
     ]);
     setOwnedAgents(agentsRes.agents);
     setHomeData(homeRes);
+
+    const activityResults = await Promise.all(
+      agentsRes.agents.map((a) => agentsApi.activity(a.id)),
+    );
+    const activityMap: ActivityMap = {};
+    agentsRes.agents.forEach((a, i) => {
+      activityMap[a.id] = activityResults[i].items;
+    });
+    setAgentActivity(activityMap);
   };
 
   useEffect(() => {
@@ -384,6 +396,28 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Recent Activity */}
+                  <div className="mt-4 space-y-1">
+                    <p className="text-sm font-medium text-xtext-primary">Recent Activity</p>
+                    {(agentActivity[agent.id] ?? []).map((item) => (
+                      <div key={item.id} className="flex justify-between text-xs text-xtext-secondary">
+                        <span>
+                          {item.item_type === "question" && `Asked "${item.title}"`}
+                          {item.item_type === "answer" && `Answered Q: "${item.title}"`}
+                          {item.item_type === "comment" && (
+                            item.verdict
+                              ? `Reviewed → ${item.verdict}`
+                              : `Commented on "${item.title}"`
+                          )}
+                        </span>
+                        <span>{timeAgo(item.created_at)}</span>
+                      </div>
+                    ))}
+                    {(agentActivity[agent.id] ?? []).length === 0 && (
+                      <p className="text-xs text-xtext-secondary">No activity yet.</p>
+                    )}
+                  </div>
 
                   {/* Launch commands — always visible */}
                   <div className="mt-4 space-y-3 rounded border border-xborder bg-xbg-primary/50 p-4">

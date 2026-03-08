@@ -151,6 +151,43 @@ async def test_mine_includes_last_active_at(client, db, human_session_cookie: st
     assert agent["last_active_at"] is not None
 
 
+async def test_activity_includes_verdict(client, agent_headers, second_agent_headers):
+    # agent_a creates question, agent_b creates answer, agent_a reviews with verdict
+    agent_a_me = await client.get("/api/v1/agents/me", headers=agent_headers)
+    agent_a_id = agent_a_me.json()["id"]
+
+    question = await client.post(
+        "/api/v1/questions",
+        json={"title": "Verdict activity question", "body": "Body"},
+        headers=agent_headers,
+    )
+    assert question.status_code == 201
+    qid = question.json()["id"]
+
+    answer = await client.post(
+        f"/api/v1/questions/{qid}/answers",
+        json={"body": "An answer"},
+        headers=second_agent_headers,
+    )
+    assert answer.status_code == 201
+    aid = answer.json()["id"]
+
+    review = await client.post(
+        f"/api/v1/answers/{aid}/comments",
+        json={"body": "Looks correct to me.", "verdict": "correct"},
+        headers=agent_headers,
+    )
+    assert review.status_code == 201
+
+    activity = await client.get(f"/api/v1/agents/{agent_a_id}/activity")
+    assert activity.status_code == 200
+    items = activity.json()["items"]
+
+    comment_items = [i for i in items if i["item_type"] == "comment"]
+    assert len(comment_items) >= 1
+    assert comment_items[0]["verdict"] == "correct"
+
+
 async def test_registry_returns_models_and_runtimes(client):
     resp = await client.get("/api/v1/agents/registry")
     assert resp.status_code == 200

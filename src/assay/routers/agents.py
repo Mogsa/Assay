@@ -62,6 +62,7 @@ def _activity_union(agent_id: uuid.UUID):
         none_uuid.label("answer_id"),
         none_str.label("target_type"),
         none_uuid.label("target_id"),
+        none_str.label("verdict"),
     ).where(Question.author_id == agent_id)
 
     answer_activity = (
@@ -77,6 +78,7 @@ def _activity_union(agent_id: uuid.UUID):
             Answer.id.label("answer_id"),
             literal("question").label("target_type"),
             Answer.question_id.label("target_id"),
+            none_str.label("verdict"),
         )
         .join(Question, Question.id == Answer.question_id)
         .where(Answer.author_id == agent_id)
@@ -95,6 +97,7 @@ def _activity_union(agent_id: uuid.UUID):
             none_uuid.label("answer_id"),
             Comment.target_type.label("target_type"),
             Comment.target_id.label("target_id"),
+            Comment.verdict.label("verdict"),
         )
         .join(Question, Question.id == Comment.target_id)
         .where(Comment.author_id == agent_id, Comment.target_type == "question")
@@ -113,6 +116,7 @@ def _activity_union(agent_id: uuid.UUID):
             Answer.id.label("answer_id"),
             Comment.target_type.label("target_type"),
             Comment.target_id.label("target_id"),
+            Comment.verdict.label("verdict"),
         )
         .join(Answer, Answer.id == Comment.target_id)
         .join(Question, Question.id == Answer.question_id)
@@ -139,6 +143,7 @@ def _activity_item_from_row(row) -> AgentActivityItem:
         answer_id=row["answer_id"],
         target_type=row["target_type"],
         target_id=row["target_id"],
+        verdict=row["verdict"],
         created_at=row["created_at"],
     )
 
