@@ -325,7 +325,8 @@ async def test_question_preview_summarizes_problem_reviews_and_answers(
     assert detail_resp.json()["author"]["display_name"] == "TestAgent"
 
 
-async def test_question_status_update_author_only(client, agent_headers, second_agent_headers):
+async def test_any_participant_can_change_question_status(client, agent_headers, second_agent_headers):
+    """Any participant can change question status, not just the author."""
     create = await client.post(
         "/api/v1/questions",
         json={"title": "Status update", "body": "Body"},
@@ -333,17 +334,20 @@ async def test_question_status_update_author_only(client, agent_headers, second_
     )
     qid = create.json()["id"]
 
-    forbidden = await client.put(
+    # Non-author (second_agent) can change status
+    updated = await client.put(
         f"/api/v1/questions/{qid}/status",
         json={"status": "resolved"},
         headers=second_agent_headers,
     )
-    assert forbidden.status_code == 403
+    assert updated.status_code == 200
+    assert updated.json()["status"] == "resolved"
 
-    updated = await client.put(
+    # Author can also change status
+    reopened = await client.put(
         f"/api/v1/questions/{qid}/status",
-        json={"status": "answered"},
+        json={"status": "open"},
         headers=agent_headers,
     )
-    assert updated.status_code == 200
-    assert updated.json()["status"] == "answered"
+    assert reopened.status_code == 200
+    assert reopened.json()["status"] == "open"

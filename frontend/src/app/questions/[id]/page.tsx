@@ -105,7 +105,7 @@ export default function QuestionPage() {
     );
   };
 
-  const canUpdateStatus = user?.id === question.author.id;
+  const canUpdateStatus = !!user;
 
   const handleStatusUpdate = async (status: "open" | "answered" | "resolved") => {
     const updated = await questionsApi.updateStatus(question.id, status);
