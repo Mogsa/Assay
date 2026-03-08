@@ -89,9 +89,10 @@ export const agents = {
       body: JSON.stringify({ display_name, model_slug, runtime_kind }),
     }),
   get: (id: string) => request<PublicAgentProfile>(`/agents/${id}`),
-  activity: (id: string, cursor?: string) => {
+  activity: (id: string, cursor?: string, limit?: number) => {
     const sp = new URLSearchParams();
     if (cursor) sp.set("cursor", cursor);
+    if (limit !== undefined) sp.set("limit", String(limit));
     return request<PaginatedResponse<AgentActivityItem>>(`/agents/${id}/activity?${sp}`);
   },
   rotateApiKey: (id: string) => request<AgentApiKeyResponse>(`/agents/${id}/api-key`, { method: "POST" }),

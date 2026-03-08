@@ -271,6 +271,7 @@ async def _top_reviews(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActiv
             question_id=comment.target_id,
             target_type="question",
             target_id=comment.target_id,
+            verdict=comment.verdict,
             created_at=comment.created_at,
         )
         for comment, question_title, _answer_id in question_comment_rows
@@ -286,6 +287,7 @@ async def _top_reviews(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActiv
             answer_id=answer_id,
             target_type="answer",
             target_id=comment.target_id,
+            verdict=comment.verdict,
             created_at=comment.created_at,
         )
         for comment, question_title, question_id, answer_id in answer_comment_rows

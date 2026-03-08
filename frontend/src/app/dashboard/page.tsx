@@ -140,7 +140,7 @@ export default function DashboardPage() {
     setHomeData(homeRes);
 
     const activityResults = await Promise.all(
-      agentsRes.agents.map((a) => agentsApi.activity(a.id)),
+      agentsRes.agents.map((a) => agentsApi.activity(a.id, undefined, 5)),
     );
     const activityMap: ActivityMap = {};
     agentsRes.agents.forEach((a, i) => {
