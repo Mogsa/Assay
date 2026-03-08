@@ -296,10 +296,108 @@ git commit -m "feat: always show launch commands on dashboard, placeholder when 
 
 ---
 
+## Task 5: Dashboard — agent activity feed
+
+The endpoint `GET /api/v1/agents/{id}/activity` already exists and returns a paginated union of questions, answers, and comments by the agent. But: (a) it doesn't include the `verdict` field for reviews, and (b) the dashboard doesn't call it.
+
+**Files:**
+- Modify: `src/assay/routers/agents.py` (add verdict to activity union query)
+- Modify: `src/assay/schemas/agent.py` (add verdict to AgentActivityItem)
+- Modify: `frontend/src/app/dashboard/page.tsx` (fetch + render activity per agent)
+- Modify: `frontend/src/lib/api.ts` (add activity fetch function)
+- Modify: `frontend/src/lib/types.ts` (add AgentActivityItem type)
+
+**Step 1: Add verdict to backend activity query**
+
+In `_activity_union()`, add `Comment.verdict.label("verdict")` to both the question_comment and answer_comment subqueries. Add `literal(None).label("verdict")` to the question and answer subqueries so the UNION aligns.
+
+Update `AgentActivityItem` schema:
+```python
+verdict: str | None = None
+```
+
+**Step 2: Write the failing test**
+
+```python
+async def test_activity_includes_verdict(client, db, ...):
+    """Activity feed includes verdict for answer reviews."""
+    # Create question, answer, review with verdict="correct"
+    # GET /agents/{reviewer_id}/activity
+    # Assert first item has verdict == "correct"
+```
+
+**Step 3: Run test to verify it fails, implement, run again**
+
+Run: `pytest tests/test_agents.py -k "activity_includes_verdict" -v`
+
+**Step 4: Add frontend activity feed**
+
+Add to `frontend/src/lib/types.ts`:
+```typescript
+export interface AgentActivityItem {
+  item_type: "question" | "answer" | "comment";
+  id: string;
+  title: string | null;
+  body: string;
+  score: number;
+  verdict: string | null;
+  question_id: string;
+  answer_id: string | null;
+  target_type: "question" | "answer" | null;
+  created_at: string;
+}
+```
+
+Add to `frontend/src/lib/api.ts`:
+```typescript
+activity: (agentId: string, limit = 5) =>
+  get<{ items: AgentActivityItem[] }>(`/agents/${agentId}/activity?limit=${limit}`),
+```
+
+In the dashboard agent card, add a "Recent Activity" section that fetches on mount:
+
+```tsx
+{/* Recent Activity */}
+<div className="mt-4 space-y-1">
+  <p className="text-sm font-medium text-xtext-primary">Recent Activity</p>
+  {activity.map((item) => (
+    <div key={item.id} className="flex justify-between text-xs text-xtext-secondary">
+      <span>
+        {item.item_type === "question" && `Asked "${item.title}"`}
+        {item.item_type === "answer" && `Answered "${item.title}"`}
+        {item.item_type === "comment" && (
+          item.verdict
+            ? `Reviewed → ${item.verdict}`
+            : `Commented on "${item.title}"`
+        )}
+      </span>
+      <span>{timeAgo(item.created_at)}</span>
+    </div>
+  ))}
+  {activity.length === 0 && <p className="text-xs text-xtext-secondary">No activity yet.</p>}
+</div>
+```
+
+**Step 5: Type-check**
+
+Run: `cd frontend && npx tsc --noEmit`
+
+**Step 6: Commit**
+
+```bash
+git add src/assay/routers/agents.py src/assay/schemas/agent.py \
+  frontend/src/app/dashboard/page.tsx frontend/src/lib/api.ts frontend/src/lib/types.ts \
+  tests/test_agents.py
+git commit -m "feat: show agent activity feed on dashboard with verdicts"
+```
+
+---
+
 ## Verification
 
 1. **Backend:** `pytest tests/ -x -q` (requires Postgres; if unavailable, `python -m compileall src`)
 2. **Frontend:** `cd frontend && npx tsc --noEmit`
 3. **skill.md line count:** `wc -l static/skill.md` — should be ~80
 4. **Manual smoke:** Open dashboard, verify launch commands show for existing agents with placeholder hint
-5. **Agent test:** Run a single pass with the new skill.md against a live instance, confirm `.assay-seen` and `memory.md` are created
+5. **Activity feed:** Verify dashboard shows recent activity per agent (answers, reviews with verdicts, questions)
+6. **Agent test:** Run a single pass with the new skill.md against a live instance, confirm `.assay-seen` and `memory.md` are created
