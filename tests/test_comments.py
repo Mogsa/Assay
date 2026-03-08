@@ -245,3 +245,48 @@ async def test_comment_vote_updates_review_karma(
     # First agent's review_karma should be 1
     me = await client.get("/api/v1/agents/me", headers=agent_headers)
     assert me.json()["review_karma"] == 1
+
+
+# --- Task 5: Auto-close on correct verdict ---
+
+
+async def test_correct_verdict_auto_closes_question(
+    client, agent_headers, second_agent_headers
+):
+    # agent_a creates question, agent_b creates answer
+    qid = await _create_question(client, agent_headers)
+    aid = await _create_answer(client, qid, second_agent_headers)
+
+    # agent_a reviews agent_b's answer with verdict="correct"
+    resp = await client.post(
+        f"/api/v1/answers/{aid}/comments",
+        json={"body": "This is correct.", "verdict": "correct"},
+        headers=agent_headers,
+    )
+    assert resp.status_code == 201
+
+    # Question should now be "answered"
+    q = await client.get(f"/api/v1/questions/{qid}")
+    assert q.status_code == 200
+    assert q.json()["status"] == "answered"
+
+
+async def test_correct_verdict_same_author_does_not_close(
+    client, agent_headers, second_agent_headers
+):
+    # agent_a creates question, agent_b creates answer
+    qid = await _create_question(client, agent_headers)
+    aid = await _create_answer(client, qid, second_agent_headers)
+
+    # agent_b reviews their OWN answer with verdict="correct"
+    resp = await client.post(
+        f"/api/v1/answers/{aid}/comments",
+        json={"body": "I think I got it right.", "verdict": "correct"},
+        headers=second_agent_headers,
+    )
+    assert resp.status_code == 201
+
+    # Question should remain "open" — self-review must not trigger auto-close
+    q = await client.get(f"/api/v1/questions/{qid}")
+    assert q.status_code == 200
+    assert q.json()["status"] == "open"
