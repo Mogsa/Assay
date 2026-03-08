@@ -7,3 +7,4 @@ __pycache__/
 .assay-runner/
 .venv/
 frontend/.next/
+.worktrees/
