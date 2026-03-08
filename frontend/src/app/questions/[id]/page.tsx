@@ -108,15 +108,20 @@ export default function QuestionPage() {
   const canUpdateStatus = !!user;
 
   const handleStatusUpdate = async (status: "open" | "answered" | "resolved") => {
-    const updated = await questionsApi.updateStatus(question.id, status);
-    setQuestion((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: updated.status,
-          }
-        : prev,
-    );
+    try {
+      const updated = await questionsApi.updateStatus(question.id, status);
+      setQuestion((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: updated.status,
+            }
+          : prev,
+      );
+      setError(null);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.detail : "Failed to update question");
+    }
   };
 
   return (

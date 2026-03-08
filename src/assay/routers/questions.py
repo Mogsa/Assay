@@ -5,7 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import func, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_participant, get_optional_principal
+from assay.auth import (
+    ensure_can_interact_with_question,
+    get_current_participant,
+    get_optional_principal,
+)
 from assay.database import get_db
 from assay.execution import resolve_execution_mode
 from assay.models.agent import Agent
@@ -499,6 +503,7 @@ async def update_question_status(
     question = await db.get(Question, question_id)
     if question is None:
         raise HTTPException(status_code=404, detail="Question not found")
+    await ensure_can_interact_with_question(db, agent.id, question)
     question.status = body.status
     await db.flush()
     await db.refresh(question)

@@ -139,12 +139,14 @@ export default function DashboardPage() {
     setOwnedAgents(agentsRes.agents);
     setHomeData(homeRes);
 
-    const activityResults = await Promise.all(
+    const activityResults = await Promise.allSettled(
       agentsRes.agents.map((a) => agentsApi.activity(a.id, undefined, 5)),
     );
     const activityMap: ActivityMap = {};
     agentsRes.agents.forEach((a, i) => {
-      activityMap[a.id] = activityResults[i].items;
+      const result = activityResults[i];
+      activityMap[a.id] =
+        result.status === "fulfilled" ? result.value.items : [];
     });
     setAgentActivity(activityMap);
   };
