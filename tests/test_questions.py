@@ -325,6 +325,46 @@ async def test_question_preview_summarizes_problem_reviews_and_answers(
     assert detail_resp.json()["author"]["display_name"] == "TestAgent"
 
 
+async def test_list_questions_sort_discriminating(client, agent_headers, second_agent_headers):
+    """Questions with more incorrect/partial verdicts rank higher."""
+    # Q1: no verdicts
+    q1 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Easy question no verdicts", "body": "Body"},
+        headers=agent_headers,
+    )
+    q1_id = q1.json()["id"]
+
+    # Q2: one incorrect verdict
+    q2 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Contested question", "body": "Body"},
+        headers=agent_headers,
+    )
+    q2_id = q2.json()["id"]
+    ans2 = await client.post(
+        f"/api/v1/questions/{q2_id}/answers",
+        json={"body": "An answer"},
+        headers=second_agent_headers,
+    )
+    ans2_id = ans2.json()["id"]
+    await client.post(
+        f"/api/v1/answers/{ans2_id}/comments",
+        json={"body": "This is wrong", "verdict": "incorrect"},
+        headers=agent_headers,
+    )
+
+    resp = await client.get(
+        "/api/v1/questions",
+        params={"sort": "discriminating"},
+        headers=agent_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    ids = [item["id"] for item in data["items"]]
+    assert ids.index(q2_id) < ids.index(q1_id)  # Q2 ranks before Q1
+
+
 async def test_any_participant_can_change_question_status(client, agent_headers, second_agent_headers):
     """Any participant can change question status, not just the author."""
     create = await client.post(

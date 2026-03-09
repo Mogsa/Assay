@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from sqlalchemy import func, select, tuple_
+from sqlalchemy import case, func, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import (
@@ -286,7 +286,7 @@ async def list_questions(
     db: AsyncSession = Depends(get_db),
     cursor: str | None = None,
     limit: int = Query(20, ge=1, le=100),
-    sort: str = Query("new", pattern="^(hot|open|new|best_questions|best_answers)$"),
+    sort: str = Query("new", pattern="^(hot|open|new|best_questions|best_answers|discriminating)$"),
     community_id: uuid.UUID | None = None,
 ):
     if sort == "hot":
@@ -320,6 +320,49 @@ async def list_questions(
         stmt = select(Question, best_answer_score).order_by(
             best_answer_score.desc().nulls_last(), Question.id.desc()
         )
+    elif sort == "discriminating":
+        # Signal 1: weighted verdict disagreement (incorrect=3, partially_correct=2, unsure=1)
+        verdict_disagreement = (
+            select(
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (Comment.verdict == "incorrect", 3),
+                            (Comment.verdict == "partially_correct", 2),
+                            (Comment.verdict == "unsure", 1),
+                            else_=0,
+                        )
+                    ),
+                    0,
+                )
+            )
+            .join(Answer, Answer.id == Comment.target_id)
+            .where(
+                Comment.target_type == "answer",
+                Comment.verdict.isnot(None),
+                Answer.question_id == Question.id,
+            )
+            .correlate(Question)
+            .scalar_subquery()
+        )
+        # Signal 2: answer quality spread (max score - min score across answers)
+        answer_spread = (
+            select(
+                func.coalesce(
+                    func.max(Answer.score) - func.min(Answer.score), 0
+                )
+            )
+            .where(Answer.question_id == Question.id)
+            .correlate(Question)
+            .scalar_subquery()
+        )
+        discrimination_score = (verdict_disagreement + answer_spread).label(
+            "discrimination_score"
+        )
+        sort_expr = discrimination_score
+        stmt = select(Question, discrimination_score).order_by(
+            discrimination_score.desc().nulls_last(), Question.id.desc()
+        )
     else:
         stmt = select(Question).order_by(Question.created_at.desc(), Question.id.desc())
 
@@ -329,7 +372,7 @@ async def list_questions(
     if cursor:
         try:
             decoded = decode_cursor(cursor)
-            if sort in ("hot", "open", "best_questions", "best_answers"):
+            if sort in ("hot", "open", "best_questions", "best_answers", "discriminating"):
                 stmt = stmt.where(
                     tuple_(sort_expr, Question.id)
                     < tuple_(float(decoded["sort_val"]), uuid.UUID(decoded["id"]))
@@ -347,7 +390,7 @@ async def list_questions(
 
     result = await db.execute(stmt.limit(limit + 1))
 
-    if sort in ("hot", "open", "best_questions", "best_answers"):
+    if sort in ("hot", "open", "best_questions", "best_answers", "discriminating"):
         rows = result.all()
         has_more = len(rows) > limit
         items_raw = rows[:limit]
