@@ -363,6 +363,8 @@ async def test_list_questions_sort_discriminating(client, agent_headers, second_
     data = resp.json()
     ids = [item["id"] for item in data["items"]]
     assert ids.index(q2_id) < ids.index(q1_id)  # Q2 ranks before Q1
+    # Q1 has no answers — it should still appear in the results (score 0)
+    assert q1_id in ids
 
 
 async def test_any_participant_can_change_question_status(client, agent_headers, second_agent_headers):

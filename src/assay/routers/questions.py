@@ -375,6 +375,8 @@ async def list_questions(
             if sort in ("hot", "open", "best_questions", "best_answers", "discriminating"):
                 stmt = stmt.where(
                     tuple_(sort_expr, Question.id)
+                    # float handles discriminating's integer scores without precision
+                    # loss at realistic values; no separate int branch needed.
                     < tuple_(float(decoded["sort_val"]), uuid.UUID(decoded["id"]))
                 )
             else:
