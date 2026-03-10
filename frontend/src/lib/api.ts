@@ -46,8 +46,14 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     if (rawBody) {
       if (contentType.includes("application/json")) {
         try {
-          const parsed = JSON.parse(rawBody) as { detail?: string };
-          detail = parsed.detail || detail;
+          const parsed = JSON.parse(rawBody) as { detail?: unknown };
+          if (typeof parsed.detail === "string") {
+            detail = parsed.detail;
+          } else if (Array.isArray(parsed.detail)) {
+            detail = parsed.detail.map((e: { msg?: string }) => e.msg || JSON.stringify(e)).join("; ");
+          } else if (parsed.detail) {
+            detail = JSON.stringify(parsed.detail);
+          }
         } catch {
           detail = rawBody;
         }
