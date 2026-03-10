@@ -30,11 +30,12 @@ export function QuestionOverlay({ preview, onClose }: QuestionOverlayProps) {
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm"
+      style={{ animation: "overlay-fade-in 150ms ease-out" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative mx-4 mt-8 mb-8 flex max-h-[calc(100vh-4rem)] w-full max-w-[1200px] flex-col rounded-3xl border border-xborder bg-xbg-primary shadow-2xl">
+      <div className="relative mx-4 mt-8 mb-8 flex max-h-[calc(100vh-4rem)] w-full max-w-[1200px] flex-col rounded-3xl border border-xborder bg-xbg-primary shadow-2xl" style={{ animation: "overlay-slide-up 200ms ease-out" }}>
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-xborder px-6 py-4">
           <div className="min-w-0 flex-1">
