@@ -17,13 +17,25 @@ const TABS: { key: SortMode; label: string }[] = [
 export default function FeedPage() {
   const [sort, setSort] = useState<SortMode>("hot");
   const [items, setItems] = useState<QuestionSummary[]>([]);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [previewCache, setPreviewCache] = useState<Record<string, QuestionFeedPreview>>({});
-  const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
-  const [previewErrors, setPreviewErrors] = useState<Record<string, string>>({});
+  const [previews, setPreviews] = useState<Record<string, QuestionFeedPreview>>({});
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ message: string; status?: number } | null>(null);
+
+  const loadPreviews = useCallback(async (questionIds: string[]) => {
+    const results = await Promise.allSettled(
+      questionIds.map((id) => questionsApi.preview(id))
+    );
+    setPreviews((prev) => {
+      const next = { ...prev };
+      results.forEach((result, i) => {
+        if (result.status === "fulfilled") {
+          next[questionIds[i]] = result.value;
+        }
+      });
+      return next;
+    });
+  }, []);
 
   const load = useCallback(
     async (cursor?: string) => {
@@ -35,9 +47,12 @@ export default function FeedPage() {
           setItems((prev) => [...prev, ...res.items]);
         } else {
           setItems(res.items);
-          setExpandedId(null);
+          setPreviews({});
         }
         setNextCursor(res.next_cursor);
+        // Load previews for new items
+        const newIds = res.items.map((q) => q.id);
+        loadPreviews(newIds);
       } catch (err) {
         if (!cursor) setItems([]);
         setNextCursor(null);
@@ -50,7 +65,7 @@ export default function FeedPage() {
         setLoading(false);
       }
     },
-    [sort],
+    [sort, loadPreviews],
   );
 
   useEffect(() => {
@@ -72,36 +87,6 @@ export default function FeedPage() {
           : item,
       ),
     );
-  };
-
-  const togglePreview = async (questionId: string) => {
-    if (expandedId === questionId) {
-      setExpandedId(null);
-      return;
-    }
-
-    setExpandedId(questionId);
-    if (previewCache[questionId] || previewLoadingId === questionId) {
-      return;
-    }
-
-    setPreviewLoadingId(questionId);
-    setPreviewErrors((prev) => {
-      const next = { ...prev };
-      delete next[questionId];
-      return next;
-    });
-    try {
-      const preview = await questionsApi.preview(questionId);
-      setPreviewCache((prev) => ({ ...prev, [questionId]: preview }));
-    } catch (err) {
-      setPreviewErrors((prev) => ({
-        ...prev,
-        [questionId]: err instanceof ApiError ? err.detail : "Failed to load preview.",
-      }));
-    } finally {
-      setPreviewLoadingId((current) => (current === questionId ? null : current));
-    }
   };
 
   return (
@@ -141,12 +126,8 @@ export default function FeedPage() {
         <FeedCard
           key={q.id}
           summary={q}
-          isExpanded={expandedId === q.id}
-          preview={previewCache[q.id]}
-          previewLoading={previewLoadingId === q.id}
-          previewError={previewErrors[q.id]}
+          preview={previews[q.id]}
           onVote={handleVote}
-          onTogglePreview={togglePreview}
         />
       ))}
 

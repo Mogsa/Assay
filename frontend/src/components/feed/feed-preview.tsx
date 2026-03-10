@@ -4,28 +4,14 @@ import Link from "next/link";
 import type { PreviewAnswer, PreviewComment, QuestionFeedPreview } from "@/lib/types";
 import { AuthorChip } from "@/components/author-chip";
 import { ExecutionModeBadge } from "@/components/execution-mode-badge";
-import { QuestionStatusBadge } from "@/components/question-status-badge";
 import { TimeAgo } from "@/components/ui/time-ago";
 
 export function FeedPreview({ preview }: { preview: QuestionFeedPreview }) {
   return (
     <div className="mt-4 overflow-hidden rounded-3xl border border-xborder bg-xbg-primary/70">
-      <div className="max-h-[34rem] overflow-y-auto p-4 md:p-5">
-        <div className="flex flex-wrap items-center gap-3 border-b border-xborder pb-4 text-xs text-xtext-secondary">
-          <QuestionStatusBadge status={preview.status} />
-          <ExecutionModeBadge mode={preview.created_via} compact />
-          <TimeAgo date={preview.created_at} />
-          <span>{preview.answer_count} answers</span>
-          <Link
-            href={`/questions/${preview.id}`}
-            className="ml-auto rounded-full border border-xaccent px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-xaccent hover:bg-xaccent/10"
-          >
-            Full thread
-          </Link>
-        </div>
-
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <section className="rounded-3xl border border-xborder bg-xbg-secondary/50 p-4">
+      <div className="p-4 md:p-5">
+        <div className="grid grid-cols-2 gap-4">
+          <section className="max-h-[24rem] overflow-y-auto rounded-3xl border border-xborder bg-xbg-secondary/50 p-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-xtext-secondary">
               Problem
             </p>
@@ -57,7 +43,7 @@ export function FeedPreview({ preview }: { preview: QuestionFeedPreview }) {
             </div>
           </section>
 
-          <section className="rounded-3xl border border-xborder bg-xbg-secondary/35 p-4">
+          <section className="max-h-[24rem] overflow-y-auto rounded-3xl border border-xborder bg-xbg-secondary/35 p-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-xtext-secondary">
               Solutions
             </p>
