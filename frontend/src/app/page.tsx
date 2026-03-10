@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { ApiError, questions as questionsApi, votes } from "@/lib/api";
 import type { QuestionFeedPreview, QuestionSummary } from "@/lib/types";
 import { FeedCard } from "@/components/feed/feed-card";
+import { QuestionOverlay } from "@/components/question-overlay";
+
 type SortMode = "hot" | "best_questions" | "best_answers" | "new";
 
 const TABS: { key: SortMode; label: string }[] = [
@@ -19,7 +21,6 @@ export default function FeedPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [previewCache, setPreviewCache] = useState<Record<string, QuestionFeedPreview>>({});
   const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
-  const [previewErrors, setPreviewErrors] = useState<Record<string, string>>({});
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ message: string; status?: number } | null>(null);
@@ -73,35 +74,22 @@ export default function FeedPage() {
     );
   };
 
-  const togglePreview = async (questionId: string) => {
-    if (expandedId === questionId) {
-      setExpandedId(null);
-      return;
-    }
-
+  const openOverlay = async (questionId: string) => {
     setExpandedId(questionId);
-    if (previewCache[questionId] || previewLoadingId === questionId) {
-      return;
-    }
+    if (previewCache[questionId]) return;
 
     setPreviewLoadingId(questionId);
-    setPreviewErrors((prev) => {
-      const next = { ...prev };
-      delete next[questionId];
-      return next;
-    });
     try {
       const preview = await questionsApi.preview(questionId);
       setPreviewCache((prev) => ({ ...prev, [questionId]: preview }));
-    } catch (err) {
-      setPreviewErrors((prev) => ({
-        ...prev,
-        [questionId]: err instanceof ApiError ? err.detail : "Failed to load preview.",
-      }));
+    } catch {
+      setExpandedId(null);
     } finally {
       setPreviewLoadingId((current) => (current === questionId ? null : current));
     }
   };
+
+  const closeOverlay = () => setExpandedId(null);
 
   return (
     <div>
@@ -109,7 +97,9 @@ export default function FeedPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-lg font-semibold text-xtext-primary">Main Feed</p>
-            <p className="text-sm text-xtext-secondary">Browse questions, answers, and reviews in one global stream.</p>
+            <p className="text-sm text-xtext-secondary">
+              Browse questions, answers, and reviews in one global stream.
+            </p>
           </div>
           <label className="text-sm text-xtext-secondary">
             <span className="sr-only">Sort feed</span>
@@ -138,14 +128,8 @@ export default function FeedPage() {
         <FeedCard
           key={q.id}
           summary={q}
-          score={q.score}
-          viewerVote={q.viewer_vote}
-          isExpanded={expandedId === q.id}
-          preview={previewCache[q.id]}
-          previewLoading={previewLoadingId === q.id}
-          previewError={previewErrors[q.id]}
           onVote={handleVote}
-          onTogglePreview={togglePreview}
+          onExpand={openOverlay}
         />
       ))}
 
@@ -162,6 +146,19 @@ export default function FeedPage() {
         >
           Show more
         </button>
+      )}
+
+      {expandedId && previewCache[expandedId] && (
+        <QuestionOverlay
+          preview={previewCache[expandedId]}
+          onClose={closeOverlay}
+        />
+      )}
+
+      {expandedId && previewLoadingId === expandedId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <p className="text-xtext-secondary">Loading...</p>
+        </div>
       )}
     </div>
   );
