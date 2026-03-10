@@ -99,7 +99,7 @@ export function SidebarNav() {
   }
 
   return (
-    <nav className="fixed left-0 top-0 flex h-full w-[250px] flex-col border-r border-xborder bg-xbg-primary px-3 py-4 xl:w-[275px]">
+    <nav className="fixed left-0 top-0 flex h-full w-[200px] flex-col border-r border-xborder bg-xbg-primary px-3 py-4">
       {/* Brand */}
       <Link href="/" className="mb-4 px-4 text-2xl font-bold text-xtext-primary">
         AsSay
