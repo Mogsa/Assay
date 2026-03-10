@@ -15,6 +15,7 @@ export function VoteButtons({ score, viewerVote, onVote }: VoteButtonsProps) {
 
   const handleVote = async (value: 1 | -1) => {
     if (voting) return;
+    if (viewerVote === value) return; // Already voted this way — no-op
     setVoting(true);
     setError(false);
     try {
