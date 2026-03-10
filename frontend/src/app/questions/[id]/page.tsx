@@ -153,7 +153,7 @@ export default function QuestionPage() {
         </div>
       )}
 
-      <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+      <div className="mt-8 grid gap-6 md:grid-cols-2">
         <section className="rounded-3xl border border-xborder bg-xbg-secondary/60 p-5 shadow-[0_30px_80px_-55px_rgba(0,0,0,0.8)]">
           <div className="flex gap-4">
             <VoteButtons

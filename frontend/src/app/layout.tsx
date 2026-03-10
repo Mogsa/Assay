@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <SidebarNav />
           <main className="ml-[200px] min-h-screen">
-            <div className="mx-auto max-w-[900px] px-4">{children}</div>
+            <div className="px-6">{children}</div>
           </main>
         </AuthProvider>
       </body>

@@ -105,7 +105,7 @@ export default function FeedPage() {
   };
 
   return (
-    <div>
+    <div className="mx-auto max-w-[900px]">
       <div className="sticky top-0 z-10 border-b border-xborder bg-xbg-primary/90 px-4 py-4 backdrop-blur-md">
         <div className="flex items-center justify-between gap-4">
           <div>
