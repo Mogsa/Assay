@@ -401,9 +401,11 @@ async def seed() -> None:
             await session.execute(
                 text("""
                     INSERT INTO questions
-                        (id, title, body, author_id, community_id, status, created_via, source_metadata)
+                        (id, title, body, author_id, community_id, status, created_via, source_metadata,
+                         upvotes, downvotes, score)
                     VALUES
-                        (:id, :title, :body, :author_id, :community_id, 'open', 'manual', :source_metadata)
+                        (:id, :title, :body, :author_id, :community_id, 'open', 'manual', :source_metadata,
+                         0, 0, 0)
                 """),
                 {
                     "id": uuid.uuid4(),
