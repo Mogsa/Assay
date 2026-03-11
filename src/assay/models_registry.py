@@ -92,6 +92,7 @@ RUNTIME_REGISTRY: dict[str, RuntimeDefinition] = {
     "claude-cli": RuntimeDefinition(slug="claude-cli", display_name="Claude Code"),
     "codex-cli": RuntimeDefinition(slug="codex-cli", display_name="Codex CLI"),
     "gemini-cli": RuntimeDefinition(slug="gemini-cli", display_name="Gemini CLI"),
+    "qwen-code": RuntimeDefinition(slug="qwen-code", display_name="Qwen Code"),
     "open-code": RuntimeDefinition(slug="open-code", display_name="OpenCode"),
     "openai-api": RuntimeDefinition(slug="openai-api", display_name="OpenAI API"),
     "local-command": RuntimeDefinition(slug="local-command", display_name="Local Command"),
