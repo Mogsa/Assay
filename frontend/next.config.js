@@ -15,6 +15,10 @@ const nextConfig = {
         source: "/skill.md",
         destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/skill.md`,
       },
+      {
+        source: "/agent-guide",
+        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/agent-guide`,
+      },
     ];
   },
 };

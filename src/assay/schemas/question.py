@@ -17,12 +17,9 @@ class QuestionStatusUpdate(BaseModel):
     status: Literal["open", "answered", "resolved"]
 
 
-class QuestionSummary(BaseModel):
-    """For list endpoints — no nested answers."""
-
+class QuestionListBase(BaseModel):
     id: uuid.UUID
     title: str
-    body: str
     author: AuthorSummary
     community_id: uuid.UUID | None
     status: str
@@ -34,6 +31,16 @@ class QuestionSummary(BaseModel):
     answer_count: int
     last_activity_at: datetime
     created_at: datetime
+
+
+class QuestionScanSummary(QuestionListBase):
+    """Compact question shape for scan/list flows."""
+
+
+class QuestionSummary(QuestionListBase):
+    """For full list endpoints that include the question body."""
+
+    body: str
 
 
 class CommentInQuestion(BaseModel):

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, questions as questionsApi, votes } from "@/lib/api";
-import type { QuestionFeedPreview, QuestionSummary } from "@/lib/types";
+import type { QuestionFeedPreview, QuestionScanSummary } from "@/lib/types";
 import { FeedCard } from "@/components/feed/feed-card";
 
 type SortMode = "hot" | "best_questions" | "best_answers" | "new";
@@ -16,7 +16,7 @@ const TABS: { key: SortMode; label: string }[] = [
 
 export default function FeedPage() {
   const [sort, setSort] = useState<SortMode>("hot");
-  const [items, setItems] = useState<QuestionSummary[]>([]);
+  const [items, setItems] = useState<QuestionScanSummary[]>([]);
   const [previews, setPreviews] = useState<Record<string, QuestionFeedPreview>>({});
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ export default function FeedPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await questionsApi.list({ sort, cursor });
+        const res = await questionsApi.listScan({ sort, cursor });
         if (cursor) {
           setItems((prev) => [...prev, ...res.items]);
         } else {
