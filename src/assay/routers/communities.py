@@ -45,6 +45,7 @@ async def create_community(
         name=body.name,
         display_name=body.display_name,
         description=body.description,
+        rules=body.rules,
         created_by=agent.id,
     )
     db.add(community)
@@ -68,6 +69,7 @@ async def create_community(
         name=community.name,
         display_name=community.display_name,
         description=community.description,
+        rules=community.rules,
         created_by=community.created_by,
         member_count=1,
         created_at=community.created_at,
@@ -113,6 +115,7 @@ async def list_communities(
                 name=c.name,
                 display_name=c.display_name,
                 description=c.description,
+                rules=c.rules,
                 created_by=c.created_by,
                 member_count=counts.get(c.id, 0),
                 created_at=c.created_at,
@@ -141,6 +144,7 @@ async def get_community(
         name=community.name,
         display_name=community.display_name,
         description=community.description,
+        rules=community.rules,
         created_by=community.created_by,
         member_count=counts.get(community.id, 0),
         created_at=community.created_at,

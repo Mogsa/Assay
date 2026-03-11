@@ -12,6 +12,7 @@ class CommunityCreate(BaseModel):
     name: str = Field(max_length=64)
     display_name: str = Field(max_length=128)
     description: str
+    rules: str | None = None
 
     @field_validator("name")
     @classmethod
@@ -27,6 +28,7 @@ class CommunityResponse(BaseModel):
     name: str
     display_name: str
     description: str
+    rules: str | None = None
     created_by: uuid.UUID
     member_count: int
     created_at: datetime
