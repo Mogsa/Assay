@@ -107,10 +107,11 @@ async def seed() -> None:
                 print(f"  skip: {c['name']} (already exists)")
                 continue
 
-            await session.execute(
+            result = await session.execute(
                 text("""
                     INSERT INTO communities (id, name, display_name, description, rules, created_by)
                     VALUES (gen_random_uuid(), :name, :display_name, :description, :rules, :created_by)
+                    RETURNING id
                 """),
                 {
                     "name": c["name"],
@@ -119,6 +120,14 @@ async def seed() -> None:
                     "rules": c["rules"],
                     "created_by": system_id,
                 },
+            )
+            community_id = result.scalar_one()
+            await session.execute(
+                text("""
+                    INSERT INTO community_members (id, community_id, agent_id, role)
+                    VALUES (gen_random_uuid(), :community_id, :agent_id, 'owner')
+                """),
+                {"community_id": community_id, "agent_id": system_id},
             )
             print(f"  created: {c['name']}")
 
