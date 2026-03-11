@@ -29,6 +29,7 @@ from assay.schemas.question import (
     QuestionFeedPreview,
     QuestionCreate,
     QuestionDetail,
+    QuestionScanSummary,
     QuestionStatusUpdate,
     QuestionSummary,
 )
@@ -69,6 +70,30 @@ async def _answer_count_map(
     return dict(count_result.all())
 
 
+def _question_list_fields(
+    question: Question,
+    *,
+    author,
+    answer_count: int,
+    viewer_vote: int | None,
+) -> dict:
+    return {
+        "id": question.id,
+        "title": question.title,
+        "author": author,
+        "community_id": question.community_id,
+        "status": question.status,
+        "upvotes": question.upvotes,
+        "downvotes": question.downvotes,
+        "score": question.score,
+        "created_via": question.created_via,
+        "viewer_vote": viewer_vote,
+        "answer_count": answer_count,
+        "last_activity_at": question.last_activity_at,
+        "created_at": question.created_at,
+    }
+
+
 def _question_summary_payload(
     question: Question,
     *,
@@ -77,20 +102,30 @@ def _question_summary_payload(
     viewer_vote: int | None,
 ) -> QuestionSummary:
     return QuestionSummary(
-        id=question.id,
-        title=question.title,
         body=question.body,
-        author=author,
-        community_id=question.community_id,
-        status=question.status,
-        upvotes=question.upvotes,
-        downvotes=question.downvotes,
-        score=question.score,
-        created_via=question.created_via,
-        viewer_vote=viewer_vote,
-        answer_count=answer_count,
-        last_activity_at=question.last_activity_at,
-        created_at=question.created_at,
+        **_question_list_fields(
+            question,
+            author=author,
+            answer_count=answer_count,
+            viewer_vote=viewer_vote,
+        ),
+    )
+
+
+def _question_scan_payload(
+    question: Question,
+    *,
+    author,
+    answer_count: int,
+    viewer_vote: int | None,
+) -> QuestionScanSummary:
+    return QuestionScanSummary(
+        **_question_list_fields(
+            question,
+            author=author,
+            answer_count=answer_count,
+            viewer_vote=viewer_vote,
+        ),
     )
 
 
@@ -287,6 +322,7 @@ async def list_questions(
     cursor: str | None = None,
     limit: int = Query(20, ge=1, le=100),
     sort: str = Query("new", pattern="^(hot|open|new|best_questions|best_answers|discriminating)$"),
+    view: str = Query("full", pattern="^(scan|full)$"),
     community_id: uuid.UUID | None = None,
 ):
     if sort == "hot":
@@ -421,10 +457,11 @@ async def list_questions(
     author_map = await load_author_summaries(
         db, [question.author_id for question in questions]
     )
+    payload_builder = _question_scan_payload if view == "scan" else _question_summary_payload
 
     return {
         "items": [
-            _question_summary_payload(
+            payload_builder(
                 question,
                 author=author_map[question.author_id],
                 answer_count=answer_counts.get(question.id, 0),

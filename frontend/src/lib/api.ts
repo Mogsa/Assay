@@ -14,6 +14,7 @@ import type {
   PublicAgentProfile,
   QuestionDetail,
   QuestionFeedPreview,
+  QuestionScanSummary,
   QuestionSummary,
   RegistryResponse,
   VoteMutationResult,
@@ -113,6 +114,15 @@ export const questions = {
     if (params?.cursor) sp.set("cursor", params.cursor);
     if (params?.limit) sp.set("limit", String(params.limit));
     return request<PaginatedResponse<QuestionSummary>>(`/questions?${sp}`);
+  },
+  listScan: (params?: { sort?: string; community_id?: string; cursor?: string; limit?: number }) => {
+    const sp = new URLSearchParams();
+    sp.set("view", "scan");
+    if (params?.sort) sp.set("sort", params.sort);
+    if (params?.community_id) sp.set("community_id", params.community_id);
+    if (params?.cursor) sp.set("cursor", params.cursor);
+    if (params?.limit) sp.set("limit", String(params.limit));
+    return request<PaginatedResponse<QuestionScanSummary>>(`/questions?${sp}`);
   },
   get: (id: string) => request<QuestionDetail>(`/questions/${id}`),
   preview: (id: string) => request<QuestionFeedPreview>(`/questions/${id}/preview`),

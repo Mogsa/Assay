@@ -1,4 +1,5 @@
-import pytest
+import asyncio
+
 from httpx import AsyncClient
 
 
@@ -11,6 +12,7 @@ async def test_link_to_question_updates_activity(client: AsyncClient, agent_head
 
     r2 = await client.post("/api/v1/questions", json={"title": "New Q", "body": "new"}, headers=agent_headers)
     q2_id = r2.json()["id"]
+    await asyncio.sleep(0.01)
 
     # Link q2 -> q1 (references)
     await client.post("/api/v1/links", json={
@@ -21,7 +23,49 @@ async def test_link_to_question_updates_activity(client: AsyncClient, agent_head
 
     # Check q1's activity was updated
     resp = await client.get(f"/api/v1/questions/{q1_id}", headers=agent_headers)
-    assert resp.json()["last_activity_at"] >= original_activity
+    assert resp.json()["last_activity_at"] > original_activity
+
+
+async def test_link_to_answer_updates_parent_question_activity(
+    client: AsyncClient, agent_headers, second_agent_headers
+):
+    """Linking to an answer updates the parent question's last_activity_at."""
+    target = await client.post(
+        "/api/v1/questions",
+        json={"title": "Parent", "body": "body"},
+        headers=agent_headers,
+    )
+    qid = target.json()["id"]
+    original_activity = target.json()["last_activity_at"]
+
+    answer = await client.post(
+        f"/api/v1/questions/{qid}/answers",
+        json={"body": "Target answer"},
+        headers=second_agent_headers,
+    )
+    aid = answer.json()["id"]
+
+    source = await client.post(
+        "/api/v1/questions",
+        json={"title": "Follow-up", "body": "body"},
+        headers=agent_headers,
+    )
+    await asyncio.sleep(0.01)
+
+    await client.post(
+        "/api/v1/links",
+        json={
+            "source_type": "question",
+            "source_id": source.json()["id"],
+            "target_type": "answer",
+            "target_id": aid,
+            "link_type": "extends",
+        },
+        headers=agent_headers,
+    )
+
+    resp = await client.get(f"/api/v1/questions/{qid}", headers=agent_headers)
+    assert resp.json()["last_activity_at"] > original_activity
 
 
 async def test_vote_on_question_updates_activity(client: AsyncClient, agent_headers, second_agent_headers):

@@ -75,7 +75,42 @@ async def test_list_questions_newest(client, agent_headers):
         reverse=True,
     )
     assert data["items"] == ordered
+    assert "body" in data["items"][0]
     assert data["items"][0]["author"]["display_name"] == "TestAgent"
+
+
+async def test_list_questions_scan_view_is_compact_and_cursor_paginated(client, agent_headers):
+    for i in range(4):
+        await client.post(
+            "/api/v1/questions",
+            json={
+                "title": f"Scan {i}",
+                "body": f"Body {i}",
+            },
+            headers=agent_headers,
+        )
+
+    first = await client.get(
+        "/api/v1/questions?view=scan&limit=2",
+        headers=agent_headers,
+    )
+    assert first.status_code == 200
+    first_data = first.json()
+    assert len(first_data["items"]) == 2
+    assert first_data["has_more"] is True
+    assert "body" not in first_data["items"][0]
+    assert first_data["items"][0]["title"].startswith("Scan")
+
+    second = await client.get(
+        f"/api/v1/questions?view=scan&limit=2&cursor={first_data['next_cursor']}",
+        headers=agent_headers,
+    )
+    assert second.status_code == 200
+    second_data = second.json()
+    assert len(second_data["items"]) == 2
+    assert {item["id"] for item in first_data["items"]}.isdisjoint(
+        {item["id"] for item in second_data["items"]}
+    )
 
 
 async def test_cursor_pagination(client, agent_headers):
@@ -257,6 +292,11 @@ async def test_public_question_reads_allow_anonymous_viewer(client, agent_header
     list_resp = await client.get("/api/v1/questions")
     assert list_resp.status_code == 200
     assert any(item["id"] == qid for item in list_resp.json()["items"])
+
+    scan_resp = await client.get("/api/v1/questions?view=scan")
+    assert scan_resp.status_code == 200
+    scan_item = next(item for item in scan_resp.json()["items"] if item["id"] == qid)
+    assert "body" not in scan_item
 
 
 async def test_question_preview_summarizes_problem_reviews_and_answers(

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { QuestionFeedPreview, QuestionSummary } from "@/lib/types";
+import type { QuestionFeedPreview, QuestionScanSummary } from "@/lib/types";
 import { VoteButtons } from "@/components/questions/vote-buttons";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { AuthorChip } from "@/components/author-chip";
@@ -10,7 +10,7 @@ import { ExecutionModeBadge } from "@/components/execution-mode-badge";
 import { FeedPreview } from "./feed-preview";
 
 interface FeedCardProps {
-  summary: QuestionSummary;
+  summary: QuestionScanSummary;
   preview?: QuestionFeedPreview;
   onVote: (questionId: string, value: 1 | -1) => Promise<void>;
 }

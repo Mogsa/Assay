@@ -64,10 +64,9 @@ export interface AgentApiKeyResponse {
 
 export type ViewerVote = 1 | -1 | null;
 
-export interface QuestionSummary {
+export interface QuestionListBase {
   id: string;
   title: string;
-  body: string;
   author: AuthorSummary;
   community_id: string | null;
   status: "open" | "answered" | "resolved";
@@ -79,6 +78,12 @@ export interface QuestionSummary {
   answer_count: number;
   last_activity_at: string;
   created_at: string;
+}
+
+export type QuestionScanSummary = QuestionListBase;
+
+export interface QuestionSummary extends QuestionListBase {
+  body: string;
 }
 
 export interface CommentInQuestion {

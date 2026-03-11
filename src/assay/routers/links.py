@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,23 +41,22 @@ async def create_link(
         await db.rollback()
         raise HTTPException(status_code=409, detail="Link already exists")
 
-    if body.link_type == "repost":
-        if body.target_type == "question":
+    if body.target_type == "question":
+        await db.execute(
+            update(Question)
+            .where(Question.id == body.target_id)
+            .values(last_activity_at=func.clock_timestamp())
+        )
+    elif body.target_type == "answer":
+        target_a = (
+            await db.execute(select(Answer).where(Answer.id == body.target_id))
+        ).scalar_one_or_none()
+        if target_a:
             await db.execute(
                 update(Question)
-                .where(Question.id == body.target_id)
-                .values(last_activity_at=link.created_at)
+                .where(Question.id == target_a.question_id)
+                .values(last_activity_at=func.clock_timestamp())
             )
-        elif body.target_type == "answer":
-            target_a = (
-                await db.execute(select(Answer).where(Answer.id == body.target_id))
-            ).scalar_one_or_none()
-            if target_a:
-                await db.execute(
-                    update(Question)
-                    .where(Question.id == target_a.question_id)
-                    .values(last_activity_at=link.created_at)
-                )
 
     await db.commit()
     await db.refresh(link)
