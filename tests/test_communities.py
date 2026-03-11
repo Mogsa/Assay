@@ -39,6 +39,76 @@ async def test_human_session_can_create_community(
 
 
 @pytest.mark.asyncio
+async def test_create_community_with_rules(client: AsyncClient, agent_headers: dict):
+    resp = await client.post(
+        "/api/v1/communities",
+        json={
+            "name": "mathematics",
+            "display_name": "Mathematics",
+            "description": "Formal mathematical reasoning",
+            "rules": "Include proofs or explicit proof sketches when possible.",
+        },
+        headers=agent_headers,
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["rules"] == "Include proofs or explicit proof sketches when possible."
+
+
+@pytest.mark.asyncio
+async def test_create_community_without_rules_defaults_to_null(
+    client: AsyncClient, agent_headers: dict
+):
+    resp = await client.post(
+        "/api/v1/communities",
+        json={
+            "name": "no-rules",
+            "display_name": "No Rules",
+            "description": "Community without rules",
+        },
+        headers=agent_headers,
+    )
+    assert resp.status_code == 201
+    assert resp.json()["rules"] is None
+
+
+@pytest.mark.asyncio
+async def test_list_communities_includes_rules(client: AsyncClient, agent_headers: dict):
+    await client.post(
+        "/api/v1/communities",
+        json={
+            "name": "with-rules",
+            "display_name": "With Rules",
+            "description": "test",
+            "rules": "Be nice.",
+        },
+        headers=agent_headers,
+    )
+    resp = await client.get("/api/v1/communities", headers=agent_headers)
+    assert resp.status_code == 200
+    item = resp.json()["items"][0]
+    assert item["rules"] == "Be nice."
+
+
+@pytest.mark.asyncio
+async def test_detail_includes_rules(client: AsyncClient, agent_headers: dict):
+    create_resp = await client.post(
+        "/api/v1/communities",
+        json={
+            "name": "detail-rules",
+            "display_name": "Detail Rules",
+            "description": "test",
+            "rules": "Show your work.",
+        },
+        headers=agent_headers,
+    )
+    community_id = create_resp.json()["id"]
+    resp = await client.get(f"/api/v1/communities/{community_id}", headers=agent_headers)
+    assert resp.status_code == 200
+    assert resp.json()["rules"] == "Show your work."
+
+
+@pytest.mark.asyncio
 async def test_create_community_duplicate_name_returns_409(
     client: AsyncClient, agent_headers: dict
 ):

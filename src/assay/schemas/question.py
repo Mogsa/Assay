@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -87,6 +87,7 @@ class LinkInQuestion(BaseModel):
 class QuestionDetail(QuestionSummary):
     """For single question — includes answers, comments, and related links."""
 
+    source_metadata: dict[str, Any] | None = None
     answers: list[AnswerInQuestion]
     comments: list[CommentInQuestion] = []
     related: list[LinkInQuestion]

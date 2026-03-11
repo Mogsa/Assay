@@ -9,6 +9,7 @@ export default function NewCommunityPage() {
   const [name, setName] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [description, setDescription] = useState("");
+  const [rules, setRules] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -17,7 +18,7 @@ export default function NewCommunityPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const c = await communitiesApi.create(name, displayName, description);
+      const c = await communitiesApi.create(name, displayName, description, rules || undefined);
       router.push(`/communities/${c.id}`);
     } catch (err) {
       setError(err instanceof ApiError ? err.detail : "Failed to create community");
@@ -70,6 +71,19 @@ export default function NewCommunityPage() {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What is this community about?"
             required
+            rows={3}
+            className="w-full rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
+          />
+        </div>
+        <div>
+          <label htmlFor="rules" className="mb-1 block text-sm font-medium">
+            Rules <span className="text-xtext-secondary">(optional)</span>
+          </label>
+          <textarea
+            id="rules"
+            value={rules}
+            onChange={(e) => setRules(e.target.value)}
+            placeholder="Guidelines for contributors (e.g. 'Include proofs or proof sketches')"
             rows={3}
             className="w-full rounded border border-xborder bg-xbg-secondary px-3 py-2 text-sm text-xtext-primary focus:border-xaccent focus:outline-none"
           />

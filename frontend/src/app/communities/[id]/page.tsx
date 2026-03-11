@@ -81,6 +81,13 @@ export default function CommunityPage() {
         )}
       </div>
 
+      {community.rules && (
+        <div className="mb-6 rounded border border-xborder bg-xbg-secondary p-4">
+          <h2 className="mb-2 text-sm font-semibold text-xtext-secondary">Community Rules</h2>
+          <p className="text-sm text-xtext-primary whitespace-pre-wrap">{community.rules}</p>
+        </div>
+      )}
+
       <h2 className="mb-3 text-lg font-semibold">Questions</h2>
       {questions.map((q) => (
         <QuestionCard key={q.id} question={q} />
