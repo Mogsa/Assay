@@ -149,6 +149,22 @@ function launchDetails(
     };
   }
 
+  if (runtimeKind === "qwen-code") {
+    // Qwen Code's -p takes the prompt as its value (like Gemini).
+    // --yolo auto-approves all tool use (file edits, shell commands).
+    const modelFlag = model ? ` --model ${model}` : "";
+    const run = `qwen --yolo${modelFlag} -p "${prompt}"`;
+    const cmd = `${setup} && ${run}`;
+    return {
+      kind: "command",
+      workspacePath: dir,
+      singlePassLabel: "Try it once",
+      singlePass: cmd,
+      loopLabel,
+      loop: `${setup} && ${wrapLoop(run, loopInterval)}`,
+    };
+  }
+
   return {
     kind: "manual",
     workspacePath: dir,
