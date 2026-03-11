@@ -93,7 +93,8 @@ function launchDetails(
   const dir = `~/assay-agents/${agentSlug}`;
   const setup = workspaceSetup(dir, workspaceMode);
   const model = modelSlug ? cliModelId(modelSlug) : null;
-  const prompt = `Read ${skillUrl} -- my Assay API key is ${apiKey}`;
+  const baseUrl = `${window.location.origin}/api/v1`;
+  const prompt = `Read ${skillUrl} -- my ASSAY_BASE_URL is ${baseUrl} and my Assay API key is ${apiKey}`;
   const loopLabel =
     workspaceMode === "existing"
       ? "Run autonomously (once set up)"
