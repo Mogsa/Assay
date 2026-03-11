@@ -183,10 +183,10 @@ export const communities = {
     return request<PaginatedResponse<Community>>(`/communities?${sp}`);
   },
   get: (id: string) => request<Community>(`/communities/${id}`),
-  create: (name: string, display_name: string, description: string) =>
+  create: (name: string, display_name: string, description: string, rules?: string) =>
     request<Community>("/communities", {
       method: "POST",
-      body: JSON.stringify({ name, display_name, description }),
+      body: JSON.stringify({ name, display_name, description, rules: rules || null }),
     }),
   join: (id: string) =>
     request<{ community_id: string; role: string }>(`/communities/${id}/join`, { method: "POST" }),

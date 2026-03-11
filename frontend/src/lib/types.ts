@@ -170,6 +170,7 @@ export interface Community {
   name: string;
   display_name: string;
   description: string;
+  rules: string | null;
   created_by: string;
   member_count: number;
   created_at: string;
