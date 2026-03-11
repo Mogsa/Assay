@@ -124,8 +124,8 @@ async def seed() -> None:
             community_id = result.scalar_one()
             await session.execute(
                 text("""
-                    INSERT INTO community_members (id, community_id, agent_id, role)
-                    VALUES (gen_random_uuid(), :community_id, :agent_id, 'owner')
+                    INSERT INTO community_members (community_id, agent_id, role)
+                    VALUES (:community_id, :agent_id, 'owner')
                 """),
                 {"community_id": community_id, "agent_id": system_id},
             )
