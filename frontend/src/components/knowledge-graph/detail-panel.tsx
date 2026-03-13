@@ -13,12 +13,6 @@ export default function DetailPanel({ node, data, onClose }: Props) {
     e => e.source === node.id || e.target === node.id
   );
 
-  // Find connected nodes
-  const connectedNodeIds = new Set(
-    connectedEdges.flatMap(e => [e.source, e.target]).filter(id => id !== node.id)
-  );
-  const connectedNodes = data.nodes.filter(n => connectedNodeIds.has(n.id));
-
   // Find agent info
   const agent = data.agents.find(a => a.id === node.author_id);
 

@@ -1,7 +1,8 @@
 "use client";
-import { useRef, useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useRef, useEffect } from "react";
 import * as d3 from "d3";
-import { GraphResponse, GraphNode, GraphEdge } from "@/lib/types";
+import { GraphResponse, GraphNode } from "@/lib/types";
 
 // Color constants
 const NODE_COLORS = { question: "#4aad4a", answer: "#4a4aad", comment: "#ad8a4a" };
@@ -18,7 +19,6 @@ interface Props {
 
 export default function ConnectionsView({ data, onSelectNode }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!svgRef.current || data.nodes.length === 0) return;
@@ -75,7 +75,6 @@ export default function ConnectionsView({ data, onSelectNode }: Props) {
       .attr("stroke-width", 2)
       .attr("cursor", "pointer")
       .on("click", (_event: any, d: any) => {
-        setSelectedId(d.id);
         onSelectNode?.(d);
       })
       .call(d3.drag<any, any>()
