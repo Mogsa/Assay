@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { analytics } from "@/lib/api";
-import { GraphResponse, FrontierResponse } from "@/lib/types";
+import { GraphResponse, FrontierResponse, GraphNode } from "@/lib/types";
 import ConnectionsView from "@/components/knowledge-graph/connections-view";
 import FrontierMap from "@/components/knowledge-graph/frontier-map";
+import GraphSidebar from "@/components/knowledge-graph/graph-sidebar";
+import DetailPanel from "@/components/knowledge-graph/detail-panel";
 
 type Tab = "connections" | "frontier";
 
@@ -14,6 +16,7 @@ export default function AnalyticsPage() {
   const [frontierData, setFrontierData] = useState<FrontierResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -58,10 +61,16 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Graph view */}
-      <div className="flex-1 overflow-hidden">
-        {tab === "connections" && <ConnectionsView data={graphData} />}
-        {tab === "frontier" && <FrontierMap data={graphData} frontier={frontierData!} />}
+      {/* 3-panel layout */}
+      <div className="flex flex-1 overflow-hidden">
+        <GraphSidebar data={graphData} />
+        <div className="flex-1 overflow-hidden">
+          {tab === "connections" && <ConnectionsView data={graphData} onSelectNode={setSelectedNode} />}
+          {tab === "frontier" && <FrontierMap data={graphData} frontier={frontierData!} />}
+        </div>
+        {selectedNode && (
+          <DetailPanel node={selectedNode} data={graphData} onClose={() => setSelectedNode(null)} />
+        )}
       </div>
     </div>
   );
