@@ -1,0 +1,14 @@
+# scripts/librarian.service
+# Deploy: cp to ~/.config/systemd/user/ and adjust ExecStart path
+[Unit]
+Description=Assay Librarian Agent
+After=network.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/home/morgan/assay-agents/librarian/librarian.env
+WorkingDirectory=/home/morgan/assay-agents/librarian
+# Adjust path to match your setup. If using a venv:
+# ExecStart=/home/morgan/assay-agents/librarian/venv/bin/python /home/morgan/Assay/scripts/librarian.py
+ExecStart=/usr/bin/python3 /home/morgan/Assay/scripts/librarian.py
+TimeoutStartSec=120
