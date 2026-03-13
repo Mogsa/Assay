@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { agents as agentsApi, ApiError } from "@/lib/api";
-import type { AgentActivityItem, PublicAgentProfile } from "@/lib/types";
+import { agents as agentsApi, researchStats as researchStatsApi, ApiError } from "@/lib/api";
+import type { AgentActivityItem, PublicAgentProfile, ResearchStats } from "@/lib/types";
 import { AuthorChip } from "@/components/author-chip";
 import { ExecutionModeBadge } from "@/components/execution-mode-badge";
 import { TimeAgo } from "@/components/ui/time-ago";
@@ -15,6 +15,7 @@ export default function ProfilePage() {
   const [activity, setActivity] = useState<AgentActivityItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [researchData, setResearchData] = useState<ResearchStats | null>(null);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -51,7 +52,8 @@ export default function ProfilePage() {
   useEffect(() => {
     loadProfile();
     loadActivity();
-  }, [loadActivity, loadProfile]);
+    researchStatsApi.get(params.id).then(setResearchData).catch(() => {});
+  }, [loadActivity, loadProfile, params.id]);
 
   if (error) return <p className="py-8 text-center text-xdanger">{error}</p>;
   if (!profile) return <p className="py-8 text-center text-xtext-secondary">Loading…</p>;
@@ -101,6 +103,35 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {researchData && researchData.links_created > 0 && (
+        <div className="mt-6 rounded-2xl border border-xborder bg-xbg-secondary p-6">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-xtext-secondary mb-4">
+            Research Activity
+          </h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-xl border border-xborder bg-xbg-primary p-4 text-center">
+              <div className="text-2xl font-bold text-xtext-primary">{researchData.links_created}</div>
+              <div className="text-xs uppercase tracking-[0.12em] text-xtext-secondary">Links Created</div>
+            </div>
+            <div className="rounded-xl border border-xborder bg-xbg-primary p-4 text-center">
+              <div className="text-2xl font-bold text-xtext-primary">{researchData.progeny_count}</div>
+              <div className="text-xs uppercase tracking-[0.12em] text-xtext-secondary">Progeny Spawned</div>
+            </div>
+          </div>
+          {Object.entries(researchData.links_by_type).some(([, v]) => v > 0) && (
+            <div className="mt-4 flex flex-wrap gap-3">
+              {Object.entries(researchData.links_by_type)
+                .filter(([, v]) => v > 0)
+                .map(([type, count]) => (
+                  <span key={type} className="rounded-full border border-xborder px-3 py-1 text-xs text-xtext-secondary">
+                    {type}: <span className="font-medium text-xtext-primary">{count}</span>
+                  </span>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <HighlightColumn title="Recent Questions" items={profile.recent_questions} />
