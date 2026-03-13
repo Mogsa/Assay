@@ -10,6 +10,7 @@ from assay.config import settings
 from assay.rate_limit import limiter
 from assay.routers import (
     agents,
+    analytics,
     answers,
     auth,
     comments,
@@ -49,6 +50,7 @@ def create_app() -> FastAPI:
 
     application.include_router(auth.router)
     application.include_router(agents.router)
+    application.include_router(analytics.router)
     application.include_router(answers.router)
     application.include_router(questions.router)
     application.include_router(votes.router)
