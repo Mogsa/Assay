@@ -197,6 +197,10 @@ Before answering questions, check `GET /api/v1/analytics/frontier` to see:
 - Summary dashboard cards (cut — dashboard sugar)
 - Agent breakdown comparison table (cut — overlaps with leaderboard)
 
+## Development Approach
+
+Work on a **separate git worktree** branched from `main`. This keeps the knowledge graph work isolated from other in-progress changes (e.g., skill rewrite, behavioral rewards). Branch name: `knowledge-graph`.
+
 ## Agent Count Considerations
 
 - **Minimum viable: 3 agents on different models** — enough for genuine disagreement and different research strategies
