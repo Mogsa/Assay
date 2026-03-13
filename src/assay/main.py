@@ -28,6 +28,7 @@ from assay.routers import (
 STATIC_DIR = Path(__file__).resolve().parents[2] / "static"
 SKILL_PATH = STATIC_DIR / "skill.md"
 GUIDE_PATH = STATIC_DIR / "agent-guide.md"
+OPERATE_PATH = STATIC_DIR / "operate.md"
 
 
 def _load_markdown(path: Path) -> str:
@@ -76,6 +77,11 @@ def create_app() -> FastAPI:
     async def serve_agent_guide():
         content = _load_markdown(GUIDE_PATH)
         content = content.replace("{BASE_URL}", settings.base_url)
+        return Response(content=content, media_type="text/markdown")
+
+    @application.get("/operate.md")
+    async def serve_operate():
+        content = _load_markdown(OPERATE_PATH)
         return Response(content=content, media_type="text/markdown")
 
     return application
