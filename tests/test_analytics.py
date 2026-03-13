@@ -205,3 +205,42 @@ async def test_frontier_active_debate(client: AsyncClient, agent_headers: dict, 
     assert debate["question_id"] == q["id"]
     assert debate["contradicts_count"] == 1
     assert len(debate["involved_agents"]) == 2
+
+
+# ==================== RESEARCH STATS ENDPOINT ====================
+
+@pytest.mark.anyio
+async def test_research_stats_empty(client: AsyncClient, agent_headers: dict):
+    """Agent with no links has zero stats."""
+    # Get agent ID from /agents/me
+    me = await client.get("/api/v1/agents/me", headers=agent_headers)
+    agent_id = me.json()["id"]
+
+    resp = await client.get(f"/api/v1/agents/{agent_id}/research-stats", headers=agent_headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["links_created"] == 0
+    assert data["progeny_count"] == 0
+    assert all(v == 0 for v in data["links_by_type"].values())
+
+
+@pytest.mark.anyio
+async def test_research_stats_with_links(client: AsyncClient, agent_headers: dict, second_agent_headers: dict):
+    """Research stats count links created by the agent."""
+    q1 = await _create_question(client, agent_headers, "Q1")
+    q2 = await _create_question(client, agent_headers, "Q2")
+    a1 = await _create_answer(client, second_agent_headers, q1["id"])
+
+    # Agent creates links
+    await _create_link(client, agent_headers, "question", q1["id"], "question", q2["id"], "references")
+    await _create_link(client, agent_headers, "answer", a1["id"], "question", q2["id"], "extends")
+
+    me = await client.get("/api/v1/agents/me", headers=agent_headers)
+    agent_id = me.json()["id"]
+
+    resp = await client.get(f"/api/v1/agents/{agent_id}/research-stats", headers=agent_headers)
+    data = resp.json()
+    assert data["links_created"] == 2
+    assert data["links_by_type"]["references"] == 1
+    assert data["links_by_type"]["extends"] == 1
+    assert data["progeny_count"] == 1  # extends link to a question

@@ -3,13 +3,14 @@ import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from sqlalchemy import String, Uuid, literal, select, tuple_, union_all
+from sqlalchemy import String, Uuid, func, literal, select, tuple_, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_human, get_current_principal
+from assay.auth import get_current_human, get_current_principal, get_optional_principal
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
+from assay.models.link import Link
 from assay.models.comment import Comment
 from assay.models.question import Question
 from assay.models_registry import (
@@ -22,6 +23,7 @@ from assay.pagination import decode_cursor, encode_cursor
 from assay.tokens import hash_token
 from assay.presentation import build_agent_profile, is_public_profile
 from assay.rate_limit import limiter
+from assay.schemas.analytics import ResearchStatsResponse
 from assay.schemas.agent import (
     AgentActivityItem,
     AgentApiKeyResponse,
@@ -381,6 +383,40 @@ async def get_public_activity(
     await _get_public_agent_or_404(db, agent_id)
     items, has_more, next_cursor = await _list_agent_activity(db, agent_id, cursor=cursor, limit=limit)
     return {"items": items, "has_more": has_more, "next_cursor": next_cursor}
+
+
+@router.get("/{agent_id}/research-stats", response_model=ResearchStatsResponse)
+async def get_research_stats(
+    agent_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _principal: Agent | None = Depends(get_optional_principal),
+):
+    # Count links by type
+    link_rows = (await db.execute(
+        select(Link.link_type, func.count(Link.id))
+        .where(Link.created_by == agent_id)
+        .group_by(Link.link_type)
+    )).all()
+
+    links_by_type = {"references": 0, "repost": 0, "extends": 0, "contradicts": 0, "solves": 0}
+    total = 0
+    for link_type, count in link_rows:
+        links_by_type[link_type] = count
+        total += count
+
+    # Count progeny: extends links to questions
+    progeny_count = (await db.execute(
+        select(func.count(Link.id))
+        .where(Link.created_by == agent_id)
+        .where(Link.link_type == "extends")
+        .where(Link.target_type == "question")
+    )).scalar() or 0
+
+    return ResearchStatsResponse(
+        links_created=total,
+        links_by_type=links_by_type,
+        progeny_count=progeny_count,
+    )
 
 
 @router.get("/{agent_id}", response_model=PublicAgentProfile)
