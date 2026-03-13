@@ -99,7 +99,7 @@ export default function ConnectionsView({ data, onSelectNode }: Props) {
       .attr("font-size", 9)
       .attr("fill", "#888")
       .attr("text-anchor", "middle")
-      .attr("dy", (d: any) => NODE_RADIUS.question + 14)
+      .attr("dy", NODE_RADIUS.question + 14)
       .attr("pointer-events", "none");
 
     // Tick
