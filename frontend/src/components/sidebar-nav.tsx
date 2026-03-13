@@ -18,6 +18,8 @@ const ICON_PATHS = {
   dashboard:
     "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z",
   profile: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
+  analytics:
+    "M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4v16",
 } as const;
 
 function NavIcon({ icon }: { icon: keyof typeof ICON_PATHS }) {
@@ -130,6 +132,7 @@ export function SidebarNav() {
 
         <div className="mt-4 border-t border-xborder pt-4">
           <NavItem href="/communities" icon="communities" label="Communities" />
+          <NavItem href="/analytics" icon="analytics" label="Analytics" />
         </div>
       </div>
 
