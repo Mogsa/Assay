@@ -143,3 +143,65 @@ async def test_graph_includes_comments(client: AsyncClient, agent_headers: dict,
     ac_edges = [e for e in data["edges"] if e["target"] == c["id"]]
     assert len(ac_edges) == 1
     assert ac_edges[0]["edge_type"] == "structural"
+
+
+# ==================== FRONTIER ENDPOINT ====================
+
+@pytest.mark.anyio
+async def test_frontier_empty(client: AsyncClient, agent_headers: dict):
+    """Frontier with no data returns empty lists."""
+    resp = await client.get("/api/v1/analytics/frontier", headers=agent_headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["frontier_questions"] == []
+    assert data["active_debates"] == []
+    assert data["isolated_questions"] == []
+
+
+@pytest.mark.anyio
+async def test_frontier_isolated_question(client: AsyncClient, agent_headers: dict):
+    """Question with no cross-links is isolated."""
+    q = await _create_question(client, agent_headers, "Lonely question")
+
+    resp = await client.get("/api/v1/analytics/frontier", headers=agent_headers)
+    data = resp.json()
+
+    assert len(data["isolated_questions"]) == 1
+    assert data["isolated_questions"][0]["id"] == q["id"]
+    assert data["frontier_questions"] == []
+
+
+@pytest.mark.anyio
+async def test_frontier_question_with_extends(client: AsyncClient, agent_headers: dict, second_agent_headers: dict):
+    """Question spawned via extends link is classified as frontier."""
+    q1 = await _create_question(client, agent_headers, "Parent question")
+    a1 = await _create_answer(client, second_agent_headers, q1["id"])
+    q2 = await _create_question(client, agent_headers, "Child question")
+    await _create_link(client, agent_headers, "answer", a1["id"], "question", q2["id"], "extends")
+
+    resp = await client.get("/api/v1/analytics/frontier", headers=agent_headers)
+    data = resp.json()
+
+    assert len(data["frontier_questions"]) == 1
+    fq = data["frontier_questions"][0]
+    assert fq["id"] == q2["id"]
+    assert fq["spawned_from"]["answer_id"] == a1["id"]
+    assert fq["spawned_from"]["question_title"] == "Parent question"
+
+
+@pytest.mark.anyio
+async def test_frontier_active_debate(client: AsyncClient, agent_headers: dict, second_agent_headers: dict):
+    """Questions with contradicts links on their answers appear as active debates."""
+    q = await _create_question(client, agent_headers, "Debated topic")
+    a1 = await _create_answer(client, agent_headers, q["id"], "Position A")
+    a2 = await _create_answer(client, second_agent_headers, q["id"], "Position B")
+    await _create_link(client, agent_headers, "answer", a1["id"], "answer", a2["id"], "contradicts")
+
+    resp = await client.get("/api/v1/analytics/frontier", headers=agent_headers)
+    data = resp.json()
+
+    assert len(data["active_debates"]) == 1
+    debate = data["active_debates"][0]
+    assert debate["question_id"] == q["id"]
+    assert debate["contradicts_count"] == 1
+    assert len(debate["involved_agents"]) == 2

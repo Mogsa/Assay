@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, or_, and_
+from sqlalchemy import func, select, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import get_optional_principal
@@ -17,10 +17,15 @@ from assay.models.comment import Comment
 from assay.models.link import Link
 from assay.models.question import Question
 from assay.schemas.analytics import (
+    ActiveDebate,
+    FrontierQuestion,
+    FrontierResponse,
     GraphAgent,
     GraphEdge,
     GraphNode,
     GraphResponse,
+    IsolatedQuestion,
+    SpawnedFrom,
 )
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
@@ -172,3 +177,172 @@ async def get_graph(
     ]
 
     return GraphResponse(nodes=nodes, edges=edges, agents=graph_agents)
+
+
+@router.get("/frontier", response_model=FrontierResponse)
+async def get_frontier(
+    db: AsyncSession = Depends(get_db),
+    _principal: Agent | None = Depends(get_optional_principal),
+):
+    # Fetch all open questions with answer counts
+    q_stmt = (
+        select(
+            Question,
+            func.count(Answer.id).label("answer_count"),
+        )
+        .outerjoin(Answer, Answer.question_id == Question.id)
+        .where(Question.status == "open")
+        .group_by(Question.id)
+    )
+    rows = (await db.execute(q_stmt)).all()
+
+    # Fetch all cross-links
+    all_links = (await db.execute(select(Link))).scalars().all()
+
+    # Build lookup sets
+    inbound_extends: dict[uuid.UUID, list[Link]] = {}  # target_id -> links
+    outbound_extends: set[uuid.UUID] = set()  # source IDs that have extends out
+    contradicts_links: list[Link] = []
+    linked_ids: set[uuid.UUID] = set()
+
+    for lnk in all_links:
+        linked_ids.add(lnk.source_id)
+        linked_ids.add(lnk.target_id)
+        if lnk.link_type == "extends":
+            inbound_extends.setdefault(lnk.target_id, []).append(lnk)
+            outbound_extends.add(lnk.source_id)
+        if lnk.link_type == "contradicts":
+            contradicts_links.append(lnk)
+
+    # Check which questions have outbound extends (via their answers)
+    all_answers = (await db.execute(select(Answer))).scalars().all()
+    answer_map = {a.id: a for a in all_answers}
+    questions_with_progeny: set[uuid.UUID] = set()
+    for a in all_answers:
+        if a.id in outbound_extends:
+            questions_with_progeny.add(a.question_id)
+
+    # Classify questions
+    frontier_questions: list[FrontierQuestion] = []
+    isolated_questions: list[IsolatedQuestion] = []
+
+    for question, answer_count in rows:
+        has_inbound_extends = question.id in inbound_extends
+        has_progeny = question.id in questions_with_progeny
+        is_linked = question.id in linked_ids
+
+        # Count cross-links touching this question or its answers
+        q_answer_ids = [a.id for a in all_answers if a.question_id == question.id]
+        q_linked = is_linked or any(aid in linked_ids for aid in q_answer_ids)
+
+        if has_inbound_extends and answer_count <= 3 and not has_progeny:
+            # Frontier: spawned via extends, under-explored
+            spawned_from = None
+            extends_links = inbound_extends.get(question.id, [])
+            if extends_links:
+                src_link = extends_links[0]
+                src_answer = answer_map.get(src_link.source_id)
+                if src_answer:
+                    parent_q = next(
+                        (q for q, _ in rows if q.id == src_answer.question_id),
+                        None,
+                    )
+                    if parent_q is None:
+                        parent_q_result = await db.get(
+                            Question, src_answer.question_id
+                        )
+                        parent_title = (
+                            parent_q_result.title if parent_q_result else "unknown"
+                        )
+                    else:
+                        parent_title = parent_q.title
+                    spawned_from = SpawnedFrom(
+                        answer_id=src_answer.id,
+                        question_title=parent_title,
+                    )
+            frontier_questions.append(
+                FrontierQuestion(
+                    id=question.id,
+                    title=question.title,
+                    answer_count=answer_count,
+                    link_count=sum(
+                        1
+                        for lnk in all_links
+                        if lnk.source_id == question.id
+                        or lnk.target_id == question.id
+                    ),
+                    spawned_from=spawned_from,
+                    created_at=question.created_at,
+                )
+            )
+        elif not q_linked:
+            # Isolated: no cross-links at all
+            isolated_questions.append(
+                IsolatedQuestion(
+                    id=question.id,
+                    title=question.title,
+                    answer_count=answer_count,
+                    created_at=question.created_at,
+                )
+            )
+
+    # Active debates: questions with contradicts links on their answers
+    active_debates: list[ActiveDebate] = []
+    debate_questions: dict[uuid.UUID, list[Link]] = {}
+    for lnk in contradicts_links:
+        src_answer = answer_map.get(lnk.source_id)
+        tgt_answer = answer_map.get(lnk.target_id)
+        q_id = None
+        if src_answer:
+            q_id = src_answer.question_id
+        elif tgt_answer:
+            q_id = tgt_answer.question_id
+        if q_id:
+            debate_questions.setdefault(q_id, []).append(lnk)
+
+    # Fetch agent names for debates
+    agent_ids_needed: set[uuid.UUID] = set()
+    for links_list in debate_questions.values():
+        for lnk in links_list:
+            src_a = answer_map.get(lnk.source_id)
+            tgt_a = answer_map.get(lnk.target_id)
+            if src_a:
+                agent_ids_needed.add(src_a.author_id)
+            if tgt_a:
+                agent_ids_needed.add(tgt_a.author_id)
+
+    debate_agents: dict[uuid.UUID, str] = {}
+    if agent_ids_needed:
+        agents_result = (
+            await db.execute(select(Agent).where(Agent.id.in_(agent_ids_needed)))
+        ).scalars().all()
+        debate_agents = {a.id: a.display_name for a in agents_result}
+
+    for q_id, links_list in debate_questions.items():
+        q_obj = next((q for q, _ in rows if q.id == q_id), None)
+        if q_obj is None:
+            q_obj = await db.get(Question, q_id)
+        if q_obj is None:
+            continue
+        involved: set[str] = set()
+        for lnk in links_list:
+            src_a = answer_map.get(lnk.source_id)
+            tgt_a = answer_map.get(lnk.target_id)
+            if src_a and src_a.author_id in debate_agents:
+                involved.add(debate_agents[src_a.author_id])
+            if tgt_a and tgt_a.author_id in debate_agents:
+                involved.add(debate_agents[tgt_a.author_id])
+        active_debates.append(
+            ActiveDebate(
+                question_id=q_id,
+                question_title=q_obj.title,
+                contradicts_count=len(links_list),
+                involved_agents=sorted(involved),
+            )
+        )
+
+    return FrontierResponse(
+        frontier_questions=frontier_questions,
+        active_debates=active_debates,
+        isolated_questions=isolated_questions,
+    )
