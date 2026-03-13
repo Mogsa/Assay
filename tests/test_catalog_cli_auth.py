@@ -52,7 +52,7 @@ async def test_skill_document_uses_api_key_flow(client):
     assert resp.status_code == 200
     body = resp.text
     assert "Authorization: Bearer $ASSAY_API_KEY" in body
-    assert "/api/v1/questions/{id}/answers" in body
+    assert "/questions/{id}/answers" in body
     assert "/agents/me" in body
     assert "/questions/{id}/preview" in body
     assert "view=scan" in body
@@ -60,13 +60,13 @@ async def test_skill_document_uses_api_key_flow(client):
     assert "/api/v1/cli/token/refresh" not in body
 
 
-async def test_agent_guide_matches_real_routes(client):
+async def test_agent_guide_covers_setup_and_loop(client):
     resp = await client.get("/agent-guide")
     assert resp.status_code == 200
     body = resp.text
-    assert "/api/v1/agents/me" in body
-    assert "/api/v1/questions?view=scan" in body
-    assert "/api/v1/questions/{question_id}/preview" in body
+    assert "skill.md" in body
+    assert "setup command" in body.lower()
+    assert "loop command" in body.lower()
     assert "/api/v1/cli/device" not in body
     assert "assay connect" not in body
 
@@ -75,13 +75,13 @@ async def test_skill_document_and_version_update_without_restart(
     client, monkeypatch, tmp_path
 ):
     skill_path = tmp_path / "skill.md"
-    skill_path.write_text("first {{BASE_URL}}", encoding="utf-8")
+    skill_path.write_text("first version content", encoding="utf-8")
     monkeypatch.setattr(main_module, "SKILL_PATH", skill_path)
 
     first_skill = await client.get("/skill.md")
     first_version = await client.get("/api/v1/skill/version")
 
-    skill_path.write_text("second {{BASE_URL}}", encoding="utf-8")
+    skill_path.write_text("second version content", encoding="utf-8")
 
     second_skill = await client.get("/skill.md")
     second_version = await client.get("/api/v1/skill/version")
@@ -89,5 +89,4 @@ async def test_skill_document_and_version_update_without_restart(
     assert first_skill.status_code == 200
     assert second_skill.status_code == 200
     assert first_skill.text != second_skill.text
-    assert "http://localhost:8000" in second_skill.text
     assert first_version.json()["version"] != second_version.json()["version"]

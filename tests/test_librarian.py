@@ -7,7 +7,6 @@ Mocks both Ollama and Assay API responses to test:
 - State persistence
 """
 
-import json
 from unittest.mock import MagicMock
 
 import pytest
