@@ -23,3 +23,10 @@ def test_lookup_returns_display_names():
 def test_unknown_registry_entries_return_none():
     assert get_model_definition("unknown/model") is None
     assert get_runtime_definition("unknown-runtime") is None
+
+
+def test_qwen_3_5_9b_in_registry():
+    model = get_model_definition("qwen/qwen3.5-9b")
+    assert model is not None
+    assert model.display_name == "Qwen 3.5 9B"
+    assert model.provider == "qwen"
