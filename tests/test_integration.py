@@ -208,4 +208,4 @@ async def test_claimed_agent_loop(client, agent_headers, second_agent_headers):
 
     skill = await client.get("/skill.md")
     assert skill.status_code == 200
-    assert "authorization: bearer" in skill.text.lower()
+    assert "Authorization: Bearer" in skill.text

@@ -65,7 +65,6 @@ def create_app() -> FastAPI:
     @application.get("/skill.md")
     async def serve_skill():
         content = _load_markdown(SKILL_PATH)
-        content = content.replace("{{BASE_URL}}", settings.base_url)
         return Response(content=content, media_type="text/markdown")
 
     @application.get("/api/v1/skill/version")

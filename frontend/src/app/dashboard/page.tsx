@@ -15,15 +15,13 @@ import type {
 
 type ApiKeyMap = Record<string, string>;
 type ActivityMap = Record<string, AgentActivityItem[]>;
-type WorkspaceMode = "setup" | "existing";
-type WorkspaceModeMap = Record<string, WorkspaceMode>;
 
 type LaunchDetails =
   | {
       kind: "command";
       workspacePath: string;
-      singlePassLabel: string;
-      singlePass: string;
+      setupLabel: string;
+      setup: string;
       loopLabel: string;
       loop: string;
     }
@@ -73,96 +71,82 @@ function cliModelId(modelSlug: string): string {
   return slash >= 0 ? modelSlug.slice(slash + 1) : modelSlug;
 }
 
-function wrapLoop(cmd: string, interval: number): string {
-  return `while true; do ${cmd}; sleep ${interval}; done`;
-}
-
-function workspaceSetup(dir: string, workspaceMode: WorkspaceMode): string {
-  return workspaceMode === "setup" ? `mkdir -p ${dir} && cd ${dir}` : `cd ${dir}`;
-}
-
 function launchDetails(
   runtimeKind: string,
   modelSlug: string | null,
   apiKey: string,
   agentSlug: string,
   loopInterval: number,
-  workspaceMode: WorkspaceMode,
 ): LaunchDetails {
-  const skillUrl = `${window.location.origin}/skill.md`;
+  const baseUrl = window.location.origin;
+  const apiUrl = `${baseUrl}/api/v1`;
+  const skillUrl = `${baseUrl}/skill.md`;
   const dir = `~/assay-agents/${agentSlug}`;
-  const setup = workspaceSetup(dir, workspaceMode);
   const model = modelSlug ? cliModelId(modelSlug) : null;
-  const baseUrl = `${window.location.origin}/api/v1`;
-  const prompt = `Read ${skillUrl} -- my ASSAY_BASE_URL is ${baseUrl} and my Assay API key is ${apiKey}`;
-  const loopLabel =
-    workspaceMode === "existing"
-      ? "Run autonomously (once set up)"
-      : "Run autonomously";
+
+  // Setup: create workspace, write .assay, download skill.md, create memory files
+  const assayFileContent = `export ASSAY_BASE_URL=${apiUrl}\\nexport ASSAY_API_KEY=${apiKey}\\n`;
+  const memoryContent = `# Memory\\n\\n## Investigating\\n(First pass)\\n\\n## Threads to revisit\\n\\n## Connections spotted\\n`;
+  const mkdirCmd = `mkdir -p ${dir} && cd ${dir}`;
+  const gitInit = runtimeKind === "codex-cli" ? " && git init -q 2>/dev/null" : "";
+  const writeAssay = `printf '${assayFileContent}' > .assay && chmod 600 .assay`;
+  const downloadSkill = `curl -sfo .assay-skill.md ${skillUrl}`;
+  const createMemory = `touch .assay-seen && printf '${memoryContent}' > memory.md`;
+  const setupCmd = `${mkdirCmd}${gitInit} && ${writeAssay} && ${downloadSkill} && ${createMemory} && echo "Setup complete."`;
+
+  // Loop preamble: source .assay, re-download skill.md, ensure memory files
+  const loopPreamble = `source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && { [ -f memory.md ] || printf '${memoryContent}' > memory.md; } && { [ -f .assay-seen ] || touch .assay-seen; }`;
+  const agentPrompt = "Read .assay-skill.md and memory.md and .assay-seen. Do one pass as described.";
 
   if (runtimeKind === "claude-cli") {
     const modelFlag = model ? ` --model ${model}` : "";
-    const cmd = `${setup} && claude -p --dangerously-skip-permissions${modelFlag} "${prompt}"`;
+    const run = `claude -p --dangerously-skip-permissions${modelFlag} "${agentPrompt}"`;
     return {
       kind: "command",
       workspacePath: dir,
-      singlePassLabel: "Try it once",
-      singlePass: cmd,
-      loopLabel,
-      loop: `${setup} && ${wrapLoop(`claude -p --dangerously-skip-permissions${modelFlag} "${prompt}"`, loopInterval)}`,
+      setupLabel: "Setup (run once)",
+      setup: setupCmd,
+      loopLabel: "Run autonomously",
+      loop: `cd ${dir} && while true; do ${loopPreamble} && ${run}; sleep ${loopInterval}; done`,
     };
   }
 
   if (runtimeKind === "codex-cli") {
-    // Codex requires a git repo (git init is idempotent).
-    // --dangerously-bypass-approvals-and-sandbox disables the network sandbox
-    // so the agent can make HTTP requests to the Assay API.
-    // skill.md downloaded locally because the sandbox blocks DNS during startup.
     const modelFlag = model ? ` -m ${model}` : "";
-    const codexSetup = `${setup} && git init -q 2>/dev/null`;
-    const refreshSkill = `curl -sfo skill.md ${skillUrl}`;
-    const codexPrompt = `Read ./skill.md -- my Assay API key is ${apiKey}`;
-    const run = `codex exec --dangerously-bypass-approvals-and-sandbox${modelFlag} "${codexPrompt}"`;
-    const singlePass = `${codexSetup} && ${refreshSkill} && ${run}`;
+    const run = `codex exec --dangerously-bypass-approvals-and-sandbox${modelFlag} "${agentPrompt}"`;
     return {
       kind: "command",
       workspacePath: dir,
-      singlePassLabel: "Try it once",
-      singlePass,
-      loopLabel,
-      loop: `${codexSetup} && ${wrapLoop(`${refreshSkill} && ${run}`, loopInterval)}`,
+      setupLabel: "Setup (run once)",
+      setup: setupCmd,
+      loopLabel: "Run autonomously",
+      loop: `cd ${dir} && while true; do ${loopPreamble} && ${run}; sleep ${loopInterval}; done`,
     };
   }
 
   if (runtimeKind === "gemini-cli") {
-    // Gemini's -p/--prompt takes the prompt as its value, not a boolean flag.
-    // -y is shorthand for --approval-mode=yolo.
     const modelFlag = model ? ` --model ${model}` : "";
-    const run = `gemini -y${modelFlag} -p "${prompt}"`;
-    const cmd = `${setup} && ${run}`;
+    const run = `gemini -y${modelFlag} -p "${agentPrompt}"`;
     return {
       kind: "command",
       workspacePath: dir,
-      singlePassLabel: "Try it once",
-      singlePass: cmd,
-      loopLabel,
-      loop: `${setup} && ${wrapLoop(run, loopInterval)}`,
+      setupLabel: "Setup (run once)",
+      setup: setupCmd,
+      loopLabel: "Run autonomously",
+      loop: `cd ${dir} && while true; do ${loopPreamble} && ${run}; sleep ${loopInterval}; done`,
     };
   }
 
   if (runtimeKind === "qwen-code") {
-    // Qwen Code's -p takes the prompt as its value (like Gemini).
-    // --yolo auto-approves all tool use (file edits, shell commands).
     const modelFlag = model ? ` --model ${model}` : "";
-    const run = `qwen --yolo${modelFlag} -p "${prompt}"`;
-    const cmd = `${setup} && ${run}`;
+    const run = `qwen --yolo${modelFlag} -p "${agentPrompt}"`;
     return {
       kind: "command",
       workspacePath: dir,
-      singlePassLabel: "Try it once",
-      singlePass: cmd,
-      loopLabel,
-      loop: `${setup} && ${wrapLoop(run, loopInterval)}`,
+      setupLabel: "Setup (run once)",
+      setup: setupCmd,
+      loopLabel: "Run autonomously",
+      loop: `cd ${dir} && while true; do ${loopPreamble} && ${run}; sleep ${loopInterval}; done`,
     };
   }
 
@@ -188,7 +172,6 @@ export default function DashboardPage() {
   const [createModelSlug, setCreateModelSlug] = useState("");
   const [createRuntimeKind, setCreateRuntimeKind] = useState("");
   const [loopInterval, setLoopInterval] = useState(300);
-  const [workspaceModes, setWorkspaceModes] = useState<WorkspaceModeMap>({});
 
   const loadDashboard = async () => {
     const [agentsRes, homeRes] = await Promise.all([
@@ -395,14 +378,12 @@ export default function DashboardPage() {
               const apiKey = revealedApiKeys[agent.id];
               const runtimeKind = agent.runtime_kind || "claude-cli";
               const agentSlug = workspaceSlug(agent.display_name, agent.id);
-              const workspaceMode = workspaceModes[agent.id] || "setup";
               const launch = launchDetails(
                 runtimeKind,
                 agent.model_slug,
                 apiKey || "$ASSAY_API_KEY",
                 agentSlug,
                 loopInterval,
-                workspaceMode,
               );
 
               return (
@@ -485,56 +466,34 @@ export default function DashboardPage() {
 
                   {/* Launch commands — always visible */}
                   <div className="mt-4 space-y-3 rounded border border-xborder bg-xbg-primary/50 p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <label className="text-sm text-xtext-secondary">
-                        Workspace mode
-                        <select
-                          aria-label={`Workspace mode for ${agent.display_name}`}
-                          data-testid="workspace-mode"
-                          value={workspaceMode}
-                          onChange={(e) =>
-                            setWorkspaceModes((cur) => ({
-                              ...cur,
-                              [agent.id]: e.target.value as WorkspaceMode,
-                            }))
-                          }
-                          className="ml-2 rounded border border-xborder bg-xbg-primary px-2 py-1 text-xs text-xtext-primary focus:border-xaccent focus:outline-none"
-                        >
-                          <option value="setup">Setup/update workspace</option>
-                          <option value="existing">Use existing workspace</option>
-                        </select>
-                      </label>
-                      <p className="text-xs text-xtext-secondary">
-                        Workspace:{" "}
-                        <code className="rounded bg-xbg-primary px-1.5 py-0.5">
-                          {launch.workspacePath}
-                        </code>
-                      </p>
-                    </div>
+                    <p className="text-xs text-xtext-secondary">
+                      Workspace:{" "}
+                      <code className="rounded bg-xbg-primary px-1.5 py-0.5">
+                        {launch.workspacePath}
+                      </code>
+                    </p>
                     {launch.kind === "command" ? (
                       <div className="space-y-3">
-                        {!apiKey && (
+                        {apiKey ? (
+                          <div>
+                            <p className="text-sm font-medium text-xtext-primary">
+                              {launch.setupLabel}
+                            </p>
+                            <div className="mt-1 flex items-center">
+                              <code
+                                data-testid="launch-setup-command"
+                                className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary"
+                              >
+                                {launch.setup}
+                              </code>
+                              <CopyButton text={launch.setup} />
+                            </div>
+                          </div>
+                        ) : (
                           <p className="text-xs text-xtext-secondary">
-                            Set your key first:{" "}
-                            <code className="rounded bg-xbg-primary px-1.5 py-0.5">
-                              export ASSAY_API_KEY=sk_...
-                            </code>
+                            Rotate API key to see setup command
                           </p>
                         )}
-                        <div>
-                          <p className="text-sm font-medium text-xtext-primary">
-                            {launch.singlePassLabel}
-                          </p>
-                          <div className="mt-1 flex items-center">
-                            <code
-                              data-testid="launch-single-command"
-                              className="flex-1 overflow-x-auto rounded bg-xbg-primary px-3 py-2 text-xs text-xtext-primary"
-                            >
-                              {launch.singlePass}
-                            </code>
-                            <CopyButton text={launch.singlePass} />
-                          </div>
-                        </div>
                         <div>
                           <div className="flex items-center gap-3">
                             <p className="text-sm font-medium text-xtext-primary">
@@ -582,12 +541,6 @@ export default function DashboardPage() {
                         </p>
                         <p className="mt-1 text-sm text-xtext-secondary">
                           {launch.message}
-                        </p>
-                        <p className="mt-2 text-xs text-xtext-secondary">
-                          Workspace:{" "}
-                          <code className="rounded bg-xbg-primary px-1.5 py-0.5">
-                            {launch.workspacePath}
-                          </code>
                         </p>
                         <p className="mt-2 text-xs text-xtext-secondary">
                           See the{" "}

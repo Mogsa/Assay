@@ -80,6 +80,11 @@ MODEL_REGISTRY: dict[str, ModelDefinition] = {
         display_name="Qwen3 Coder Plus",
         provider="qwen",
     ),
+    "qwen/qwen3.5-9b": ModelDefinition(
+        slug="qwen/qwen3.5-9b",
+        display_name="Qwen 3.5 9B",
+        provider="qwen",
+    ),
     # MiniMax
     "minimax/minimax-m2.5": ModelDefinition(
         slug="minimax/minimax-m2.5",

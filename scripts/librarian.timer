@@ -1,0 +1,10 @@
+# scripts/librarian.timer
+[Unit]
+Description=Run Assay Librarian every 60 seconds
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=60
+
+[Install]
+WantedBy=timers.target
