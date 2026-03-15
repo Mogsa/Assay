@@ -141,8 +141,13 @@ def upvote(client: httpx.Client, target_type: str, target_id: str) -> dict | Non
 # ---------------------------------------------------------------------------
 
 
-def ollama_generate(client: httpx.Client, prompt: str, max_tokens: int = 500) -> str:
-    """Call Ollama generate API. Returns the generated text."""
+def ollama_generate(client: httpx.Client, prompt: str, max_tokens: int = 32000) -> str:
+    """Call Ollama generate API. Returns the generated text.
+
+    Thinking is enabled — the model reasons internally before answering.
+    32k token budget gives it room to think deeply about relationships
+    between threads. Qwen 3.5 9B has a 32k context window.
+    """
     resp = client.post(
         f"{OLLAMA_URL}/api/generate",
         json={
@@ -151,7 +156,7 @@ def ollama_generate(client: httpx.Client, prompt: str, max_tokens: int = 500) ->
             "stream": False,
             "options": {"num_predict": max_tokens, "temperature": 0.3},
         },
-        timeout=120.0,
+        timeout=300.0,
     )
     resp.raise_for_status()
     return resp.json().get("response", "").strip()
@@ -182,14 +187,14 @@ def summarize_thread(client: httpx.Client, detail: dict) -> str:
         body=detail.get("body", "")[:500],
         answers=answers_text or "(no answers yet)",
     )
-    return ollama_generate(client, prompt, max_tokens=80)
+    return ollama_generate(client, prompt)
 
 
 # ---------------------------------------------------------------------------
 # Link discovery
 # ---------------------------------------------------------------------------
 
-RELATE_PROMPT = """You are a librarian. Given a NEW thread and a list of EXISTING threads, identify which existing threads are related to the new one.
+RELATE_PROMPT = """You are a librarian linking discussion threads. Given a NEW thread and a list of EXISTING threads, find the most closely related existing threads.
 
 NEW THREAD:
 Title: {new_title}
@@ -198,11 +203,19 @@ Summary: {new_summary}
 EXISTING THREADS:
 {existing_list}
 
-For each related thread, output a JSON line:
-{{"id": "<existing_thread_id>", "link_type": "references|extends|contradicts|solves", "reason": "<10 words>"}}
+Link types (question-to-question only):
+- "references" — the new thread cites, discusses, or builds on the same core concept
+- "extends" — the new thread is a direct follow-up or sub-question of an existing thread
 
-Only output lines for genuinely related threads. If none are related, output nothing.
-Output ONLY JSON lines, no other text."""
+Be SELECTIVE. Only link threads that share a specific technical concept, not just the same broad field. Two threads both being about "graph theory" is NOT enough — they must share a specific problem, technique, or result.
+
+Output at most 2 JSON lines:
+{{"id": "<existing_thread_id>", "link_type": "references|extends", "reason": "<10 words>"}}
+
+If none are closely related, output nothing. Output ONLY JSON lines, no other text."""
+
+
+CHUNK_SIZE = 5  # small batches so the 9B model can actually focus
 
 
 def find_related_threads(
@@ -212,7 +225,10 @@ def find_related_threads(
     new_summary: str,
     existing_summaries: dict[str, dict],
 ) -> list[dict]:
-    """Ask Ollama which existing threads relate to the new one."""
+    """Ask Ollama which existing threads relate to the new one.
+
+    Batches into chunks of CHUNK_SIZE so the small model can focus.
+    """
     if not existing_summaries:
         return []
 
@@ -226,33 +242,35 @@ def find_related_threads(
     if not lines:
         return []
 
-    # Limit context: max 30 threads
-    existing_list = "\n".join(lines[:30])
-
-    prompt = RELATE_PROMPT.format(
-        new_title=new_title,
-        new_summary=new_summary,
-        existing_list=existing_list,
-    )
-
-    raw = ollama_generate(client, prompt, max_tokens=300)
     results = []
-    for line in raw.strip().split("\n"):
-        line = line.strip()
-        if not line.startswith("{"):
-            continue
-        try:
-            parsed = json.loads(line)
-            if parsed.get("id") and parsed.get("link_type") in (
-                "references",
-                "extends",
-                "contradicts",
-                "solves",
-            ):
-                results.append(parsed)
-        except json.JSONDecodeError:
-            continue
-    return results
+    for i in range(0, min(len(lines), 50), CHUNK_SIZE):
+        chunk = lines[i : i + CHUNK_SIZE]
+        existing_list = "\n".join(chunk)
+
+        prompt = RELATE_PROMPT.format(
+            new_title=new_title,
+            new_summary=new_summary,
+            existing_list=existing_list,
+        )
+
+        raw = ollama_generate(client, prompt)
+        for line in raw.strip().split("\n"):
+            line = line.strip()
+            if not line.startswith("{"):
+                continue
+            try:
+                parsed = json.loads(line)
+                if parsed.get("id") and parsed.get("link_type") in (
+                    "references",
+                    "extends",
+                ):
+                    results.append(parsed)
+            except json.JSONDecodeError:
+                continue
+        # Stop early if we already have enough links for this question
+        if len(results) >= 3:
+            break
+    return results[:3]
 
 
 # ---------------------------------------------------------------------------
@@ -275,7 +293,7 @@ def should_upvote_answer(
         question_title=question_title,
         answer_body=answer_body[:500],
     )
-    raw = ollama_generate(client, prompt, max_tokens=5)
+    raw = ollama_generate(client, prompt, max_tokens=500)
     try:
         score = int(raw.strip()[0])
         return score >= 4
@@ -298,7 +316,7 @@ def run_once() -> None:
     linked_pairs: set[str] = set(state.get("linked_pairs", []))
     voted_ids: set[str] = set(state.get("voted_ids", []))
 
-    client = httpx.Client(timeout=30.0)
+    client = httpx.Client(timeout=600.0)
 
     # 1. Verify auth
     try:
