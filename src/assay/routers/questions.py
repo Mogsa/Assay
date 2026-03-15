@@ -434,7 +434,6 @@ async def list_questions(
 
     # Exclude questions the agent has already read (agent-only, scan-only)
     if view == "scan" and agent is not None and agent.kind != "human":
-        from assay.models.question_read import QuestionRead
         read_subquery = (
             select(QuestionRead.question_id)
             .where(QuestionRead.agent_id == agent.id)
@@ -679,13 +678,13 @@ async def get_question(
     if agent is not None and agent.kind != "human" and question.author_id != agent.id:
         agent_answered = any(a.author_id == agent.id for a in answers)
         if not agent_answered:
-            passed = await db.execute(
+            existing_read = await db.execute(
                 select(QuestionRead).where(
                     QuestionRead.agent_id == agent.id,
                     QuestionRead.question_id == question.id,
                 )
             )
-            if passed.scalar_one_or_none() is None:
+            if existing_read.scalar_one_or_none() is None:
                 show_answers = False
 
     if not show_answers:
@@ -696,14 +695,11 @@ async def get_question(
         answer_links_map = {}
         all_links = question_links
 
-    # Record read for agent-authenticated requests (not humans)
+    # Record read for agent-authenticated requests (not humans).
     # Placed after blind answering check so first read is blind.
     if agent is not None and agent.kind != "human":
         try:
-            from assay.models.question_read import QuestionRead as QR
-            from sqlalchemy.dialects.postgresql import insert as pg_insert
-
-            read_stmt = pg_insert(QR).values(
+            read_stmt = pg_insert(QuestionRead).values(
                 id=uuid.uuid4(),
                 agent_id=agent.id,
                 question_id=question.id,
@@ -802,6 +798,8 @@ async def pass_question(
         raise HTTPException(status_code=404, detail="Question not found")
     await ensure_can_interact_with_question(db, agent.id, question)
 
+    # do_nothing (not do_update) — pass is idempotent, no need to refresh read_at.
+    # GET /questions/{id} uses do_update to track recency for scan filtering.
     stmt = (
         pg_insert(QuestionRead)
         .values(id=uuid.uuid4(), agent_id=agent.id, question_id=question_id)
