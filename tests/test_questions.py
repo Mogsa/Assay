@@ -433,3 +433,150 @@ async def test_any_participant_can_change_question_status(client, agent_headers,
     )
     assert reopened.status_code == 200
     assert reopened.json()["status"] == "open"
+
+
+# --- Blind answering ---
+
+
+async def test_blind_question_hides_answers(client, agent_headers, second_agent_headers):
+    """Agent who hasn't answered or passed sees no answers."""
+    q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Blind test", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = q.json()["id"]
+
+    # First agent answers
+    await client.post(
+        f"/api/v1/questions/{qid}/answers",
+        json={"body": "First agent's answer"},
+        headers=agent_headers,
+    )
+
+    # Second agent reads — should be blind
+    resp = await client.get(f"/api/v1/questions/{qid}", headers=second_agent_headers)
+    assert resp.status_code == 200
+    assert resp.json()["answers"] == []
+    assert resp.json()["answer_count"] == 0
+
+
+async def test_blind_question_reveals_after_answer(client, agent_headers, second_agent_headers):
+    """Agent sees answers after submitting their own."""
+    q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Blind reveal test", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = q.json()["id"]
+
+    await client.post(
+        f"/api/v1/questions/{qid}/answers",
+        json={"body": "First agent's answer"},
+        headers=agent_headers,
+    )
+
+    # Second agent answers
+    await client.post(
+        f"/api/v1/questions/{qid}/answers",
+        json={"body": "Second agent's answer"},
+        headers=second_agent_headers,
+    )
+
+    # Now second agent should see all answers
+    resp = await client.get(f"/api/v1/questions/{qid}", headers=second_agent_headers)
+    assert resp.status_code == 200
+    assert len(resp.json()["answers"]) == 2
+
+
+async def test_blind_question_reveals_after_pass(client, agent_headers, second_agent_headers):
+    """Agent sees answers after passing."""
+    q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Blind pass test", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = q.json()["id"]
+
+    await client.post(
+        f"/api/v1/questions/{qid}/answers",
+        json={"body": "First agent's answer"},
+        headers=agent_headers,
+    )
+
+    # Second agent passes
+    pass_resp = await client.post(
+        f"/api/v1/questions/{qid}/pass",
+        headers=second_agent_headers,
+    )
+    assert pass_resp.status_code == 204
+
+    # Now second agent should see answers
+    resp = await client.get(f"/api/v1/questions/{qid}", headers=second_agent_headers)
+    assert resp.status_code == 200
+    assert len(resp.json()["answers"]) == 1
+
+
+async def test_blind_question_shows_for_humans(client, agent_headers, human_session_cookie):
+    """Humans always see answers."""
+    q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Human sees all", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = q.json()["id"]
+
+    await client.post(
+        f"/api/v1/questions/{qid}/answers",
+        json={"body": "An answer"},
+        headers=agent_headers,
+    )
+
+    resp = await client.get(
+        f"/api/v1/questions/{qid}",
+        cookies={"session": human_session_cookie},
+    )
+    assert resp.status_code == 200
+    assert len(resp.json()["answers"]) == 1
+
+
+async def test_blind_question_shows_for_author(client, agent_headers, second_agent_headers):
+    """Question author always sees answers (they asked the question)."""
+    q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Author sees all", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = q.json()["id"]
+
+    # Different agent answers
+    await client.post(
+        f"/api/v1/questions/{qid}/answers",
+        json={"body": "Another agent's answer"},
+        headers=second_agent_headers,
+    )
+
+    # Author reads — should see all answers despite not answering
+    resp = await client.get(f"/api/v1/questions/{qid}", headers=agent_headers)
+    assert resp.status_code == 200
+    assert len(resp.json()["answers"]) == 1
+
+
+async def test_blind_unauthenticated_sees_answers(client, agent_headers):
+    """Unauthenticated requests see everything."""
+    q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Anon sees all", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = q.json()["id"]
+
+    await client.post(
+        f"/api/v1/questions/{qid}/answers",
+        json={"body": "An answer"},
+        headers=agent_headers,
+    )
+
+    resp = await client.get(f"/api/v1/questions/{qid}")
+    assert resp.status_code == 200
+    assert len(resp.json()["answers"]) == 1

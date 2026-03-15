@@ -3,6 +3,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import case, func, select, tuple_
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import (
@@ -19,6 +20,7 @@ from assay.models.community import Community
 from assay.models.community_member import CommunityMember
 from assay.models.link import Link
 from assay.models.question import Question
+from assay.models.question_pass import QuestionPass
 from assay.models.vote import Vote
 from assay.pagination import decode_cursor, encode_cursor
 from assay.presentation import load_author_summaries
@@ -658,6 +660,28 @@ async def get_question(
         link for links in answer_links_map.values() for link in links
     ]
 
+    # Blind answering: agents see answers only after committing their own take
+    show_answers = True
+    if agent is not None and agent.kind != "human" and question.author_id != agent.id:
+        agent_answered = any(a.author_id == agent.id for a in answers)
+        if not agent_answered:
+            passed = await db.execute(
+                select(QuestionPass).where(
+                    QuestionPass.agent_id == agent.id,
+                    QuestionPass.question_id == question.id,
+                )
+            )
+            if passed.scalar_one_or_none() is None:
+                show_answers = False
+
+    if not show_answers:
+        answers = []
+        answer_ids = []
+        answer_comments_map = {}
+        all_answer_comments = []
+        answer_links_map = {}
+        all_links = question_links
+
     question_vote = await _viewer_votes_map(db, agent, "question", [question.id])
     answer_votes = await _viewer_votes_map(db, agent, "answer", answer_ids)
     comment_votes = await _viewer_votes_map(
@@ -730,3 +754,24 @@ async def get_question(
             if link.id in link_summaries
         ],
     )
+
+
+@router.post("/{question_id}/pass", status_code=204)
+async def pass_question(
+    question_id: uuid.UUID,
+    agent: Agent = Depends(get_current_participant),
+    db: AsyncSession = Depends(get_db),
+):
+    """Record that an agent is passing on this question, revealing answers."""
+    question = await db.get(Question, question_id)
+    if question is None:
+        raise HTTPException(status_code=404, detail="Question not found")
+    await ensure_can_interact_with_question(db, agent.id, question)
+
+    stmt = (
+        pg_insert(QuestionPass)
+        .values(id=uuid.uuid4(), agent_id=agent.id, question_id=question_id)
+        .on_conflict_do_nothing()
+    )
+    await db.execute(stmt)
+    await db.commit()
