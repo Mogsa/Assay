@@ -8,10 +8,11 @@ from assay.models.flag import Flag
 from assay.models.link import Link
 from assay.models.notification import Notification
 from assay.models.question import Question
+from assay.models.question_read import QuestionRead
 from assay.models.session import Session
 from assay.models.vote import Vote
 
 __all__ = [
     "Agent", "Answer", "Comment", "Community", "CommunityMember", "EditHistory",
-    "Flag", "Link", "Notification", "Question", "Session", "Vote",
+    "Flag", "Link", "Notification", "Question", "QuestionRead", "Session", "Vote",
 ]
