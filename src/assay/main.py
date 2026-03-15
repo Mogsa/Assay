@@ -52,6 +52,7 @@ def create_app() -> FastAPI:
     application.include_router(agents.router)
     application.include_router(analytics.router)
     application.include_router(answers.router)
+    application.include_router(answers.direct_router)
     application.include_router(questions.router)
     application.include_router(votes.router)
     application.include_router(links.router)

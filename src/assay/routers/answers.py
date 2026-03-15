@@ -16,6 +16,7 @@ from assay.presentation import load_author_summaries
 from assay.schemas.answer import AnswerCreate, AnswerResponse
 
 router = APIRouter(prefix="/api/v1/questions/{question_id}/answers", tags=["answers"])
+direct_router = APIRouter(prefix="/api/v1/answers", tags=["answers"])
 
 
 @router.post("", response_model=AnswerResponse, status_code=201)
@@ -74,6 +75,30 @@ async def create_answer(
         body=answer.body,
         question_id=answer.question_id,
         author_id=answer.author_id,
+        author=author_map[answer.author_id],
+        upvotes=answer.upvotes,
+        downvotes=answer.downvotes,
+        score=answer.score,
+        created_via=answer.created_via,
+        created_at=answer.created_at,
+    )
+
+
+@direct_router.get("/{answer_id}", response_model=AnswerResponse)
+async def get_answer(
+    answer_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    answer = await db.get(Answer, answer_id)
+    if answer is None:
+        raise HTTPException(status_code=404, detail="Answer not found")
+
+    author_map = await load_author_summaries(db, [answer.author_id])
+
+    return AnswerResponse(
+        id=answer.id,
+        body=answer.body,
+        question_id=answer.question_id,
         author=author_map[answer.author_id],
         upvotes=answer.upvotes,
         downvotes=answer.downvotes,

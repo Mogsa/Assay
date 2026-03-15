@@ -193,7 +193,7 @@ def summarize_thread(client: httpx.Client, detail: dict) -> str:
 # Link discovery
 # ---------------------------------------------------------------------------
 
-RELATE_PROMPT = """You are a librarian linking discussion threads. Given a NEW thread and a list of EXISTING threads, find the most closely related existing threads.
+RELATE_PROMPT = """You are a librarian deciding whether to link discussion threads. Your DEFAULT output is NOTHING. Most threads are unrelated — outputting nothing is the correct answer the vast majority of the time.
 
 NEW THREAD:
 Title: {new_title}
@@ -202,19 +202,54 @@ Summary: {new_summary}
 EXISTING THREADS:
 {existing_list}
 
+STRICT CRITERIA — threads must share at least one of:
+- A specific claim or result that one thread could falsify or support
+- A concrete technique, method, or algorithm used in both
+- A direct counterexample from one thread that applies to the other
+- An explicit parent-child relationship (one thread is a sub-question of the other)
+
+Sharing a broad topic area is NEVER enough. Two threads must be useful to read together — a reader of one would materially benefit from seeing the other.
+
+NEGATIVE EXAMPLE (do NOT link):
+- Thread A: "Is Dijkstra's algorithm optimal for sparse graphs?"
+- Thread B: "Can graph coloring solve scheduling problems?"
+- These both involve graph theory but share NO specific claim, technique, or result. Output nothing.
+
+POSITIVE EXAMPLE (link):
+- Thread A: "Does memoization improve Dijkstra's on sparse graphs?"
+- Thread B: "Dijkstra's with Fibonacci heaps on sparse graphs"
+- These share a specific algorithm (Dijkstra's) applied to the same structure (sparse graphs). Link them.
+
 Link types (question-to-question only):
-- "references" — the new thread cites, discusses, or builds on the same core concept
+- "references" — both threads discuss the same specific claim, technique, or result
 - "extends" — the new thread is a direct follow-up or sub-question of an existing thread
 
-Be SELECTIVE. Only link threads that share a specific technical concept, not just the same broad field. Two threads both being about "graph theory" is NOT enough — they must share a specific problem, technique, or result.
-
 Output at most 2 JSON lines:
-{{"id": "<existing_thread_id>", "link_type": "references|extends", "reason": "<10 words>"}}
+{{"id": "<existing_thread_id>", "link_type": "references|extends", "reason": "<10 words explaining the shared specific concept>"}}
 
-If none are closely related, output nothing. Output ONLY JSON lines, no other text."""
+If none meet the strict criteria, output NOTHING. No apologies, no explanation — just empty output.
+Output ONLY valid JSON lines or nothing at all."""
 
 
-CHUNK_SIZE = 5  # small batches so the 9B model can actually focus
+CHUNK_SIZE = 3  # small batches so the 9B model can actually focus
+
+# Phrases in a "reason" field that reveal the model knows threads aren't related
+_NEGATIVE_REASON_PHRASES = (
+    "no shared",
+    "not related",
+    "unrelated",
+    "no connection",
+    "no direct",
+    "no specific",
+    "no common",
+    "not closely",
+    "no overlap",
+    "different topic",
+    "different problem",
+    "no link",
+    "not found",
+    "none found",
+)
 
 
 def find_related_threads(
@@ -265,6 +300,19 @@ def find_related_threads(
                     "references",
                     "extends",
                 ):
+                    # Filter out results where the model's own reason
+                    # reveals it knows the threads aren't related
+                    reason = (parsed.get("reason") or "").lower()
+                    if any(
+                        phrase in reason
+                        for phrase in _NEGATIVE_REASON_PHRASES
+                    ):
+                        log.info(
+                            "Filtered spurious link to %s: %s",
+                            parsed["id"][:8],
+                            parsed.get("reason", ""),
+                        )
+                        continue
                     results.append(parsed)
             except json.JSONDecodeError:
                 continue

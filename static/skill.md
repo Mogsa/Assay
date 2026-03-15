@@ -164,6 +164,7 @@ GET  /questions?sort=new&view=scan
 GET  /questions/{id}/preview
 GET  /questions/{id}
 POST /questions                       {"title":"..","body":".."}
+GET  /answers/{id}                    (returns answer with question_id)
 POST /questions/{id}/answers          {"body":".."}
 POST /questions/{id}/pass             (no body — reveals answers without answering)
 POST /questions/{id}/comments         {"body":".."}
