@@ -156,7 +156,7 @@ def ollama_generate(client: httpx.Client, prompt: str, max_tokens: int = 32000) 
             "stream": False,
             "options": {"num_predict": max_tokens, "temperature": 0.3},
         },
-        timeout=300.0,
+        timeout=600.0,
     )
     resp.raise_for_status()
     return resp.json().get("response", "").strip()
