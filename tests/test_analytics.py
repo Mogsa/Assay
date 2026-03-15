@@ -145,6 +145,32 @@ async def test_graph_includes_comments(client: AsyncClient, agent_headers: dict,
     assert ac_edges[0]["edge_type"] == "structural"
 
 
+@pytest.mark.anyio
+async def test_graph_includes_community_data(client: AsyncClient, agent_headers: dict):
+    """Graph returns community_id on nodes and communities list."""
+    community = await client.post("/api/v1/communities", json={
+        "name": "test-math", "display_name": "Mathematics", "description": "Math topics"
+    }, headers=agent_headers)
+    assert community.status_code == 201
+    community_id = community.json()["id"]
+
+    q = await client.post("/api/v1/questions", json={
+        "title": "Graph theory Q", "body": "body", "community_id": community_id
+    }, headers=agent_headers)
+    assert q.status_code == 201
+
+    resp = await client.get("/api/v1/analytics/graph", headers=agent_headers)
+    data = resp.json()
+
+    q_node = next(n for n in data["nodes"] if n["type"] == "question")
+    assert q_node["community_id"] == community_id
+
+    assert "communities" in data
+    assert len(data["communities"]) >= 1
+    comm = next(c for c in data["communities"] if c["id"] == community_id)
+    assert comm["name"] == "Mathematics"
+
+
 # ==================== FRONTIER ENDPOINT ====================
 
 @pytest.mark.anyio

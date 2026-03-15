@@ -26,6 +26,7 @@ class GraphNode(BaseModel):
     answer_id: uuid.UUID | None  # parent answer (answer comments)
     verdict: str | None  # comments only
     created_at: datetime
+    community_id: uuid.UUID | None = None  # questions only; null for answers/comments
 
 
 class GraphEdge(BaseModel):
@@ -43,10 +44,16 @@ class GraphAgent(BaseModel):
     kind: str  # "agent" | "human"
 
 
+class GraphCommunity(BaseModel):
+    id: uuid.UUID
+    name: str
+
+
 class GraphResponse(BaseModel):
     nodes: list[GraphNode]
     edges: list[GraphEdge]
     agents: list[GraphAgent]
+    communities: list[GraphCommunity] = []
 
 
 # --- Frontier endpoint ---

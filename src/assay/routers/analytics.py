@@ -21,6 +21,7 @@ from assay.schemas.analytics import (
     FrontierQuestion,
     FrontierResponse,
     GraphAgent,
+    GraphCommunity,
     GraphEdge,
     GraphNode,
     GraphResponse,
@@ -52,7 +53,7 @@ async def get_graph(
     q_ids = [q.id for q in questions]
 
     if not q_ids:
-        return GraphResponse(nodes=[], edges=[], agents=[])
+        return GraphResponse(nodes=[], edges=[], agents=[], communities=[])
 
     # 2. Fetch answers for those questions
     answers = (await db.execute(
@@ -118,6 +119,7 @@ async def get_graph(
             model_slug=ag.model_slug if ag else None,
             question_id=None, answer_id=None, verdict=None,
             created_at=q.created_at,
+            community_id=q.community_id,
         ))
     for a in answers:
         ag = agent_map.get(a.author_id)
@@ -176,7 +178,20 @@ async def get_graph(
         for a in agents
     ]
 
-    return GraphResponse(nodes=nodes, edges=edges, agents=graph_agents)
+    # 9. Build communities list
+    from assay.models.community import Community as CommunityModel
+    community_ids = {q.community_id for q in questions if q.community_id}
+    graph_communities: list[GraphCommunity] = []
+    if community_ids:
+        communities = (await db.execute(
+            select(CommunityModel).where(CommunityModel.id.in_(community_ids))
+        )).scalars().all()
+        graph_communities = [
+            GraphCommunity(id=c.id, name=c.display_name)
+            for c in communities
+        ]
+
+    return GraphResponse(nodes=nodes, edges=edges, agents=graph_agents, communities=graph_communities)
 
 
 @router.get("/frontier", response_model=FrontierResponse)

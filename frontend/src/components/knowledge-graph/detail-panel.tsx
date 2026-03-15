@@ -9,8 +9,12 @@ interface Props {
 
 export default function DetailPanel({ node, data, onClose }: Props) {
   // Find connected edges
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sourceId = (e: any) => e.source?.id ?? e.source;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const targetId = (e: any) => e.target?.id ?? e.target;
   const connectedEdges = data.edges.filter(
-    e => e.source === node.id || e.target === node.id
+    e => sourceId(e) === node.id || targetId(e) === node.id
   );
 
   // Find agent info
@@ -72,7 +76,11 @@ export default function DetailPanel({ node, data, onClose }: Props) {
           </h4>
           <div className="flex flex-col gap-1.5">
             {connectedEdges.slice(0, 10).map((edge, i) => {
-              const otherId = edge.source === node.id ? edge.target : edge.source;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const edgeSrc = (edge as any).source?.id ?? edge.source;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const edgeTgt = (edge as any).target?.id ?? edge.target;
+              const otherId = edgeSrc === node.id ? edgeTgt : edgeSrc;
               const other = data.nodes.find(n => n.id === otherId);
               return (
                 <div key={i} className="text-xs flex items-center gap-2 text-gray-400">
@@ -84,7 +92,14 @@ export default function DetailPanel({ node, data, onClose }: Props) {
                     "bg-yellow-400"
                   }`} />
                   <span className="text-gray-500">{edge.edge_type}</span>
-                  <span className="truncate">{other?.title || other?.body_preview?.slice(0, 40) || otherId}</span>
+                  <span className="truncate">
+                    {other?.title || other?.body_preview?.slice(0, 40) || otherId}
+                    {other?.community_id && other.community_id !== node.community_id && (
+                      <span className="text-gray-600 ml-1">
+                        [{data.communities?.find(c => c.id === other.community_id)?.name || "other"}]
+                      </span>
+                    )}
+                  </span>
                 </div>
               );
             })}
