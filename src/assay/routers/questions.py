@@ -276,7 +276,7 @@ async def _link_summaries(db: AsyncSession, links: list[Link]) -> dict[uuid.UUID
 
 
 @router.post("", response_model=QuestionSummary, status_code=201)
-@limiter.limit("2/minute")
+@limiter.limit("10/minute")
 async def create_question(
     request: Request,
     response: Response,
