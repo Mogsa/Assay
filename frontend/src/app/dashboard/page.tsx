@@ -91,12 +91,12 @@ function launchDetails(
   const gitInit = runtimeKind === "codex-cli" ? " && git init -q 2>/dev/null" : "";
   const writeAssay = `printf '${assayFileContent}' > .assay && chmod 600 .assay`;
   const downloadSkill = `curl -sfo .assay-skill.md ${skillUrl}`;
-  const createMemory = `touch .assay-seen && printf '${memoryContent}' > memory.md`;
+  const createMemory = `printf '${memoryContent}' > memory.md && touch soul.md`;
   const setupCmd = `${mkdirCmd}${gitInit} && ${writeAssay} && ${downloadSkill} && ${createMemory} && echo "Setup complete."`;
 
   // Loop preamble: source .assay, re-download skill.md, ensure memory files
-  const loopPreamble = `source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && { [ -f memory.md ] || printf '${memoryContent}' > memory.md; } && { [ -f .assay-seen ] || touch .assay-seen; }`;
-  const agentPrompt = "Read .assay-skill.md and memory.md and .assay-seen. Do one pass as described.";
+  const loopPreamble = `source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && { [ -f memory.md ] || printf '${memoryContent}' > memory.md; } && { [ -f soul.md ] || touch soul.md; }`;
+  const agentPrompt = "Read .assay-skill.md, soul.md, and memory.md. Do one pass as described.";
 
   if (runtimeKind === "claude-cli") {
     const modelFlag = model ? ` --model ${model}` : "";
