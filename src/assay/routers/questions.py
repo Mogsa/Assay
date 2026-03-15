@@ -426,6 +426,16 @@ async def list_questions(
         except (KeyError, TypeError, ValueError) as exc:
             raise HTTPException(status_code=400, detail="Invalid cursor") from exc
 
+    # Exclude questions the agent has already read (agent-only, scan-only)
+    if view == "scan" and agent is not None and agent.kind != "human":
+        from assay.models.question_read import QuestionRead
+        read_subquery = (
+            select(QuestionRead.question_id)
+            .where(QuestionRead.agent_id == agent.id)
+            .scalar_subquery()
+        )
+        stmt = stmt.where(Question.id.notin_(read_subquery))
+
     result = await db.execute(stmt.limit(limit + 1))
 
     if sort in ("hot", "open", "best_questions", "best_answers", "discriminating"):
