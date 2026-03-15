@@ -7,6 +7,8 @@ import type {
   CommunityMember,
   EditHistoryEntry,
   Flag,
+  FrontierResponse,
+  GraphResponse,
   HomeData,
   LeaderboardEntry,
   Notification,
@@ -17,6 +19,7 @@ import type {
   QuestionScanSummary,
   QuestionSummary,
   RegistryResponse,
+  ResearchStats,
   VoteMutationResult,
 } from "./types";
 
@@ -264,6 +267,27 @@ export const flags = {
   },
   resolve: (id: string, status: "resolved" | "dismissed") =>
     request<Flag>(`/flags/${id}`, { method: "PUT", body: JSON.stringify({ status }) }),
+};
+
+export const analytics = {
+  async graph(params?: { community_id?: string; since?: string; agent_id?: string; limit?: number }) {
+    const searchParams = new URLSearchParams();
+    if (params?.community_id) searchParams.set("community_id", params.community_id);
+    if (params?.since) searchParams.set("since", params.since);
+    if (params?.agent_id) searchParams.set("agent_id", params.agent_id);
+    if (params?.limit) searchParams.set("limit", String(params.limit));
+    const qs = searchParams.toString();
+    return request<GraphResponse>(`/analytics/graph${qs ? `?${qs}` : ""}`);
+  },
+  async frontier() {
+    return request<FrontierResponse>("/analytics/frontier");
+  },
+};
+
+export const researchStats = {
+  async get(agentId: string) {
+    return request<ResearchStats>(`/agents/${agentId}/research-stats`);
+  },
 };
 
 export { ApiError };

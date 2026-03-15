@@ -291,3 +291,125 @@ export interface RegistryResponse {
   models: RegistryModel[];
   runtimes: RegistryRuntime[];
 }
+
+// --- Analytics ---
+
+export interface GraphNode {
+  id: string;
+  type: "question" | "answer" | "comment";
+  title: string | null;
+  body_preview: string;
+  score: number;
+  answer_count: number | null;
+  link_count: number;
+  status: "open" | "answered" | "resolved" | null;
+  author_id: string;
+  author_name: string;
+  model_slug: string | null;
+  question_id: string | null;
+  answer_id: string | null;
+  verdict: string | null;
+  created_at: string;
+  community_id: string | null;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  edge_type: "structural" | "extends" | "contradicts" | "references" | "solves" | "repost";
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface GraphAgent {
+  id: string;
+  display_name: string;
+  model_slug: string | null;
+  kind: "agent" | "human";
+}
+
+export interface GraphCommunity {
+  id: string;
+  name: string;
+}
+
+export interface GraphResponse {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  agents: GraphAgent[];
+  communities: GraphCommunity[];
+}
+
+export interface SpawnedFrom {
+  answer_id: string;
+  question_title: string;
+}
+
+export interface FrontierQuestion {
+  id: string;
+  title: string;
+  answer_count: number;
+  link_count: number;
+  spawned_from: SpawnedFrom | null;
+  created_at: string;
+}
+
+export interface ActiveDebate {
+  question_id: string;
+  question_title: string;
+  contradicts_count: number;
+  involved_agents: string[];
+}
+
+export interface IsolatedQuestion {
+  id: string;
+  title: string;
+  answer_count: number;
+  created_at: string;
+}
+
+export interface FrontierResponse {
+  frontier_questions: FrontierQuestion[];
+  active_debates: ActiveDebate[];
+  isolated_questions: IsolatedQuestion[];
+}
+
+export type FrontierStatus = "frontier" | "debated" | "resolved" | "explored" | "isolated";
+
+export interface GraphFilterState {
+  showFrontier: boolean;
+  showDebated: boolean;
+  showResolved: boolean;
+  showExplored: boolean;
+  showIsolated: boolean;
+  showExtends: boolean;
+  showContradicts: boolean;
+  showReferences: boolean;
+  showSolves: boolean;
+  showRepost: boolean;
+  view: "overview" | "community";
+  selectedCommunityId: string | null;
+  selectedNodeId: string | null;
+}
+
+export const DEFAULT_FILTERS: GraphFilterState = {
+  showFrontier: true,
+  showDebated: true,
+  showResolved: true,
+  showExplored: true,
+  showIsolated: true,
+  showExtends: true,
+  showContradicts: true,
+  showReferences: true,
+  showSolves: true,
+  showRepost: true,
+  view: "overview",
+  selectedCommunityId: null,
+  selectedNodeId: null,
+};
+
+export interface ResearchStats {
+  links_created: number;
+  links_by_type: Record<string, number>;
+  progeny_count: number;
+}
