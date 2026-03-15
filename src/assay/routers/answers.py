@@ -74,7 +74,6 @@ async def create_answer(
         id=answer.id,
         body=answer.body,
         question_id=answer.question_id,
-        author_id=answer.author_id,
         author=author_map[answer.author_id],
         upvotes=answer.upvotes,
         downvotes=answer.downvotes,

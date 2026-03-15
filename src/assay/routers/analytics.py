@@ -14,6 +14,7 @@ from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.comment import Comment
+from assay.models.community import Community as CommunityModel
 from assay.models.link import Link
 from assay.models.question import Question
 from assay.schemas.analytics import (
@@ -179,7 +180,6 @@ async def get_graph(
     ]
 
     # 9. Build communities list
-    from assay.models.community import Community as CommunityModel
     community_ids = {q.community_id for q in questions if q.community_id}
     graph_communities: list[GraphCommunity] = []
     if community_ids:
@@ -210,9 +210,31 @@ async def get_frontier(
         .group_by(Question.id)
     )
     rows = (await db.execute(q_stmt)).all()
+    q_ids = [q.id for q, _ in rows]
 
-    # Fetch all cross-links
-    all_links = (await db.execute(select(Link))).scalars().all()
+    # Fetch answers for open questions only
+    open_answers: list[Answer] = []
+    if q_ids:
+        open_answers = (await db.execute(
+            select(Answer).where(Answer.question_id.in_(q_ids))
+        )).scalars().all()
+    answer_map = {a.id: a for a in open_answers}
+    open_answer_ids = [a.id for a in open_answers]
+
+    # Build answer IDs grouped by question for O(1) lookup (Fix 5)
+    answers_by_question: dict[uuid.UUID, list[uuid.UUID]] = {}
+    for a in open_answers:
+        answers_by_question.setdefault(a.question_id, []).append(a.id)
+
+    # Fetch cross-links touching open questions or their answers
+    all_entity_ids = q_ids + open_answer_ids
+    all_links: list[Link] = []
+    if all_entity_ids:
+        all_links = (await db.execute(
+            select(Link).where(
+                or_(Link.source_id.in_(all_entity_ids), Link.target_id.in_(all_entity_ids))
+            )
+        )).scalars().all()
 
     # Build lookup sets
     inbound_extends: dict[uuid.UUID, list[Link]] = {}  # target_id -> links
@@ -230,10 +252,8 @@ async def get_frontier(
             contradicts_links.append(lnk)
 
     # Check which questions have outbound extends (via their answers)
-    all_answers = (await db.execute(select(Answer))).scalars().all()
-    answer_map = {a.id: a for a in all_answers}
     questions_with_progeny: set[uuid.UUID] = set()
-    for a in all_answers:
+    for a in open_answers:
         if a.id in outbound_extends:
             questions_with_progeny.add(a.question_id)
 
@@ -246,8 +266,8 @@ async def get_frontier(
         has_progeny = question.id in questions_with_progeny
         is_linked = question.id in linked_ids
 
-        # Count cross-links touching this question or its answers
-        q_answer_ids = [a.id for a in all_answers if a.question_id == question.id]
+        # Check if this question or any of its answers are linked
+        q_answer_ids = answers_by_question.get(question.id, [])
         q_linked = is_linked or any(aid in linked_ids for aid in q_answer_ids)
 
         if has_inbound_extends and answer_count <= 3 and not has_progeny:

@@ -4,7 +4,7 @@ from datetime import datetime
 
 import sqlalchemy.exc
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from sqlalchemy import case, func, select, tuple_
+from sqlalchemy import case, exists, func, select, tuple_
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -434,12 +434,13 @@ async def list_questions(
 
     # Exclude questions the agent has already read (agent-only, scan-only)
     if view == "scan" and agent is not None and agent.kind != "human":
-        read_subquery = (
-            select(QuestionRead.question_id)
-            .where(QuestionRead.agent_id == agent.id)
-            .scalar_subquery()
+        stmt = stmt.where(
+            ~exists(
+                select(QuestionRead.id)
+                .where(QuestionRead.agent_id == agent.id)
+                .where(QuestionRead.question_id == Question.id)
+            )
         )
-        stmt = stmt.where(Question.id.notin_(read_subquery))
 
     result = await db.execute(stmt.limit(limit + 1))
 
