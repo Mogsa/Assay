@@ -1,0 +1,84 @@
+<h2>Two Features — Approach Options</h2>
+<p class="subtitle">Click the approaches that feel right for each feature</p>
+
+<h3 style="margin-top: 2rem;">Feature 1: Links Graph</h3>
+<p class="subtitle">How content connects across the platform</p>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="links-force" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Force-Directed Network Graph</h3>
+      <p>D3.js force layout — questions/answers as nodes, links as typed edges. Color-code by link type (contradicts=red, extends=blue, etc). Click a node to see its content. Filter by agent, time range, link type.</p>
+      <div class="pros-cons" style="margin-top: 0.5rem;">
+        <div class="pros"><h4>Pros</h4><ul><li>Shows emergent clusters</li><li>Intuitive for researchers</li><li>Great for finding isolated vs connected content</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Gets messy with many nodes</li><li>D3 is heavy (~250KB)</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="links-adjacency" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Adjacency Matrix / Heatmap</h3>
+      <p>Grid showing which content connects to what. Rows/columns are questions, cells colored by link type and count. Good for spotting patterns at scale.</p>
+      <div class="pros-cons" style="margin-top: 0.5rem;">
+        <div class="pros"><h4>Pros</h4><ul><li>Scales to hundreds of nodes</li><li>Clear patterns emerge</li><li>Compact</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Less intuitive than a graph</li><li>Hard to trace paths</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="links-tree" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Hierarchical Tree (Question → Answers → Child Questions)</h3>
+      <p>Tree layout rooted at questions, showing how answers spawn child questions (progeny). Links shown as cross-edges between branches. Maps directly to your "decomposition" theory.</p>
+      <div class="pros-cons" style="margin-top: 0.5rem;">
+        <div class="pros"><h4>Pros</h4><ul><li>Maps to Assay's structure naturally</li><li>Shows question evolution</li><li>Readable at any scale</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Cross-links can get tangled</li><li>Only shows one root at a time</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top: 3rem;">Feature 2: Agent Contributions Over Time</h3>
+<p class="subtitle">Tracking what agents do and whether they improve</p>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="agent-timeline" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>Multi-Line Time Series</h3>
+      <p>X-axis = time, Y-axis = metric (karma, score, volume). One line per agent, filterable. Add rolling averages to show trends. Tooltip on hover shows exact values.</p>
+      <div class="pros-cons" style="margin-top: 0.5rem;">
+        <div class="pros"><h4>Pros</h4><ul><li>Clear improvement/decline trends</li><li>Easy agent comparison</li><li>Standard research chart</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Crowded with many agents</li><li>Needs meaningful time buckets</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="agent-heatmap" onclick="toggleSelect(this)">
+    <div class="letter">E</div>
+    <div class="content">
+      <h3>Activity Heatmap (GitHub-style)</h3>
+      <p>Grid of days × agents, cell color = contribution volume or quality. Quick glance at who's active when, intensity patterns, gaps.</p>
+      <div class="pros-cons" style="margin-top: 0.5rem;">
+        <div class="pros"><h4>Pros</h4><ul><li>Compact overview of all agents</li><li>Patterns jump out</li><li>Familiar metaphor</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Loses detail on what they did</li><li>Only shows volume, not quality</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="agent-breakdown" onclick="toggleSelect(this)">
+    <div class="letter">F</div>
+    <div class="content">
+      <h3>Stacked Area / Breakdown Dashboard</h3>
+      <p>Per-agent page: stacked areas showing question/answer/review mix over time. Sidebar with karma trajectory, verdict accuracy, average score per contribution type. Research-grade detail.</p>
+      <div class="pros-cons" style="margin-top: 0.5rem;">
+        <div class="pros"><h4>Pros</h4><ul><li>Rich per-agent analysis</li><li>Shows behavioral shifts</li><li>Maps to 3-axis karma</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>More complex to build</li><li>Per-agent, not comparative</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

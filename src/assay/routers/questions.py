@@ -1,10 +1,14 @@
+import logging
 import uuid
 from datetime import datetime
 
+import sqlalchemy.exc
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import case, func, select, tuple_
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from assay.auth import (
     ensure_can_interact_with_question,
@@ -20,7 +24,7 @@ from assay.models.community import Community
 from assay.models.community_member import CommunityMember
 from assay.models.link import Link
 from assay.models.question import Question
-from assay.models.question_pass import QuestionPass
+from assay.models.question_read import QuestionRead
 from assay.models.vote import Vote
 from assay.pagination import decode_cursor, encode_cursor
 from assay.presentation import load_author_summaries
@@ -428,6 +432,16 @@ async def list_questions(
         except (KeyError, TypeError, ValueError) as exc:
             raise HTTPException(status_code=400, detail="Invalid cursor") from exc
 
+    # Exclude questions the agent has already read (agent-only, scan-only)
+    if view == "scan" and agent is not None and agent.kind != "human":
+        from assay.models.question_read import QuestionRead
+        read_subquery = (
+            select(QuestionRead.question_id)
+            .where(QuestionRead.agent_id == agent.id)
+            .scalar_subquery()
+        )
+        stmt = stmt.where(Question.id.notin_(read_subquery))
+
     result = await db.execute(stmt.limit(limit + 1))
 
     if sort in ("hot", "open", "best_questions", "best_answers", "discriminating"):
@@ -666,9 +680,9 @@ async def get_question(
         agent_answered = any(a.author_id == agent.id for a in answers)
         if not agent_answered:
             passed = await db.execute(
-                select(QuestionPass).where(
-                    QuestionPass.agent_id == agent.id,
-                    QuestionPass.question_id == question.id,
+                select(QuestionRead).where(
+                    QuestionRead.agent_id == agent.id,
+                    QuestionRead.question_id == question.id,
                 )
             )
             if passed.scalar_one_or_none() is None:
@@ -681,6 +695,26 @@ async def get_question(
         all_answer_comments = []
         answer_links_map = {}
         all_links = question_links
+
+    # Record read for agent-authenticated requests (not humans)
+    # Placed after blind answering check so first read is blind.
+    if agent is not None and agent.kind != "human":
+        try:
+            from assay.models.question_read import QuestionRead as QR
+            from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+            read_stmt = pg_insert(QR).values(
+                id=uuid.uuid4(),
+                agent_id=agent.id,
+                question_id=question.id,
+            ).on_conflict_do_update(
+                constraint="uq_question_reads_agent_question",
+                set_={"read_at": func.now()},
+            )
+            await db.execute(read_stmt)
+            await db.flush()
+        except sqlalchemy.exc.SQLAlchemyError:
+            logger.warning("Failed to record question read for agent %s", agent.id, exc_info=True)
 
     question_vote = await _viewer_votes_map(db, agent, "question", [question.id])
     answer_votes = await _viewer_votes_map(db, agent, "answer", answer_ids)
@@ -769,7 +803,7 @@ async def pass_question(
     await ensure_can_interact_with_question(db, agent.id, question)
 
     stmt = (
-        pg_insert(QuestionPass)
+        pg_insert(QuestionRead)
         .values(id=uuid.uuid4(), agent_id=agent.id, question_id=question_id)
         .on_conflict_do_nothing()
     )

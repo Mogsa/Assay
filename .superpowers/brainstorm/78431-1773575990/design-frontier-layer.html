@@ -1,0 +1,122 @@
+<h2>Design: Frontier as a Layer, Not a Separate View</h2>
+<p class="subtitle">Instead of a separate "Frontier Map" tab, frontier status is built into the main graph</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Current: Two separate tabs</div>
+    <div class="mockup-body" style="background: #0a0a12; padding: 1.5rem; min-height: 200px;">
+      <div style="display: flex; gap: 6px; margin-bottom: 16px;">
+        <div style="background: #222; color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 11px;">Connections</div>
+        <div style="color: #666; padding: 4px 12px; font-size: 11px;">Frontier Map</div>
+      </div>
+      <ul style="color: #888; font-size: 12px; line-height: 1.8; list-style: none; padding: 0;">
+        <li style="color: #d06f6f;">✗ Two views with different layouts</li>
+        <li style="color: #d06f6f;">✗ Frontier map is a blob — explored nodes pile up</li>
+        <li style="color: #d06f6f;">✗ Context switch to see frontier status</li>
+        <li style="color: #d06f6f;">✗ No click interaction on frontier map</li>
+      </ul>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">New: Status is the node color</div>
+    <div class="mockup-body" style="background: #0a0a12; padding: 1.5rem; min-height: 200px;">
+      <div style="display: flex; gap: 6px; margin-bottom: 16px;">
+        <div style="background: #222; color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 11px;">Knowledge Graph</div>
+        <div style="color: #666; padding: 4px 12px; font-size: 11px; text-decoration: line-through;">Frontier Map</div>
+      </div>
+      <ul style="color: #aaa; font-size: 12px; line-height: 1.8; list-style: none; padding: 0;">
+        <li style="color: #4aad4a;">✓ One view — status IS the color</li>
+        <li style="color: #4aad4a;">✓ Frontier questions pulse blue — instant visibility</li>
+        <li style="color: #4aad4a;">✓ Debated questions glow red — see conflict at a glance</li>
+        <li style="color: #4aad4a;">✓ All interactions work (click, hover, zoom)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 2rem;">
+  <h3>Sidebar filters replace the Frontier Map</h3>
+  <div class="mockup">
+    <div class="mockup-header">Sidebar — Status Filters</div>
+    <div class="mockup-body" style="background: #0a0a12; padding: 1rem; max-width: 280px;">
+      <div style="margin-bottom: 16px;">
+        <div style="color: #666; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Status Filter</div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; cursor: pointer;">
+            <input type="checkbox" checked style="accent-color: #6f6fd0;"/>
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #6f6fd0; display: inline-block;"></span>
+            Frontier (12)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; cursor: pointer;">
+            <input type="checkbox" checked style="accent-color: #d06f6f;"/>
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #d06f6f; display: inline-block;"></span>
+            Debated (8)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; cursor: pointer;">
+            <input type="checkbox" checked style="accent-color: #4aad4a;"/>
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #4aad4a; display: inline-block;"></span>
+            Resolved (31)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; cursor: pointer;">
+            <input type="checkbox" checked style="accent-color: #555;"/>
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #555; display: inline-block;"></span>
+            Explored (65)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; cursor: pointer;">
+            <input type="checkbox" checked style="accent-color: #333;"/>
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #333; display: inline-block;"></span>
+            Isolated (8)
+          </label>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <div style="color: #666; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Quick Views</div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <button style="background: #1a1a2a; border: 1px solid #6f6fd033; color: #6f6fd0; padding: 5px 10px; border-radius: 6px; font-size: 11px; text-align: left; cursor: pointer;">
+            🔍 Show only frontier + debated
+          </button>
+          <button style="background: #1a1a1a; border: 1px solid #33333366; color: #888; padding: 5px 10px; border-radius: 6px; font-size: 11px; text-align: left; cursor: pointer;">
+            🔗 Show only cross-community links
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div style="color: #666; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Link Types</div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; cursor: pointer;">
+            <input type="checkbox" checked style="accent-color: #6f6fd0;"/>
+            <span style="width: 12px; height: 2px; background: #6f6fd0; display: inline-block; border-radius: 1px;"></span>
+            extends (53)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; cursor: pointer;">
+            <input type="checkbox" checked style="accent-color: #d06f6f;"/>
+            <span style="width: 12px; height: 2px; background: #d06f6f; display: inline-block; border-radius: 1px;"></span>
+            contradicts (0)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; cursor: pointer;">
+            <input type="checkbox" checked style="accent-color: #6fd06f;"/>
+            <span style="width: 12px; height: 2px; background: #6fd06f; display: inline-block; border-radius: 1px;"></span>
+            references (7)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #aaa; cursor: pointer;">
+            <input type="checkbox" checked style="accent-color: #d0ad6f;"/>
+            <span style="width: 12px; height: 2px; background: #d0ad6f; display: inline-block; border-radius: 1px;"></span>
+            solves (0)
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 1.5rem;">
+  <h3>Summary</h3>
+  <p style="color: #aaa; font-size: 14px; line-height: 1.7;">
+    The Frontier Map tab is <strong>deleted</strong>. Its job is done better by the node colors + sidebar filters.
+    The "Show only frontier + debated" quick view gives you exactly what the Frontier Map tried to do,
+    but inside the same interactive graph with all the connections visible.
+    The frontier API endpoint stays — agents still use it programmatically.
+  </p>
+</div>

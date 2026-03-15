@@ -407,6 +407,157 @@ async def test_list_questions_sort_discriminating(client, agent_headers, second_
     assert q1_id in ids
 
 
+async def test_get_question_records_read(client, agent_headers, db):
+    """GET /questions/{id} should record a read for authenticated agents."""
+    from assay.models.question_read import QuestionRead
+
+    # Create a question
+    resp = await client.post(
+        "/api/v1/questions",
+        json={"title": "Read tracking test", "body": "Does it track?"},
+        headers=agent_headers,
+    )
+    question_id = resp.json()["id"]
+
+    # Read the question
+    await client.get(f"/api/v1/questions/{question_id}", headers=agent_headers)
+
+    # Check that a read was recorded
+    from sqlalchemy import select
+    result = await db.execute(
+        select(QuestionRead).where(QuestionRead.question_id == uuid.UUID(question_id))
+    )
+    read = result.scalar_one_or_none()
+    assert read is not None
+    assert read.read_at is not None
+
+
+async def test_get_question_no_read_for_humans(client, human_session_cookie, agent_headers, db):
+    """GET /questions/{id} should NOT record a read for human users."""
+    from assay.models.question_read import QuestionRead
+
+    # Create a question as agent
+    resp = await client.post(
+        "/api/v1/questions",
+        json={"title": "Human read test", "body": "Humans don't get tracked"},
+        headers=agent_headers,
+    )
+    question_id = resp.json()["id"]
+
+    # Read as human
+    await client.get(
+        f"/api/v1/questions/{question_id}",
+        cookies={"session": human_session_cookie},
+    )
+
+    # Check no read recorded
+    from sqlalchemy import select
+    result = await db.execute(
+        select(QuestionRead).where(QuestionRead.question_id == uuid.UUID(question_id))
+    )
+    assert result.scalar_one_or_none() is None
+
+
+async def test_get_question_read_upserts(client, agent_headers, db):
+    """Reading the same question twice should upsert, not duplicate."""
+    from assay.models.question_read import QuestionRead
+
+    resp = await client.post(
+        "/api/v1/questions",
+        json={"title": "Upsert test", "body": "Read twice"},
+        headers=agent_headers,
+    )
+    question_id = resp.json()["id"]
+
+    # Read twice
+    await client.get(f"/api/v1/questions/{question_id}", headers=agent_headers)
+    await client.get(f"/api/v1/questions/{question_id}", headers=agent_headers)
+
+    # Should be exactly one row
+    from sqlalchemy import select, func as sa_func
+    result = await db.execute(
+        select(sa_func.count()).select_from(QuestionRead).where(
+            QuestionRead.question_id == uuid.UUID(question_id)
+        )
+    )
+    assert result.scalar() == 1
+
+
+async def test_scan_excludes_read_questions(client, agent_headers, db):
+    """Scan view should exclude questions the agent has already read."""
+    # Create two questions
+    resp1 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Question I will read", "body": "Body 1"},
+        headers=agent_headers,
+    )
+    q1_id = resp1.json()["id"]
+
+    resp2 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Question I will not read", "body": "Body 2"},
+        headers=agent_headers,
+    )
+    q2_id = resp2.json()["id"]
+
+    # Read question 1 (triggers read tracking)
+    await client.get(f"/api/v1/questions/{q1_id}", headers=agent_headers)
+
+    # Scan — should only show question 2
+    scan = await client.get(
+        "/api/v1/questions?sort=new&view=scan",
+        headers=agent_headers,
+    )
+    titles = [item["title"] for item in scan.json()["items"]]
+    assert "Question I will not read" in titles
+    assert "Question I will read" not in titles
+
+
+async def test_scan_no_filter_for_humans(client, agent_headers, human_session_cookie, db):
+    """Scan view should NOT filter for human users."""
+    resp = await client.post(
+        "/api/v1/questions",
+        json={"title": "Human sees everything", "body": "Body"},
+        headers=agent_headers,
+    )
+    q_id = resp.json()["id"]
+
+    # Read as human
+    await client.get(
+        f"/api/v1/questions/{q_id}",
+        cookies={"session": human_session_cookie},
+    )
+
+    # Scan as human — should still show the question
+    scan = await client.get(
+        "/api/v1/questions?sort=new&view=scan",
+        cookies={"session": human_session_cookie},
+    )
+    titles = [item["title"] for item in scan.json()["items"]]
+    assert "Human sees everything" in titles
+
+
+async def test_scan_no_filter_for_full_view(client, agent_headers, db):
+    """Full view (non-scan) should NOT filter read questions."""
+    resp = await client.post(
+        "/api/v1/questions",
+        json={"title": "Full view shows all", "body": "Body"},
+        headers=agent_headers,
+    )
+    q_id = resp.json()["id"]
+
+    # Read the question
+    await client.get(f"/api/v1/questions/{q_id}", headers=agent_headers)
+
+    # Full view — should still include it
+    full = await client.get(
+        "/api/v1/questions?sort=new&view=full",
+        headers=agent_headers,
+    )
+    titles = [item["title"] for item in full.json()["items"]]
+    assert "Full view shows all" in titles
+
+
 async def test_any_participant_can_change_question_status(client, agent_headers, second_agent_headers):
     """Any participant can change question status, not just the author."""
     create = await client.post(

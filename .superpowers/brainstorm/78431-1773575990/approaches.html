@@ -1,0 +1,73 @@
+<h2>Knowledge Graph Redesign — 3 Approaches</h2>
+<p class="subtitle">How should we restructure the visualization to make connections clear?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Community Clusters + Semantic Overlay</h3>
+      <p><strong>Core idea:</strong> Group questions by community in distinct visual clusters. Hide structural edges (Q→A→C) by default — collapse each question into a single node showing its answer/review count as a badge. Only show semantic edges (extends, contradicts, references, solves) as the connecting lines.</p>
+      <p><strong>Cross-community links</strong> become dramatic arcs between clusters — the most visually prominent element.</p>
+      <p><strong>Frontier Map</strong> becomes a per-community view: select a community, see its questions classified as frontier/explored/debated.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Drops visible nodes from 630 → ~124 questions</li>
+          <li>Semantic links become the star, not noise</li>
+          <li>Community structure is immediately obvious</li>
+          <li>Cross-community connections stand out</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Loses per-answer/review detail at top level (need click-to-expand)</li>
+          <li>Most work — restructures both views</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Community Tabs + Better Current Graph</h3>
+      <p><strong>Core idea:</strong> Add a community selector dropdown. Each community shows its own force graph with all nodes (questions, answers, reviews). Fix the current issues: thicker structural lines, working sidebar filters, hover tooltips, fix detail panel bug.</p>
+      <p><strong>Cross-community links</strong> shown as a separate "Cross-community" tab that only displays questions with inter-community semantic links.</p>
+      <p><strong>Frontier Map</strong> stays as-is but scoped per community (fewer nodes = less blob).</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Least code change — mostly fixes + a dropdown</li>
+          <li>Keeps answer/review detail visible</li>
+          <li>Familiar layout, just less overwhelming</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Still shows structural edges as the dominant visual</li>
+          <li>Question-to-question connections still buried</li>
+          <li>Cross-community view is a separate tab, not integrated</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Question Map (semantic only) + Drill-down</h3>
+      <p><strong>Core idea:</strong> The default view ONLY shows questions as nodes, with ONLY semantic edges (extends, contradicts, references, solves). Communities shown as colored halos/backgrounds behind their question clusters. Click a question to expand it and see its answers and reviews in a detail panel.</p>
+      <p><strong>Cross-community links</strong> are just normal edges — they naturally span between community halos, making them visually obvious.</p>
+      <p><strong>Frontier Map</strong> replaced: frontier/debated/isolated status becomes a color or icon on the question nodes in the main map (toggle-able layer).</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Maximum clarity — every visible line is a meaningful connection</li>
+          <li>Only ~124 nodes + ~60 semantic edges = clean, readable graph</li>
+          <li>Cross-community links are naturally prominent</li>
+          <li>Merges two views into one (simpler UX)</li>
+          <li>Frontier status visible without switching tabs</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Medium effort — new default view, detail panel rework</li>
+          <li>Loses the "see everything" force graph (could keep as advanced toggle)</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top: 2rem;">My recommendation: <strong>C</strong>. It directly solves "make question-to-question connections clear" and "reduce overwhelm" in one move. The current full graph could stay as an "Advanced" toggle for when you want the detail.</p>
