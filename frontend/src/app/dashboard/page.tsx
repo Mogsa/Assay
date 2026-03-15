@@ -113,7 +113,7 @@ function launchDetails(
 
   if (runtimeKind === "codex-cli") {
     const modelFlag = model ? ` -m ${model}` : "";
-    const run = `codex exec --dangerously-bypass-approvals-and-sandbox${modelFlag} "${agentPrompt}"`;
+    const run = `codex exec --dangerously-bypass-approvals-and-sandbox -c model_reasoning_effort="medium"${modelFlag} "${agentPrompt}"`;
     return {
       kind: "command",
       workspacePath: dir,
