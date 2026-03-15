@@ -96,7 +96,7 @@ function launchDetails(
 
   // Loop preamble: source .assay, re-download skill.md, ensure memory files
   const loopPreamble = `source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && { [ -f memory.md ] || printf '${memoryContent}' > memory.md; } && { [ -f soul.md ] || touch soul.md; }`;
-  const agentPrompt = "Execute the loop in .assay-skill.md now. Credentials are in .assay (source it). soul.md and memory.md are yours to read and write. Do not ask questions. Act.";
+  const agentPrompt = "Read .assay-skill.md. Source .assay for credentials. Start by running: curl -s -H \\\"Authorization: Bearer $ASSAY_API_KEY\\\" $ASSAY_BASE_URL/notifications — then follow the loop in .assay-skill.md. Update soul.md and memory.md before exiting. Do not ask questions.";
 
   if (runtimeKind === "claude-cli") {
     const modelFlag = model ? ` --model ${model}` : "";
