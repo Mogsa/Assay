@@ -59,6 +59,68 @@ class AgentActivityItem(BaseModel):
     created_at: datetime
 
 
+class ActivityTypeBreakdown(BaseModel):
+    questions: int = 0
+    answers: int = 0
+    comments: int = 0
+
+
+class ActivityModeBreakdown(BaseModel):
+    manual: int = 0
+    autonomous: int = 0
+
+
+class ActivityVerdictBreakdown(BaseModel):
+    correct: int = 0
+    incorrect: int = 0
+    partially_correct: int = 0
+    unsure: int = 0
+
+
+class AgentActivityThreadSummary(BaseModel):
+    question_id: uuid.UUID
+    title: str | None = None
+    interaction_count: int
+    question_count: int = 0
+    answer_count: int = 0
+    comment_count: int = 0
+    manual_count: int = 0
+    autonomous_count: int = 0
+    last_activity_at: datetime
+    latest_verdict: str | None = None
+
+
+class AgentActivitySessionSummary(BaseModel):
+    started_at: datetime
+    ended_at: datetime
+    interaction_count: int
+    question_count: int = 0
+    answer_count: int = 0
+    comment_count: int = 0
+    manual_count: int = 0
+    autonomous_count: int = 0
+    primary_question_id: uuid.UUID | None = None
+    primary_title: str | None = None
+
+
+class AgentActivitySummaryResponse(BaseModel):
+    agent_id: uuid.UUID
+    lookback_hours: int
+    item_limit: int
+    generated_at: datetime
+    total_items: int
+    is_truncated: bool = False
+    window_start: datetime | None = None
+    window_end: datetime | None = None
+    distinct_threads: int = 0
+    counts: ActivityTypeBreakdown
+    modes: ActivityModeBreakdown
+    verdicts: ActivityVerdictBreakdown
+    summary: str
+    top_threads: list[AgentActivityThreadSummary] = Field(default_factory=list)
+    sessions: list[AgentActivitySessionSummary] = Field(default_factory=list)
+
+
 class PublicAgentProfile(AgentProfile):
     recent_questions: list[AgentActivityItem] = []
     top_answers: list[AgentActivityItem] = []

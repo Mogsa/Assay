@@ -1,6 +1,7 @@
+from collections import Counter
 import secrets
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import String, Uuid, literal, select, tuple_, union_all
@@ -24,10 +25,16 @@ from assay.presentation import build_agent_profile, is_public_profile
 from assay.rate_limit import limiter
 from assay.schemas.agent import (
     AgentActivityItem,
+    AgentActivitySessionSummary,
+    AgentActivitySummaryResponse,
+    AgentActivityThreadSummary,
     AgentApiKeyResponse,
     AgentCreateRequest,
     AgentMineResponse,
     AgentProfile,
+    ActivityModeBreakdown,
+    ActivityTypeBreakdown,
+    ActivityVerdictBreakdown,
     PublicAgentProfile,
 )
 
@@ -179,6 +186,226 @@ async def _list_agent_activity(
         next_cursor = encode_cursor({"created_at": last["created_at"], "id": str(last["id"])})
 
     return ([_activity_item_from_row(row) for row in items_raw], has_more, next_cursor)
+
+
+async def _recent_agent_activity_window(
+    db: AsyncSession,
+    agent_id: uuid.UUID,
+    *,
+    since: datetime,
+    limit: int,
+    created_via: str | None = None,
+) -> tuple[list[AgentActivityItem], bool]:
+    activity = _activity_union(agent_id)
+    stmt = (
+        select(activity)
+        .where(activity.c.created_at >= since)
+        .order_by(activity.c.created_at.desc(), activity.c.id.desc())
+    )
+    if created_via is not None:
+        stmt = stmt.where(activity.c.created_via == created_via)
+
+    result = await db.execute(stmt.limit(limit + 1))
+    rows = result.mappings().all()
+    has_more = len(rows) > limit
+    return ([_activity_item_from_row(row) for row in rows[:limit]], has_more)
+
+
+def _empty_type_breakdown() -> ActivityTypeBreakdown:
+    return ActivityTypeBreakdown()
+
+
+def _empty_mode_breakdown() -> ActivityModeBreakdown:
+    return ActivityModeBreakdown()
+
+
+def _empty_verdict_breakdown() -> ActivityVerdictBreakdown:
+    return ActivityVerdictBreakdown()
+
+
+def _increment_breakdowns(
+    item: AgentActivityItem,
+    *,
+    counts: ActivityTypeBreakdown,
+    modes: ActivityModeBreakdown,
+    verdicts: ActivityVerdictBreakdown,
+) -> None:
+    if item.item_type == "question":
+        counts.questions += 1
+    elif item.item_type == "answer":
+        counts.answers += 1
+    else:
+        counts.comments += 1
+
+    if item.created_via == "autonomous":
+        modes.autonomous += 1
+    else:
+        modes.manual += 1
+
+    if item.verdict == "correct":
+        verdicts.correct += 1
+    elif item.verdict == "incorrect":
+        verdicts.incorrect += 1
+    elif item.verdict == "partially_correct":
+        verdicts.partially_correct += 1
+    elif item.verdict == "unsure":
+        verdicts.unsure += 1
+
+
+def _build_thread_summaries(
+    items: list[AgentActivityItem],
+) -> tuple[list[AgentActivityThreadSummary], int]:
+    grouped: dict[uuid.UUID, dict] = {}
+
+    for item in items:
+        thread = grouped.setdefault(
+            item.question_id,
+            {
+                "question_id": item.question_id,
+                "title": item.title,
+                "interaction_count": 0,
+                "question_count": 0,
+                "answer_count": 0,
+                "comment_count": 0,
+                "manual_count": 0,
+                "autonomous_count": 0,
+                "last_activity_at": item.created_at,
+                "latest_verdict": None,
+            },
+        )
+        thread["interaction_count"] += 1
+        if item.item_type == "question":
+            thread["question_count"] += 1
+        elif item.item_type == "answer":
+            thread["answer_count"] += 1
+        else:
+            thread["comment_count"] += 1
+
+        if item.created_via == "autonomous":
+            thread["autonomous_count"] += 1
+        else:
+            thread["manual_count"] += 1
+
+        if item.created_at > thread["last_activity_at"]:
+            thread["last_activity_at"] = item.created_at
+        if item.verdict is not None and (
+            thread["latest_verdict"] is None or item.created_at >= thread["last_activity_at"]
+        ):
+            thread["latest_verdict"] = item.verdict
+
+    threads = [AgentActivityThreadSummary(**thread) for thread in grouped.values()]
+    threads.sort(
+        key=lambda thread: (thread.interaction_count, thread.last_activity_at),
+        reverse=True,
+    )
+    return threads[:5], len(grouped)
+
+
+def _session_primary_thread(
+    thread_counts: Counter[uuid.UUID],
+    titles: dict[uuid.UUID, str | None],
+) -> tuple[uuid.UUID | None, str | None]:
+    if not thread_counts:
+        return None, None
+    question_id, _count = max(
+        thread_counts.items(),
+        key=lambda item: (item[1], str(item[0])),
+    )
+    return question_id, titles.get(question_id)
+
+
+def _build_session_summaries(
+    items: list[AgentActivityItem],
+    *,
+    gap_minutes: int,
+) -> list[AgentActivitySessionSummary]:
+    if not items:
+        return []
+
+    sessions: list[AgentActivitySessionSummary] = []
+    ordered = sorted(items, key=lambda item: (item.created_at, item.id))
+    current_items: list[AgentActivityItem] = [ordered[0]]
+
+    def flush_session(batch: list[AgentActivityItem]) -> None:
+        counts = _empty_type_breakdown()
+        modes = _empty_mode_breakdown()
+        thread_counts: Counter[uuid.UUID] = Counter()
+        titles: dict[uuid.UUID, str | None] = {}
+
+        for session_item in batch:
+            if session_item.item_type == "question":
+                counts.questions += 1
+            elif session_item.item_type == "answer":
+                counts.answers += 1
+            else:
+                counts.comments += 1
+
+            if session_item.created_via == "autonomous":
+                modes.autonomous += 1
+            else:
+                modes.manual += 1
+
+            thread_counts[session_item.question_id] += 1
+            titles.setdefault(session_item.question_id, session_item.title)
+
+        primary_question_id, primary_title = _session_primary_thread(thread_counts, titles)
+        sessions.append(
+            AgentActivitySessionSummary(
+                started_at=batch[0].created_at,
+                ended_at=batch[-1].created_at,
+                interaction_count=len(batch),
+                question_count=counts.questions,
+                answer_count=counts.answers,
+                comment_count=counts.comments,
+                manual_count=modes.manual,
+                autonomous_count=modes.autonomous,
+                primary_question_id=primary_question_id,
+                primary_title=primary_title,
+            )
+        )
+
+    max_gap = timedelta(minutes=gap_minutes)
+    for item in ordered[1:]:
+        if item.created_at - current_items[-1].created_at > max_gap:
+            flush_session(current_items)
+            current_items = [item]
+        else:
+            current_items.append(item)
+
+    flush_session(current_items)
+    sessions.sort(key=lambda session: session.started_at, reverse=True)
+    return sessions[:5]
+
+
+def _activity_summary_text(
+    *,
+    total_items: int,
+    distinct_threads: int,
+    counts: ActivityTypeBreakdown,
+    modes: ActivityModeBreakdown,
+    top_threads: list[AgentActivityThreadSummary],
+    lookback_hours: int,
+    is_truncated: bool,
+) -> str:
+    if total_items == 0:
+        return f"No activity in the last {lookback_hours} hours."
+
+    scope = "most recent " if is_truncated else ""
+    parts = [
+        f"Summarized the {scope}{total_items} interactions from the last {lookback_hours} hours",
+        f"{counts.questions} questions, {counts.answers} answers, {counts.comments} comments",
+        f"across {distinct_threads} threads",
+        f"{modes.autonomous} autonomous and {modes.manual} manual",
+    ]
+    if top_threads:
+        top = top_threads[0]
+        if top.title:
+            parts.append(
+                f'top thread: "{top.title}" ({top.interaction_count} interactions)'
+            )
+        else:
+            parts.append(f"top thread had {top.interaction_count} interactions")
+    return ". ".join(parts) + "."
 
 
 async def _get_owned_agent_or_404(
@@ -381,6 +608,65 @@ async def get_public_activity(
     await _get_public_agent_or_404(db, agent_id)
     items, has_more, next_cursor = await _list_agent_activity(db, agent_id, cursor=cursor, limit=limit)
     return {"items": items, "has_more": has_more, "next_cursor": next_cursor}
+
+
+@router.get("/{agent_id}/activity/summary", response_model=AgentActivitySummaryResponse)
+async def get_public_activity_summary(
+    agent_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    hours: int = Query(12, ge=1, le=168),
+    limit: int = Query(200, ge=1, le=500),
+    session_gap_minutes: int = Query(30, ge=5, le=240),
+    created_via: str | None = Query(None, pattern="^(manual|autonomous)$"),
+):
+    await _get_public_agent_or_404(db, agent_id)
+
+    now = datetime.now(timezone.utc)
+    since = now - timedelta(hours=hours)
+    items, has_more = await _recent_agent_activity_window(
+        db,
+        agent_id,
+        since=since,
+        limit=limit,
+        created_via=created_via,
+    )
+
+    counts = _empty_type_breakdown()
+    modes = _empty_mode_breakdown()
+    verdicts = _empty_verdict_breakdown()
+    for item in items:
+        _increment_breakdowns(item, counts=counts, modes=modes, verdicts=verdicts)
+
+    top_threads, distinct_threads = _build_thread_summaries(items)
+    sessions = _build_session_summaries(items, gap_minutes=session_gap_minutes)
+    newest = items[0].created_at if items else None
+    oldest = items[-1].created_at if items else None
+
+    return AgentActivitySummaryResponse(
+        agent_id=agent_id,
+        lookback_hours=hours,
+        item_limit=limit,
+        generated_at=now,
+        total_items=len(items),
+        is_truncated=has_more,
+        window_start=oldest,
+        window_end=newest,
+        distinct_threads=distinct_threads,
+        counts=counts,
+        modes=modes,
+        verdicts=verdicts,
+        summary=_activity_summary_text(
+            total_items=len(items),
+            distinct_threads=distinct_threads,
+            counts=counts,
+            modes=modes,
+            top_threads=top_threads,
+            lookback_hours=hours,
+            is_truncated=has_more,
+        ),
+        top_threads=top_threads,
+        sessions=sessions,
+    )
 
 
 @router.get("/{agent_id}", response_model=PublicAgentProfile)

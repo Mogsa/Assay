@@ -94,6 +94,102 @@ async def test_public_activity_lists_recent_contributions(client, agent_headers)
     assert activity.json()["items"][0]["item_type"] == "question"
 
 
+async def test_activity_summary_aggregates_recent_work(client, agent_headers, second_agent_headers):
+    me = await client.get("/api/v1/agents/me", headers=agent_headers)
+    agent_id = me.json()["id"]
+
+    own_question = await client.post(
+        "/api/v1/questions",
+        json={"title": "Own thread", "body": "Body"},
+        headers=agent_headers,
+    )
+    assert own_question.status_code == 201
+    own_question_id = own_question.json()["id"]
+
+    external_question = await client.post(
+        "/api/v1/questions",
+        json={"title": "External thread", "body": "Body"},
+        headers=second_agent_headers,
+    )
+    assert external_question.status_code == 201
+    external_question_id = external_question.json()["id"]
+
+    answer_on_own = await client.post(
+        f"/api/v1/questions/{own_question_id}/answers",
+        json={"body": "Counterpoint"},
+        headers=second_agent_headers,
+    )
+    assert answer_on_own.status_code == 201
+    answer_id = answer_on_own.json()["id"]
+
+    autonomous_headers = {
+        **agent_headers,
+        "X-Assay-Execution-Mode": "autonomous",
+    }
+
+    answer = await client.post(
+        f"/api/v1/questions/{external_question_id}/answers",
+        json={"body": "Autonomous answer"},
+        headers=autonomous_headers,
+    )
+    assert answer.status_code == 201
+
+    review = await client.post(
+        f"/api/v1/answers/{answer_id}/comments",
+        json={"body": "This misses the edge case.", "verdict": "incorrect"},
+        headers=autonomous_headers,
+    )
+    assert review.status_code == 201
+
+    summary = await client.get(
+        f"/api/v1/agents/{agent_id}/activity/summary",
+        params={"hours": 1, "limit": 10},
+    )
+    assert summary.status_code == 200
+    payload = summary.json()
+
+    assert payload["total_items"] == 3
+    assert payload["is_truncated"] is False
+    assert payload["counts"] == {"questions": 1, "answers": 1, "comments": 1}
+    assert payload["modes"] == {"manual": 1, "autonomous": 2}
+    assert payload["verdicts"]["incorrect"] == 1
+    assert payload["distinct_threads"] == 2
+    assert payload["top_threads"][0]["title"] == "Own thread"
+    assert payload["top_threads"][0]["interaction_count"] == 2
+    assert len(payload["sessions"]) >= 1
+    assert "3 interactions" in payload["summary"]
+
+
+async def test_activity_summary_marks_truncated_results(client, agent_headers):
+    me = await client.get("/api/v1/agents/me", headers=agent_headers)
+    agent_id = me.json()["id"]
+
+    first = await client.post(
+        "/api/v1/questions",
+        json={"title": "First", "body": "Body"},
+        headers=agent_headers,
+    )
+    assert first.status_code == 201
+
+    second = await client.post(
+        "/api/v1/questions",
+        json={"title": "Second", "body": "Body"},
+        headers=agent_headers,
+    )
+    assert second.status_code == 201
+
+    summary = await client.get(
+        f"/api/v1/agents/{agent_id}/activity/summary",
+        params={"hours": 1, "limit": 1},
+    )
+    assert summary.status_code == 200
+    payload = summary.json()
+
+    assert payload["total_items"] == 1
+    assert payload["is_truncated"] is True
+    assert payload["summary"].startswith("Summarized the most recent 1 interactions")
+
+
 async def test_owner_can_rotate_agent_api_key(client, human_session_cookie: str, db):
     created = await client.post(
         "/api/v1/agents",
