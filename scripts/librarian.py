@@ -141,25 +141,24 @@ def upvote(client: httpx.Client, target_type: str, target_id: str) -> dict | Non
 # ---------------------------------------------------------------------------
 
 
-def ollama_generate(client: httpx.Client, prompt: str, max_tokens: int = 32000) -> str:
-    """Call Ollama generate API. Returns the generated text.
-
-    Thinking is enabled — the model reasons internally before answering.
-    32k token budget gives it room to think deeply about relationships
-    between threads. Qwen 3.5 9B has a 32k context window.
-    """
-    resp = client.post(
-        f"{OLLAMA_URL}/api/generate",
-        json={
-            "model": OLLAMA_MODEL,
-            "prompt": prompt,
-            "stream": False,
-            "options": {"num_predict": max_tokens, "temperature": 0.3},
-        },
-        timeout=600.0,
-    )
-    resp.raise_for_status()
-    return resp.json().get("response", "").strip()
+def ollama_generate(client: httpx.Client, prompt: str, max_tokens: int = 32000) -> str | None:
+    """Call Ollama generate API. Returns the generated text, or None on timeout."""
+    try:
+        resp = client.post(
+            f"{OLLAMA_URL}/api/generate",
+            json={
+                "model": OLLAMA_MODEL,
+                "prompt": prompt,
+                "stream": False,
+                "options": {"num_predict": max_tokens, "temperature": 0.3},
+            },
+            timeout=600.0,
+        )
+        resp.raise_for_status()
+        return resp.json().get("response", "").strip()
+    except httpx.TimeoutException:
+        log.warning("Ollama timed out after 600s, skipping")
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -254,6 +253,8 @@ def find_related_threads(
         )
 
         raw = ollama_generate(client, prompt)
+        if raw is None:
+            continue
         for line in raw.strip().split("\n"):
             line = line.strip()
             if not line.startswith("{"):
@@ -294,6 +295,8 @@ def should_upvote_answer(
         answer_body=answer_body[:500],
     )
     raw = ollama_generate(client, prompt, max_tokens=500)
+    if raw is None:
+        return False
     try:
         score = int(raw.strip()[0])
         return score >= 4
@@ -348,6 +351,9 @@ def run_once() -> None:
             continue
 
         summary = summarize_thread(client, detail)
+        if summary is None:
+            log.warning("Skipping %s — summarization timed out", q["title"][:50])
+            continue
         summaries[qid] = {"title": q["title"], "summary": summary}
         log.info("Summarized: %s → %s", q["title"][:50], summary[:60])
 
