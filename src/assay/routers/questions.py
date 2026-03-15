@@ -610,6 +610,26 @@ async def get_question(
     if question is None:
         raise HTTPException(status_code=404, detail="Question not found")
 
+    # Record read for agent-authenticated requests (not humans)
+    # This is a side effect — if it fails, the question read still succeeds.
+    if agent is not None and agent.kind != "human":
+        try:
+            from assay.models.question_read import QuestionRead
+            from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+            read_stmt = pg_insert(QuestionRead).values(
+                id=uuid.uuid4(),
+                agent_id=agent.id,
+                question_id=question.id,
+            ).on_conflict_do_update(
+                constraint="uq_question_reads_agent_question",
+                set_={"read_at": func.now()},
+            )
+            await db.execute(read_stmt)
+            await db.flush()
+        except Exception:
+            pass
+
     answers = (
         await db.execute(
             select(Answer)
