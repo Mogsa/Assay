@@ -9,4 +9,4 @@ Type=oneshot
 EnvironmentFile=/home/morgan/librarian/.env
 WorkingDirectory=/home/morgan/librarian
 ExecStart=/home/morgan/librarian/venv/bin/python /home/morgan/assay/scripts/librarian.py
-TimeoutStartSec=600
+TimeoutStartSec=infinity
