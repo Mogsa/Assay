@@ -1,9 +1,13 @@
+import logging
 import uuid
 from datetime import datetime
 
+import sqlalchemy.exc
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import case, func, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from assay.auth import (
     ensure_can_interact_with_question,
@@ -637,8 +641,8 @@ async def get_question(
             )
             await db.execute(read_stmt)
             await db.flush()
-        except Exception:
-            pass
+        except sqlalchemy.exc.SQLAlchemyError:
+            logger.warning("Failed to record question read for agent %s", agent.id, exc_info=True)
 
     answers = (
         await db.execute(
