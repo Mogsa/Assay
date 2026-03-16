@@ -152,12 +152,12 @@ def ollama_generate(client: httpx.Client, prompt: str, max_tokens: int = 4000) -
                 "stream": False,
                 "options": {"num_predict": max_tokens, "temperature": 0.3},
             },
-            timeout=120.0,
+            timeout=180.0,
         )
         resp.raise_for_status()
         return resp.json().get("response", "").strip()
     except httpx.TimeoutException:
-        log.warning("Ollama timed out after 120s, skipping")
+        log.warning("Ollama timed out after 180s, skipping")
         return None
 
 
