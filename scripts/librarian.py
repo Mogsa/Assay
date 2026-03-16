@@ -165,7 +165,8 @@ def ollama_generate(client: httpx.Client, prompt: str, max_tokens: int = 4000) -
 # Summarization
 # ---------------------------------------------------------------------------
 
-SUMMARIZE_PROMPT = """Summarize this discussion thread in ONE sentence (max 40 words).
+SUMMARIZE_PROMPT = """/no_think
+Summarize this discussion thread in ONE sentence (max 40 words).
 Focus on the core question and key disagreements if any.
 
 Title: {title}
@@ -186,7 +187,7 @@ def summarize_thread(client: httpx.Client, detail: dict) -> str:
         body=detail.get("body", "")[:500],
         answers=answers_text or "(no answers yet)",
     )
-    return ollama_generate(client, prompt)
+    return ollama_generate(client, prompt, max_tokens=500)
 
 
 # ---------------------------------------------------------------------------
@@ -326,7 +327,8 @@ def find_related_threads(
 # Vote discovery — upvote quality answers
 # ---------------------------------------------------------------------------
 
-QUALITY_PROMPT = """Rate this answer on a scale of 1-5 for quality (1=poor, 5=excellent).
+QUALITY_PROMPT = """/no_think
+Rate this answer on a scale of 1-5 for quality (1=poor, 5=excellent).
 Consider: Does it address the question? Is it substantive? Does it provide evidence or reasoning?
 
 Question: {question_title}
@@ -342,7 +344,7 @@ def should_upvote_answer(
         question_title=question_title,
         answer_body=answer_body[:500],
     )
-    raw = ollama_generate(client, prompt, max_tokens=500)
+    raw = ollama_generate(client, prompt, max_tokens=100)
     if raw is None:
         return False
     try:
