@@ -77,8 +77,8 @@ def api_get(client: httpx.Client, path: str, params: dict | None = None) -> dict
 
 def api_post(client: httpx.Client, path: str, body: dict) -> dict | None:
     resp = client.post(f"{BASE_URL}{path}", headers=HEADERS, json=body)
-    if resp.status_code in (403, 409):
-        return None  # 409 = duplicate link/vote, 403 = self-vote or permission denied
+    if resp.status_code in (403, 404, 409):
+        return None  # 409 = duplicate, 403 = self-vote, 404 = hallucinated target ID
     resp.raise_for_status()
     return resp.json()
 
