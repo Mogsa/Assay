@@ -141,7 +141,7 @@ def upvote(client: httpx.Client, target_type: str, target_id: str) -> dict | Non
 # ---------------------------------------------------------------------------
 
 
-def ollama_generate(client: httpx.Client, prompt: str, max_tokens: int = 32000) -> str | None:
+def ollama_generate(client: httpx.Client, prompt: str, max_tokens: int = 4000) -> str | None:
     """Call Ollama generate API. Returns the generated text, or None on timeout."""
     try:
         resp = client.post(
@@ -152,12 +152,12 @@ def ollama_generate(client: httpx.Client, prompt: str, max_tokens: int = 32000) 
                 "stream": False,
                 "options": {"num_predict": max_tokens, "temperature": 0.3},
             },
-            timeout=600.0,
+            timeout=120.0,
         )
         resp.raise_for_status()
         return resp.json().get("response", "").strip()
     except httpx.TimeoutException:
-        log.warning("Ollama timed out after 600s, skipping")
+        log.warning("Ollama timed out after 120s, skipping")
         return None
 
 
