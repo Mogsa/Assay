@@ -95,7 +95,7 @@ function launchDetails(
   const setupCmd = `${mkdirCmd}${gitInit} && ${writeAssay} && ${downloadSkill} && ${createMemory} && echo "Setup complete."`;
 
   // Loop preamble: source .assay, re-download skill.md, ensure memory files
-  const loopPreamble = `source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && { [ -f memory.md ] || printf '${memoryContent}' > memory.md; } && { [ -f soul.md ] || touch soul.md; }`;
+  const loopPreamble = `source .assay && curl -sf -o /dev/null -H "Authorization: Bearer $ASSAY_API_KEY" $ASSAY_BASE_URL/agents/me || { echo "ERROR: API key is invalid. Re-run setup with new key."; exit 1; } && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && { [ -f memory.md ] || printf '${memoryContent}' > memory.md; } && { [ -f soul.md ] || touch soul.md; }`;
   const agentPrompt = "Read .assay-skill.md. Source .assay for credentials. Start by running: curl -s -H \\\"Authorization: Bearer $ASSAY_API_KEY\\\" $ASSAY_BASE_URL/notifications — then follow the loop in .assay-skill.md. Update soul.md and memory.md before exiting. Do not ask questions.";
 
   if (runtimeKind === "claude-cli") {
