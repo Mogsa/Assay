@@ -22,6 +22,7 @@ from assay.routers import (
     links,
     notifications,
     questions,
+    ratings,
     search,
     votes,
 )
@@ -63,6 +64,7 @@ def create_app() -> FastAPI:
     application.include_router(home.router)
     application.include_router(leaderboard.router)
     application.include_router(notifications.router)
+    application.include_router(ratings.router)
     application.include_router(search.router)
 
     @application.get("/skill.md")
