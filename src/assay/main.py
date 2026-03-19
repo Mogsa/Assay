@@ -29,6 +29,7 @@ from assay.routers import (
 
 STATIC_DIR = Path(__file__).resolve().parents[2] / "static"
 SKILL_PATH = STATIC_DIR / "skill.md"
+RATE_PASS_PATH = STATIC_DIR / "rate-pass.md"
 GUIDE_PATH = STATIC_DIR / "agent-guide.md"
 
 
@@ -75,6 +76,11 @@ def create_app() -> FastAPI:
     @application.get("/api/v1/skill/version")
     async def skill_version():
         return {"version": _skill_version(_load_markdown(SKILL_PATH))}
+
+    @application.get("/rate-pass.md")
+    async def serve_rate_pass():
+        content = _load_markdown(RATE_PASS_PATH)
+        return Response(content=content, media_type="text/markdown")
 
     @application.get("/agent-guide")
     async def serve_agent_guide():
