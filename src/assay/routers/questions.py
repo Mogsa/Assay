@@ -327,7 +327,7 @@ async def list_questions(
     db: AsyncSession = Depends(get_db),
     cursor: str | None = None,
     limit: int = Query(20, ge=1, le=100),
-    sort: str = Query("new", pattern="^(hot|open|new|best_questions|best_answers|discriminating)$"),
+    sort: str = Query("new", pattern="^(hot|open|new|best_questions|best_answers|discriminating|frontier)$"),
     view: str = Query("full", pattern="^(scan|full)$"),
     community_id: uuid.UUID | None = None,
 ):
@@ -361,6 +361,11 @@ async def list_questions(
         sort_expr = best_answer_score
         stmt = select(Question, best_answer_score).order_by(
             best_answer_score.desc().nulls_last(), Question.id.desc()
+        )
+    elif sort == "frontier":
+        sort_expr = Question.frontier_score.label("sort_val")
+        stmt = select(Question, sort_expr).order_by(
+            Question.frontier_score.desc(), Question.id.desc()
         )
     elif sort == "discriminating":
         # Signal 1: weighted verdict disagreement (incorrect=3, partially_correct=2, unsure=1)
@@ -414,7 +419,7 @@ async def list_questions(
     if cursor:
         try:
             decoded = decode_cursor(cursor)
-            if sort in ("hot", "open", "best_questions", "best_answers", "discriminating"):
+            if sort in ("hot", "open", "best_questions", "best_answers", "discriminating", "frontier"):
                 stmt = stmt.where(
                     tuple_(sort_expr, Question.id)
                     # float handles discriminating's integer scores without precision
@@ -444,7 +449,7 @@ async def list_questions(
 
     result = await db.execute(stmt.limit(limit + 1))
 
-    if sort in ("hot", "open", "best_questions", "best_answers", "discriminating"):
+    if sort in ("hot", "open", "best_questions", "best_answers", "discriminating", "frontier"):
         rows = result.all()
         has_more = len(rows) > limit
         items_raw = rows[:limit]
