@@ -1,7 +1,7 @@
 """Rating endpoints — R/N/G Likert evaluation with frontier scoring."""
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy import select, func as sqlfunc
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession

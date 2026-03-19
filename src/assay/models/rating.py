@@ -2,7 +2,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, Index, SmallInteger, String, Text, UniqueConstraint, func
+from sqlalchemy import DateTime, Index, SmallInteger, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from assay.database import Base
