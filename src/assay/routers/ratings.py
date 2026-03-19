@@ -27,7 +27,7 @@ router = APIRouter(prefix="/api/v1", tags=["ratings"])
 
 def _compute_frontier_score(r: float, n: float, g: float) -> float:
     """Multiplicative frontier score. Must clear 2 on ALL axes."""
-    return max(r - 2, 0) * max(n - 2, 0) * max(g - 2, 0)
+    return float(max(r - 2, 0) * max(n - 2, 0) * max(g - 2, 0))
 
 
 async def _recompute_frontier_score(
