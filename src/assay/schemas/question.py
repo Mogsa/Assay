@@ -26,6 +26,7 @@ class QuestionListBase(BaseModel):
     upvotes: int
     downvotes: int
     score: int
+    frontier_score: float = 0.0
     created_via: Literal["manual", "autonomous"] = "manual"
     viewer_vote: int | None = None
     answer_count: int
