@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Generate rating analysis report for dissertation advisor.
 
-Framing: Opus 4.6 is the reference standard (134 questions).
-Human (Morgan, 29 questions) validates Opus.
-Four small models are calibrated against Opus.
+5 AI models + 1 human rated 134 questions on R/N/G Likert scales.
+The report surfaces surprising findings: cheapest model wins, models
+reward jargon over substance, generativity is the most contested axis.
 
-Queries the Assay API, collects all rating and discussion data, and produces:
-  - docs/analysis/2026-03-19-rating-analysis.md  (prose report)
-  - docs/analysis/2026-03-19-rating-charts.html   (interactive plotly charts)
+Queries the Assay API (no auth), produces:
+  - docs/analysis/2026-03-19-rating-analysis.md  (prose, ~1.5 pages)
+  - docs/analysis/2026-03-19-rating-charts.html   (5 interactive plotly charts)
 
-No auth needed. Run from repo root:
-  python scripts/generate-rating-report.py
+Dependencies: httpx, plotly
+Run from repo root:  python scripts/generate-rating-report.py
 """
 
 from __future__ import annotations
@@ -34,9 +34,40 @@ OUTPUT_HTML = Path("docs/analysis/2026-03-19-rating-charts.html")
 AXES = ("rigour", "novelty", "generativity")
 AXIS_SHORT = {"rigour": "R", "novelty": "N", "generativity": "G"}
 
-OPUS_RATER = "opus 4.6 rater"
+RATER_NAMES = [
+    "Haiku rater",
+    "gemini flash rater",
+    "gpt 5.4 mini rater",
+    "Owen code rater",
+    "opus 4.6 rater",
+]
 HUMAN_RATER = "morgan"
-SMALL_MODELS = ["Haiku rater", "gemini flash rater", "gpt 5.4 mini rater", "Owen code rater"]
+ALL_RATERS = RATER_NAMES + [HUMAN_RATER]
+
+# Display names for tables/charts
+DISPLAY = {
+    "Haiku rater": "Haiku 4.5",
+    "gemini flash rater": "Gemini Flash",
+    "gpt 5.4 mini rater": "GPT-5.4 mini",
+    "Owen code rater": "Qwen Coder",
+    "opus 4.6 rater": "Opus 4.6",
+    "morgan": "Morgan (human)",
+}
+SHORT_DISPLAY = {
+    "Haiku rater": "Haiku",
+    "gemini flash rater": "Gemini",
+    "gpt 5.4 mini rater": "GPT mini",
+    "Owen code rater": "Qwen",
+    "opus 4.6 rater": "Opus",
+}
+
+COST_PER_M = {
+    "Haiku rater": "$1",
+    "gemini flash rater": "free",
+    "gpt 5.4 mini rater": "cheap",
+    "Owen code rater": "free",
+    "opus 4.6 rater": "$5",
+}
 
 logging.basicConfig(
     level=logging.INFO,
@@ -74,7 +105,9 @@ def fetch_all_questions(client: httpx.Client) -> list[dict]:
 
 
 def fetch_ratings(client: httpx.Client, question_id: str) -> dict:
-    return api_get(client, "/ratings", {"target_type": "question", "target_id": question_id})
+    return api_get(
+        client, "/ratings", {"target_type": "question", "target_id": question_id}
+    )
 
 
 def fetch_graph(client: httpx.Client) -> dict:
@@ -86,7 +119,7 @@ def fetch_calibration(client: httpx.Client) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Statistics (no scipy/numpy)
+# Statistics (stdlib only, no scipy/numpy)
 # ---------------------------------------------------------------------------
 
 
@@ -118,7 +151,6 @@ def spearman(x: list[float], y: list[float]) -> tuple[float, float]:
     if abs(rho) >= 1.0:
         return rho, 0.0
     t_stat = rho * math.sqrt((n - 2) / (1 - rho**2))
-    # Approximate p using normal CDF for large-ish n
     p = 2 * (1 - _norm_cdf(abs(t_stat)))
     return rho, max(p, 0.0)
 
@@ -131,14 +163,40 @@ def mae_between(
     scores_a: dict[str, float],
     scores_b: dict[str, float],
 ) -> tuple[float, int]:
-    """MAE between two raters on their shared questions. Returns (mae, n)."""
-    diffs = []
-    for qid in scores_a:
-        if qid in scores_b:
-            diffs.append(abs(scores_a[qid] - scores_b[qid]))
+    """MAE between two raters on shared questions. Returns (mae, n)."""
+    diffs = [
+        abs(scores_a[qid] - scores_b[qid])
+        for qid in scores_a
+        if qid in scores_b
+    ]
     if not diffs:
         return float("nan"), 0
     return statistics.mean(diffs), len(diffs)
+
+
+def mae_per_axis(
+    rater_maps: dict,
+    rater_a: str,
+    rater_b: str,
+) -> dict[str, tuple[float, int]]:
+    """MAE per axis between two raters. Returns {axis: (mae, n)}."""
+    result = {}
+    for axis in AXES:
+        a_scores = rater_maps[axis].get(rater_a, {})
+        b_scores = rater_maps[axis].get(rater_b, {})
+        result[axis] = mae_between(a_scores, b_scores)
+    return result
+
+
+def frontier_score_for(rater_maps: dict, rater: str, qid: str) -> float | None:
+    """Geometric mean of R, N, G for a single rater on a single question."""
+    vals = []
+    for axis in AXES:
+        v = rater_maps[axis].get(rater, {}).get(qid)
+        if v is None:
+            return None
+        vals.append(v)
+    return (vals[0] * vals[1] * vals[2]) ** (1 / 3)
 
 
 def krippendorff_alpha(ratings_matrix: list[dict[str, float]]) -> float:
@@ -186,6 +244,43 @@ def krippendorff_alpha(ratings_matrix: list[dict[str, float]]) -> float:
 
 
 # ---------------------------------------------------------------------------
+# Content classification
+# ---------------------------------------------------------------------------
+
+
+def is_seed(q: dict) -> bool:
+    return q.get("title", "").startswith("[Seed]")
+
+
+def is_ifds(q: dict) -> bool:
+    title = q.get("title", "").lower()
+    return any(kw in title for kw in ("ifds", "tombstone", "scc"))
+
+
+def is_test(q: dict) -> bool:
+    title = q.get("title", "").lower()
+    return "test" in title and not is_seed(q) and not is_ifds(q)
+
+
+def content_type(q: dict) -> str:
+    if is_seed(q):
+        return "seed"
+    if is_ifds(q):
+        return "ifds"
+    if is_test(q):
+        return "test"
+    return "other"
+
+
+CONTENT_LABELS = {
+    "seed": "Seeds",
+    "ifds": "IFDS/Tombstone",
+    "test": "Test posts",
+    "other": "Other agent",
+}
+
+
+# ---------------------------------------------------------------------------
 # Data collection
 # ---------------------------------------------------------------------------
 
@@ -197,7 +292,9 @@ def collect_data(client: httpx.Client) -> dict:
 
     log.info("Fetching graph...")
     graph = fetch_graph(client)
-    log.info("  got %d nodes, %d edges", len(graph["nodes"]), len(graph["edges"]))
+    log.info(
+        "  got %d nodes, %d edges", len(graph["nodes"]), len(graph["edges"])
+    )
 
     log.info("Fetching calibration...")
     calibration = fetch_calibration(client)
@@ -222,28 +319,15 @@ def collect_data(client: httpx.Client) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Data indexing helpers
+# Data indexing
 # ---------------------------------------------------------------------------
-
-
-def is_seed(q: dict) -> bool:
-    return q.get("title", "").startswith("[Seed]")
-
-
-def question_source(q: dict) -> str:
-    return "seed" if is_seed(q) else "agent"
-
-
-def find_title(questions: list[dict], qid: str) -> str:
-    for q in questions:
-        if q["id"] == qid:
-            return q.get("title", "(untitled)")
-    return "(unknown)"
 
 
 def build_rater_axis_maps(data: dict) -> dict[str, dict[str, dict[str, float]]]:
     """Returns {axis: {rater_name: {question_id: score}}}."""
-    result: dict[str, dict[str, dict[str, float]]] = {a: defaultdict(dict) for a in AXES}
+    result: dict[str, dict[str, dict[str, float]]] = {
+        a: defaultdict(dict) for a in AXES
+    }
     for qid, rinfo in data["ratings"].items():
         for r in rinfo.get("ratings", []):
             name = r["rater_name"]
@@ -253,21 +337,49 @@ def build_rater_axis_maps(data: dict) -> dict[str, dict[str, dict[str, float]]]:
     return result
 
 
-def build_graph_index(graph: dict) -> dict:
+def build_graph_activity(graph: dict) -> dict[str, dict[str, int]]:
+    """Count nodes by (author_name, type) from graph data.
+
+    Returns {author_name: {question: n, answer: n, comment: n, ...}}.
+    Also counts edges by author for links.
+    """
+    activity: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    for node in graph["nodes"]:
+        author = node.get("author_name") or node.get("label", "unknown")
+        ntype = node.get("type", "unknown")
+        activity[author][ntype] += 1
+
+    # Count link edges — attribute to the edge's source node's author
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
-    edges_from: dict[str, list[dict]] = defaultdict(list)
-    for e in graph["edges"]:
-        edges_from[e["source"]].append(e)
-    return {"nodes": nodes_by_id, "from": edges_from}
+    for edge in graph["edges"]:
+        if edge.get("edge_type") == "link":
+            source_node = nodes_by_id.get(edge.get("source"))
+            if source_node:
+                author = source_node.get("author_name", "unknown")
+                activity[author]["link"] += 1
+        # Also count "extends" edges
+        if edge.get("edge_type") == "extends":
+            source_node = nodes_by_id.get(edge.get("source"))
+            if source_node:
+                author = source_node.get("author_name", "unknown")
+                activity[author]["extends"] += 1
+
+    return dict(activity)
 
 
-def discussion_metrics(q: dict, gidx: dict) -> dict:
+def discussion_metrics(q: dict, graph: dict) -> dict:
+    """Get answer_count, link_count, spawned_count for a question."""
+    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
     qid = q["id"]
-    node = gidx["nodes"].get(qid, {})
+    node = nodes_by_id.get(qid, {})
+
     answer_count = q.get("answer_count", 0) or node.get("answer_count", 0)
     link_count = node.get("link_count", 0)
+
     spawned = sum(
-        1 for e in gidx["from"].get(qid, []) if e.get("edge_type") == "extends"
+        1
+        for e in graph["edges"]
+        if e.get("source") == qid and e.get("edge_type") == "extends"
     )
     return {
         "answer_count": answer_count,
@@ -277,570 +389,738 @@ def discussion_metrics(q: dict, gidx: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Section 1: Human validates Opus
+# Section builders (markdown)
 # ---------------------------------------------------------------------------
 
 
-def section_human_validates_opus(rater_maps: dict) -> tuple[str, dict[str, float]]:
-    """Returns (markdown, {axis: mae}) for later use in key findings."""
+def section_platform_overview(data: dict) -> str:
+    questions = data["questions"]
+    graph = data["graph"]
+    n_total = len(questions)
+
+    # Content classification counts
+    counts: dict[str, int] = defaultdict(int)
+    for q in questions:
+        counts[content_type(q)] += 1
+
+    # Agent activity from graph
+    activity = build_graph_activity(graph)
+
     lines = [
-        "## 1. Human validates Opus (29 questions)\n",
+        "## 1. Platform Overview\n",
+        f"**{n_total} questions** before the rating experiment began:\n",
+        "| Category | Count | Description |",
+        "|----------|------:|-------------|",
     ]
-
-    mae_by_axis: dict[str, float] = {}
-    n_overlap = 0
-
-    for axis in AXES:
-        opus_scores = rater_maps[axis].get(OPUS_RATER, {})
-        human_scores = rater_maps[axis].get(HUMAN_RATER, {})
-        val, n = mae_between(opus_scores, human_scores)
-        mae_by_axis[axis] = val
-        if n > n_overlap:
-            n_overlap = n
-
-    if n_overlap == 0:
-        lines.append("No overlapping questions between Morgan and Opus.\n")
-        return "\n".join(lines), mae_by_axis
-
-    parts = []
-    for axis in AXES:
-        val = mae_by_axis[axis]
-        if math.isnan(val):
-            parts.append(f"n/a on {axis}")
-        else:
-            parts.append(f"**{val:.2f}** on {axis}")
-    lines.append(f"Morgan and Opus agree within {', '.join(parts)} (n={n_overlap}).\n")
-
-    all_below_one = all(not math.isnan(v) and v < 1.0 for v in mae_by_axis.values())
-    if all_below_one:
+    for ctype in ("seed", "ifds", "test", "other"):
+        desc_map = {
+            "seed": "FrontierMath + benchmark problems",
+            "ifds": "One agent looping on narrow topic",
+            "test": "Platform test posts",
+            "other": "Agent-generated, diverse topics",
+        }
         lines.append(
-            "**Conclusion:** MAE < 1.0 on all axes — Opus is a trustworthy proxy for human judgement.\n"
-        )
-    else:
-        over = [a for a in AXES if not math.isnan(mae_by_axis[a]) and mae_by_axis[a] >= 1.0]
-        lines.append(
-            f"**Conclusion:** MAE >= 1.0 on {', '.join(over)} — Opus diverges from human on "
-            f"{'this axis' if len(over) == 1 else 'these axes'}.\n"
+            f"| {CONTENT_LABELS[ctype]} | {counts.get(ctype, 0)} | {desc_map[ctype]} |"
         )
 
-    return "\n".join(lines), mae_by_axis
+    # Agent activity table
+    lines.append("\n**Agent activity** (from graph data):\n")
+    lines.append("| Model | Questions | Answers | Reviews | Links |")
+    lines.append("|-------|----------:|--------:|--------:|------:|")
 
+    # Sort by total activity descending
+    rows = []
+    for author, acts in sorted(
+        activity.items(), key=lambda x: sum(x[1].values()), reverse=True
+    ):
+        q_count = acts.get("question", 0)
+        a_count = acts.get("answer", 0)
+        r_count = acts.get("comment", 0)  # reviews are comments in the graph
+        l_count = acts.get("link", 0) + acts.get("extends", 0)
+        if q_count + a_count + r_count + l_count == 0:
+            continue
+        rows.append((author, q_count, a_count, r_count, l_count))
 
-# ---------------------------------------------------------------------------
-# Section 2: Small models calibrated against Opus
-# ---------------------------------------------------------------------------
+    for author, qc, ac, rc, lc in rows:
+        name = author[:30]
+        lines.append(f"| {name} | {qc} | {ac} | {rc} | {lc} |")
 
-
-def section_small_vs_opus(rater_maps: dict) -> tuple[str, dict[str, dict[str, float]]]:
-    """Returns (markdown, {model: {axis: mae}}) for charts and findings."""
-    lines = [
-        "## 2. Small models calibrated against Opus (134 questions)\n",
-        "### MAE vs Opus per axis\n",
-        "| Model | Rigour | Novelty | Generativity | Overall |",
-        "|-------|-------:|--------:|-------------:|--------:|",
-    ]
-
-    model_errors: dict[str, dict[str, float]] = {}
-
-    for model in SMALL_MODELS:
-        errs: dict[str, float] = {}
-        for axis in AXES:
-            opus_scores = rater_maps[axis].get(OPUS_RATER, {})
-            model_scores = rater_maps[axis].get(model, {})
-            val, _ = mae_between(opus_scores, model_scores)
-            errs[axis] = val
-        valid = [v for v in errs.values() if not math.isnan(v)]
-        errs["overall"] = statistics.mean(valid) if valid else float("nan")
-        model_errors[model] = errs
-
-        r_str = f"{errs['rigour']:.2f}" if not math.isnan(errs["rigour"]) else "n/a"
-        n_str = f"{errs['novelty']:.2f}" if not math.isnan(errs["novelty"]) else "n/a"
-        g_str = f"{errs['generativity']:.2f}" if not math.isnan(errs["generativity"]) else "n/a"
-        o_str = f"{errs['overall']:.2f}" if not math.isnan(errs["overall"]) else "n/a"
-        lines.append(f"| {model} | {r_str} | {n_str} | {g_str} | {o_str} |")
-
-    # Ranking
-    ranked = sorted(
-        model_errors.items(),
-        key=lambda x: x[1].get("overall", float("inf")),
+    ifds_pct = counts.get("ifds", 0) / max(n_total, 1) * 100
+    lines.append(
+        f"\nThe platform has a content diversity problem. "
+        f"IFDS/tombstone variants account for {ifds_pct:.0f}% of all questions."
     )
-    best_name, best_errs = ranked[0]
-    best_overall = best_errs.get("overall", float("nan"))
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+def section_experiment_setup() -> str:
+    lines = [
+        "## 2. Rating Experiment Setup\n",
+        "**5 AI raters** independently rated all 134 questions using R/N/G rubric "
+        "with calibration anchors (Euclid=R5, Godel=N5, Riemann=G5):\n",
+        "| Rater | Cost | Questions rated |",
+        "|-------|------|----------------:|",
+        "| Haiku 4.5 | $1/M tokens | 134 |",
+        "| Gemini 3 Flash | free | 134 |",
+        "| GPT-5.4 mini | cheap | 134 |",
+        "| Qwen 3.5 Coder | free (Ollama) | 134 |",
+        "| Opus 4.6 | $5/M tokens | 134 |",
+        "",
+        "**1 human** (Morgan) rated 29 questions from a stratified sample: "
+        "top 10, bottom 10, and 9 controversial.\n",
+        "Rating-only mode: agents read `rate-pass.md`, rated 10 questions "
+        "per pass via CLI tools. "
+        "`frontier_score = (R x N x G)^(1/3)` — geometric mean, range 1-5.\n",
+    ]
+    return "\n".join(lines)
+
+
+def section_finding_1(rater_maps: dict) -> str:
+    """Finding 1: Cheapest model correlates best with human judgment."""
+    lines = [
+        "### Finding 1: The cheapest model correlates best with human judgment\n",
+    ]
+
+    # Per-model MAE vs Morgan, per axis and overall
+    rows: list[tuple[str, float, float, float, float]] = []
+    for model in RATER_NAMES:
+        axis_maes = mae_per_axis(rater_maps, model, HUMAN_RATER)
+        vals = []
+        for axis in AXES:
+            m, _ = axis_maes[axis]
+            vals.append(m)
+        valid = [v for v in vals if not math.isnan(v)]
+        overall = statistics.mean(valid) if valid else float("nan")
+        rows.append((model, vals[0], vals[1], vals[2], overall))
+
+    # Sort by overall MAE
+    rows.sort(key=lambda r: r[4] if not math.isnan(r[4]) else 999)
+
+    lines.append("| Model | Cost | R MAE | N MAE | G MAE | Overall MAE |")
+    lines.append("|-------|------|------:|------:|------:|------------:|")
+    for model, r_mae, n_mae, g_mae, overall in rows:
+        def _fmt(v: float) -> str:
+            return f"{v:.2f}" if not math.isnan(v) else "n/a"
+
+        lines.append(
+            f"| {DISPLAY[model]} | {COST_PER_M[model]} | "
+            f"{_fmt(r_mae)} | {_fmt(n_mae)} | {_fmt(g_mae)} | "
+            f"**{_fmt(overall)}** |"
+        )
+
+    best_name = DISPLAY[rows[0][0]]
+    best_overall = rows[0][4]
+    worst_name = DISPLAY[rows[-1][0]]
+    worst_overall = rows[-1][4]
     lines.append("")
     lines.append(
-        f"**Closest to Opus:** {best_name} (overall MAE = {best_overall:.2f})"
+        f"{best_name} ({COST_PER_M[rows[0][0]]}) is closest to human "
+        f"(MAE={best_overall:.2f}). "
+        f"{worst_name} ({COST_PER_M[rows[-1][0]]}) is furthest "
+        f"(MAE={worst_overall:.2f})."
     )
     lines.append("")
+    return "\n".join(lines)
 
-    # Krippendorff's alpha between small models
-    lines.append("### Inter-rater agreement among small models (Krippendorff's alpha)\n")
-    lines.append("| Axis | Alpha |")
-    lines.append("|------|------:|")
+
+def section_finding_2(
+    data: dict, rater_maps: dict
+) -> str:
+    """Finding 2: Models are fooled by well-formatted jargon."""
+    questions = data["questions"]
+    lines = [
+        "### Finding 2: Models are fooled by well-formatted jargon\n",
+    ]
+
+    # Average frontier_score by content type (all model raters)
+    type_axis_scores: dict[str, dict[str, list[float]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    for q in questions:
+        qid = q["id"]
+        ctype = content_type(q)
+        for model in RATER_NAMES:
+            for axis in AXES:
+                v = rater_maps[axis].get(model, {}).get(qid)
+                if v is not None:
+                    type_axis_scores[ctype][axis].append(v)
+
+    # Also compute frontier_score per content type
+    type_fs: dict[str, list[float]] = defaultdict(list)
+    for q in questions:
+        qid = q["id"]
+        ctype = content_type(q)
+        for model in RATER_NAMES:
+            fs = frontier_score_for(rater_maps, model, qid)
+            if fs is not None:
+                type_fs[ctype].append(fs)
+
+    lines.append("**Average scores by content type** (across all 5 model raters):\n")
+    lines.append("| Content type | n | Avg R | Avg N | Avg G | frontier_score |")
+    lines.append("|--------------|--:|------:|------:|------:|---------------:|")
+    for ctype in ("seed", "ifds", "other", "test"):
+        if ctype not in type_axis_scores:
+            continue
+        r_avg = statistics.mean(type_axis_scores[ctype]["rigour"]) if type_axis_scores[ctype]["rigour"] else 0
+        n_avg = statistics.mean(type_axis_scores[ctype]["novelty"]) if type_axis_scores[ctype]["novelty"] else 0
+        g_avg = statistics.mean(type_axis_scores[ctype]["generativity"]) if type_axis_scores[ctype]["generativity"] else 0
+        fs_avg = statistics.mean(type_fs[ctype]) if type_fs[ctype] else 0
+        n_ratings = len(type_fs.get(ctype, []))
+        lines.append(
+            f"| {CONTENT_LABELS.get(ctype, ctype)} | {n_ratings} | "
+            f"{r_avg:.2f} | {n_avg:.2f} | {g_avg:.2f} | {fs_avg:.2f} |"
+        )
+
+    lines.append("")
+
+    # Per-model breakdown: seeds vs IFDS
+    lines.append("**Per-model breakdown** (Seeds vs IFDS/Tombstone):\n")
+    lines.append("| Model | Type | Avg R | Avg N | Avg G |")
+    lines.append("|-------|------|------:|------:|------:|")
+    for model in RATER_NAMES:
+        for ctype in ("seed", "ifds"):
+            r_vals, n_vals, g_vals = [], [], []
+            for q in questions:
+                if content_type(q) != ctype:
+                    continue
+                qid = q["id"]
+                r = rater_maps["rigour"].get(model, {}).get(qid)
+                n = rater_maps["novelty"].get(model, {}).get(qid)
+                g = rater_maps["generativity"].get(model, {}).get(qid)
+                if r is not None:
+                    r_vals.append(r)
+                if n is not None:
+                    n_vals.append(n)
+                if g is not None:
+                    g_vals.append(g)
+            r_avg = statistics.mean(r_vals) if r_vals else 0
+            n_avg = statistics.mean(n_vals) if n_vals else 0
+            g_avg = statistics.mean(g_vals) if g_vals else 0
+            label = CONTENT_LABELS[ctype]
+            lines.append(
+                f"| {DISPLAY[model]} | {label} | "
+                f"{r_avg:.2f} | {n_avg:.2f} | {g_avg:.2f} |"
+            )
+
+    lines.append("")
+    lines.append(
+        "Models reward hypothesis/falsifier structure over substantive novelty. "
+        "IFDS questions use formal mathematical language that inflates R and N scores "
+        "despite being narrow variations on one topic."
+    )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def section_finding_3(data: dict, rater_maps: dict) -> str:
+    """Finding 3: Generativity is the axis models disagree on most."""
+    lines = [
+        "### Finding 3: Generativity is the axis models disagree on most\n",
+    ]
+
+    # Krippendorff's alpha per axis among all 5 models
+    alpha_by_axis: dict[str, float] = {}
     for axis in AXES:
-        # Build matrix: one dict per question, keys = small model names
-        all_qids = set()
-        for model in SMALL_MODELS:
+        all_qids: set[str] = set()
+        for model in RATER_NAMES:
             all_qids.update(rater_maps[axis].get(model, {}).keys())
         matrix: list[dict[str, float]] = []
         for qid in all_qids:
             item: dict[str, float] = {}
-            for model in SMALL_MODELS:
+            for model in RATER_NAMES:
                 val = rater_maps[axis].get(model, {}).get(qid)
                 if val is not None:
                     item[model] = val
             if len(item) >= 2:
                 matrix.append(item)
         alpha = krippendorff_alpha(matrix)
-        lines.append(f"| {axis} | {alpha:.3f} |")
-    lines.append("")
+        alpha_by_axis[axis] = alpha
 
-    return "\n".join(lines), model_errors
-
-
-# ---------------------------------------------------------------------------
-# Section 3: Did frontier_score surface the right content?
-# ---------------------------------------------------------------------------
-
-
-def section_frontier_ranking(data: dict) -> tuple[str, dict]:
-    """Returns (markdown, stats_dict) for findings."""
-    questions = sorted(
-        data["questions"],
-        key=lambda q: q.get("frontier_score") or 0,
-        reverse=True,
-    )
-    lines = [
-        "## 3. Did frontier_score surface the right content?\n",
-        "### Top 10 by frontier_score\n",
-        "| Rank | Score | Source | Title |",
-        "|-----:|------:|--------|-------|",
-    ]
-    for i, q in enumerate(questions[:10]):
-        fs = q.get("frontier_score") or 0
-        lines.append(f"| {i + 1} | {fs:.2f} | {question_source(q)} | {q['title'][:70]} |")
+    lines.append("**Inter-rater reliability** (Krippendorff's alpha, 5 models):\n")
+    lines.append("| Axis | Alpha | Interpretation |")
+    lines.append("|------|------:|----------------|")
+    for axis in AXES:
+        a = alpha_by_axis[axis]
+        interp = (
+            "tentative" if a >= 0.67 else "unreliable" if a >= 0.33 else "poor"
+        )
+        lines.append(f"| {axis.capitalize()} | {a:.3f} | {interp} |")
 
     lines.append("")
-    lines.append("### Bottom 10 by frontier_score\n")
-    lines.append("| Rank | Score | Source | Title |")
-    lines.append("|-----:|------:|--------|-------|")
-    bottom = questions[-10:]
-    for i, q in enumerate(bottom):
-        fs = q.get("frontier_score") or 0
-        rank = len(questions) - len(bottom) + i + 1
-        lines.append(f"| {rank} | {fs:.2f} | {question_source(q)} | {q['title'][:70]} |")
 
-    seed_scores = [q.get("frontier_score") or 0 for q in questions if is_seed(q)]
-    agent_scores = [q.get("frontier_score") or 0 for q in questions if not is_seed(q)]
-
-    stats = {}
-    lines.append("")
-    if seed_scores:
-        seed_avg = statistics.mean(seed_scores)
-        stats["seed_avg"] = seed_avg
-        lines.append(f"Seed avg: **{seed_avg:.2f}** (n={len(seed_scores)})")
-    if agent_scores:
-        agent_avg = statistics.mean(agent_scores)
-        stats["agent_avg"] = agent_avg
-        lines.append(f"Agent-generated avg: **{agent_avg:.2f}** (n={len(agent_scores)})")
-
-    if seed_scores and agent_scores:
-        if statistics.mean(agent_scores) > statistics.mean(seed_scores):
-            lines.append(
-                "\n> **Warning:** agent-generated questions score higher than seeds — "
-                "models may be fooled by jargon."
-            )
-    lines.append("")
-    return "\n".join(lines), stats
-
-
-# ---------------------------------------------------------------------------
-# Section 4: Ratings predict discussion activity
-# ---------------------------------------------------------------------------
-
-
-def section_discussion_correlation(data: dict) -> tuple[str, dict[str, tuple[float, float]]]:
-    gidx = build_graph_index(data["graph"])
-    questions = data["questions"]
-
-    fs_list: list[float] = []
-    metrics_lists: dict[str, list[float]] = {
-        "answer_count": [],
-        "link_count": [],
-        "spawned_count": [],
-    }
-    for q in questions:
-        fs = q.get("frontier_score")
-        if fs is None:
-            continue
-        m = discussion_metrics(q, gidx)
-        fs_list.append(fs)
-        for k in metrics_lists:
-            metrics_lists[k].append(float(m[k]))
-
-    lines = [
-        "## 4. Ratings predict discussion activity\n",
-        "| Metric | Spearman rho | p-value | n |",
-        "|--------|------------:|--------:|--:|",
-    ]
-    correlations: dict[str, tuple[float, float]] = {}
-    for k in ("answer_count", "link_count", "spawned_count"):
-        rho, p = spearman(fs_list, metrics_lists[k])
-        sig = "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else ""
-        lines.append(f"| {k} | {rho:+.3f}{sig} | {p:.4f} | {len(fs_list)} |")
-        correlations[k] = (rho, p)
-
-    lines.append("")
-    return "\n".join(lines), correlations
-
-
-# ---------------------------------------------------------------------------
-# Section 5: Disagreement patterns
-# ---------------------------------------------------------------------------
-
-
-def section_disagreement(data: dict, rater_maps: dict) -> tuple[str, list[tuple[str, float]]]:
-    """Top 5 most controversial questions (highest std across ALL 6 raters)."""
-    question_stds: list[tuple[str, str, float, list[tuple[str, dict[str, float]]]]] = []
-
+    # Find the most controversial questions (highest G std across raters)
+    controversial: list[tuple[str, str, float, list[tuple[str, float]]]] = []
     for qid, rinfo in data["ratings"].items():
-        ratings = rinfo.get("ratings", [])
-        if len(ratings) < 3:
+        g_scores: list[tuple[str, float]] = []
+        for r in rinfo.get("ratings", []):
+            if r.get("generativity") is not None and r["rater_name"] in RATER_NAMES:
+                g_scores.append((r["rater_name"], float(r["generativity"])))
+        if len(g_scores) < 3:
             continue
-        all_scores: list[float] = []
-        per_rater: list[tuple[str, dict[str, float]]] = []
-        for r in ratings:
-            rater_scores = {}
-            for a in AXES:
-                if r.get(a) is not None:
-                    rater_scores[a] = float(r[a])
-                    all_scores.append(float(r[a]))
-            per_rater.append((r["rater_name"], rater_scores))
-        if len(all_scores) < 6:
-            continue
-        std = statistics.stdev(all_scores)
-        title = find_title(data["questions"], qid)
-        question_stds.append((qid, title, std, per_rater))
+        vals = [s for _, s in g_scores]
+        std = statistics.stdev(vals)
+        title = next(
+            (q["title"] for q in data["questions"] if q["id"] == qid),
+            "(unknown)",
+        )
+        controversial.append((qid, title, std, g_scores))
 
-    question_stds.sort(key=lambda x: -x[2])
-    top5 = question_stds[:5]
+    controversial.sort(key=lambda x: -x[2])
 
-    lines = [
-        "## 5. Disagreement patterns\n",
-        "### Top 5 most controversial questions (highest score std across all raters)\n",
-    ]
-
-    type_counts: dict[str, int] = defaultdict(int)
-    controversial_items: list[tuple[str, float]] = []
-
-    for rank, (qid, title, std, per_rater) in enumerate(top5, 1):
-        q = next((q for q in data["questions"] if q["id"] == qid), {})
-        qtype = question_source(q)
-        type_counts[qtype] += 1
-        controversial_items.append((title, std))
-
-        lines.append(f"**{rank}. {title[:70]}** (std={std:.2f}, source={qtype})\n")
-        lines.append("| Rater | R | N | G |")
-        lines.append("|-------|--:|--:|--:|")
-        for rname, scores in per_rater:
-            r_val = f"{scores['rigour']:.0f}" if "rigour" in scores else "-"
-            n_val = f"{scores['novelty']:.0f}" if "novelty" in scores else "-"
-            g_val = f"{scores['generativity']:.0f}" if "generativity" in scores else "-"
-            lines.append(f"| {rname} | {r_val} | {n_val} | {g_val} |")
+    if controversial:
+        lines.append("**Most contested on Generativity** (top 3):\n")
+        lines.append("| Question | " + " | ".join(SHORT_DISPLAY[m] for m in RATER_NAMES) + " | Std |")
+        lines.append("|----------|" + "|".join("----:" for _ in RATER_NAMES) + "|----:|")
+        for _, title, std, g_scores in controversial[:3]:
+            score_map = dict(g_scores)
+            cells = []
+            for model in RATER_NAMES:
+                v = score_map.get(model)
+                cells.append(f"{v:.0f}" if v is not None else "-")
+            lines.append(
+                f"| {title[:50]} | " + " | ".join(cells) + f" | {std:.2f} |"
+            )
         lines.append("")
 
-    if type_counts:
-        most_controversial_type = max(type_counts, key=lambda k: type_counts[k])
+    # Qwen's G distribution
+    qwen_g = list(rater_maps["generativity"].get("Owen code rater", {}).values())
+    if qwen_g:
+        g5_pct = sum(1 for v in qwen_g if v == 5) / len(qwen_g) * 100
         lines.append(
-            f"Most disagreement on **{most_controversial_type}** questions "
-            f"({type_counts[most_controversial_type]}/{len(top5)} in top 5).\n"
+            f"Qwen gives G=5 to {g5_pct:.0f}% of questions — "
+            f"it is an unreliable rater on this axis."
         )
-
-    return "\n".join(lines), controversial_items
-
-
-# ---------------------------------------------------------------------------
-# Section 6: Key findings (computed, NOT placeholders)
-# ---------------------------------------------------------------------------
-
-
-def section_key_findings(
-    human_opus_mae: dict[str, float],
-    model_errors: dict[str, dict[str, float]],
-    frontier_stats: dict,
-    correlations: dict[str, tuple[float, float]],
-    controversial: list[tuple[str, float]],
-) -> str:
-    lines = ["## 6. Key findings\n"]
-
-    # 1. Human-Opus agreement
-    valid_maes = {a: v for a, v in human_opus_mae.items() if not math.isnan(v)}
-    if valid_maes:
-        max_axis = max(valid_maes, key=lambda a: valid_maes[a])
-        avg_mae = statistics.mean(valid_maes.values())
-        trustworthy = all(v < 1.0 for v in valid_maes.values())
-        if trustworthy:
-            lines.append(
-                f"1. **Opus is a valid human proxy.** Average MAE vs Morgan = {avg_mae:.2f} "
-                f"across R/N/G (all < 1.0). Largest gap on {max_axis} ({valid_maes[max_axis]:.2f})."
-            )
-        else:
-            lines.append(
-                f"1. **Opus partially agrees with human.** Average MAE = {avg_mae:.2f}. "
-                f"{max_axis} diverges most ({valid_maes[max_axis]:.2f})."
-            )
-    else:
-        lines.append("1. **No human-Opus overlap data available.**")
-
-    # 2. Best small model
-    ranked = sorted(
-        model_errors.items(),
-        key=lambda x: x[1].get("overall", float("inf")),
-    )
-    if ranked:
-        best_name, best_errs = ranked[0]
-        worst_name, worst_errs = ranked[-1]
-        lines.append(
-            f"2. **{best_name}** is closest to Opus (MAE={best_errs['overall']:.2f}). "
-            f"**{worst_name}** is furthest (MAE={worst_errs['overall']:.2f})."
-        )
-
-    # 3. Frontier score effectiveness
-    seed_avg = frontier_stats.get("seed_avg")
-    agent_avg = frontier_stats.get("agent_avg")
-    if seed_avg is not None and agent_avg is not None:
-        if agent_avg > seed_avg:
-            lines.append(
-                f"3. **Agent-generated questions outscore seeds** ({agent_avg:.2f} vs {seed_avg:.2f}) — "
-                f"models may reward jargon over substance."
-            )
-        else:
-            lines.append(
-                f"3. **Seeds outscore agent-generated** ({seed_avg:.2f} vs {agent_avg:.2f}) — "
-                f"frontier_score correctly ranks curated content higher."
-            )
-    else:
-        lines.append("3. **Insufficient data to compare seed vs agent frontier scores.**")
-
-    # 4. Discussion correlation
-    answer_rho, answer_p = correlations.get("answer_count", (0.0, 1.0))
-    if answer_p < 0.05:
-        lines.append(
-            f"4. **Frontier score predicts discussion.** "
-            f"Spearman rho = {answer_rho:+.2f} with answer_count (p={answer_p:.4f})."
-        )
-    else:
-        lines.append(
-            f"4. **Frontier score does NOT significantly predict discussion** "
-            f"(rho={answer_rho:+.2f}, p={answer_p:.2f})."
-        )
-
-    # 5. Disagreement
-    if controversial:
-        avg_std = statistics.mean(s for _, s in controversial)
-        lines.append(
-            f"5. **High disagreement persists.** Top 5 controversial questions average "
-            f"std={avg_std:.2f} across raters. Most contested: \"{controversial[0][0][:50]}\"."
-        )
-    else:
-        lines.append("5. **Insufficient data to assess disagreement patterns.**")
-
     lines.append("")
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
-# Charts
-# ---------------------------------------------------------------------------
+def section_finding_4(data: dict, rater_maps: dict) -> str:
+    """Finding 4: Frontier score predicts cross-linking but not answer depth."""
+    questions = data["questions"]
+    graph = data["graph"]
 
+    fs_list: list[float] = []
+    answer_list: list[float] = []
+    link_list: list[float] = []
+    spawned_list: list[float] = []
 
-def chart_small_model_error_vs_opus(model_errors: dict[str, dict[str, float]]) -> str:
-    """Chart 1: Grouped bar chart — small model MAE vs Opus per axis."""
-    fig = go.Figure()
-    colors = {"rigour": "#e74c3c", "novelty": "#3498db", "generativity": "#2ecc71"}
-    names = list(model_errors.keys())
+    for q in questions:
+        # Use average frontier_score across all model raters
+        model_fs = []
+        for model in RATER_NAMES:
+            fs = frontier_score_for(rater_maps, model, q["id"])
+            if fs is not None:
+                model_fs.append(fs)
+        if not model_fs:
+            continue
+        avg_fs = statistics.mean(model_fs)
+        m = discussion_metrics(q, graph)
 
-    for axis in AXES:
-        errs = []
-        for model in names:
-            val = model_errors[model].get(axis, 0)
-            errs.append(val if not math.isnan(val) else 0)
-        fig.add_trace(go.Bar(
-            name=AXIS_SHORT[axis] + " error",
-            x=names,
-            y=errs,
-            marker_color=colors[axis],
-        ))
+        fs_list.append(avg_fs)
+        answer_list.append(float(m["answer_count"]))
+        link_list.append(float(m["link_count"]))
+        spawned_list.append(float(m["spawned_count"]))
 
-    fig.update_layout(
-        title="Small Model Calibration Error vs Opus 4.6",
-        barmode="group",
-        yaxis_title="Mean Absolute Error",
-        xaxis_title="Model",
-        height=450,
-        width=850,
-        font=dict(size=14),
-    )
-    return pio.to_html(fig, full_html=False)
-
-
-def chart_score_distributions(rater_maps: dict) -> str:
-    """Chart 2: Box plots — score distributions by rater, 3 subplots for R/N/G."""
-    all_raters = [OPUS_RATER, HUMAN_RATER] + SMALL_MODELS
-    palette = [
-        "#8e44ad",  # opus — purple
-        "#e67e22",  # morgan — orange
-        "#3498db",  # haiku — blue
-        "#e74c3c",  # gemini — red
-        "#2ecc71",  # gpt — green
-        "#f39c12",  # owen — yellow
+    lines = [
+        "### Finding 4: Frontier score predicts cross-linking but not answer depth\n",
+        "| Metric | Spearman rho | p-value | Sig |",
+        "|--------|------------:|--------:|-----|",
     ]
 
-    fig = make_subplots(
-        rows=1, cols=3,
-        subplot_titles=["Rigour", "Novelty", "Generativity"],
-        horizontal_spacing=0.08,
+    for name, y_list in [
+        ("link_count", link_list),
+        ("spawned_count", spawned_list),
+        ("answer_count", answer_list),
+    ]:
+        rho, p = spearman(fs_list, y_list)
+        sig = "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else "ns"
+        lines.append(f"| {name} | {rho:+.2f} | {p:.4f} | {sig} |")
+
+    lines.append("")
+    lines.append(
+        "High-rated questions generate follow-up threads and connections, "
+        "but not necessarily more answers."
     )
-
-    for col, axis in enumerate(AXES, 1):
-        for i, rater in enumerate(all_raters):
-            scores = list(rater_maps[axis].get(rater, {}).values())
-            if not scores:
-                continue
-            fig.add_trace(
-                go.Box(
-                    y=scores,
-                    name=rater[:15],
-                    marker_color=palette[i % len(palette)],
-                    showlegend=(col == 1),
-                    legendgroup=rater,
-                ),
-                row=1, col=col,
-            )
-
-    fig.update_layout(
-        title="Score Distributions by Rater and Axis",
-        height=500,
-        width=1200,
-        font=dict(size=13),
-    )
-    return pio.to_html(fig, full_html=False)
+    lines.append("")
+    return "\n".join(lines)
 
 
-def chart_frontier_vs_discussion(data: dict) -> str:
-    """Chart 3: Scatter — frontier_score vs answer_count, colored by source."""
+def section_finding_5(data: dict, rater_maps: dict) -> str:
+    """Finding 5: System works at extremes, fails in the middle."""
     questions = data["questions"]
-    seeds = [q for q in questions if is_seed(q)]
-    agents = [q for q in questions if not is_seed(q)]
+    lines = [
+        "### Finding 5: The system works at the extremes, fails in the middle\n",
+    ]
 
+    # Compute average frontier_score per question (across model raters)
+    q_scores: list[tuple[dict, float]] = []
+    for q in questions:
+        model_fs = []
+        for model in RATER_NAMES:
+            fs = frontier_score_for(rater_maps, model, q["id"])
+            if fs is not None:
+                model_fs.append(fs)
+        if model_fs:
+            q_scores.append((q, statistics.mean(model_fs)))
+
+    q_scores.sort(key=lambda x: x[1], reverse=True)
+
+    # Bottom
+    lines.append("**Bottom 5** (correctly identified as low-quality):\n")
+    lines.append("| Score | Type | Title |")
+    lines.append("|------:|------|-------|")
+    for q, fs in q_scores[-5:]:
+        lines.append(
+            f"| {fs:.2f} | {CONTENT_LABELS.get(content_type(q), '?')} | "
+            f"{q['title'][:70]} |"
+        )
+
+    # Top
+    lines.append("\n**Top 5** (correctly identified as high-quality):\n")
+    lines.append("| Score | Type | Title |")
+    lines.append("|------:|------|-------|")
+    for q, fs in q_scores[:5]:
+        lines.append(
+            f"| {fs:.2f} | {CONTENT_LABELS.get(content_type(q), '?')} | "
+            f"{q['title'][:70]} |"
+        )
+
+    # Middle — count IFDS in the 2nd and 3rd quartiles
+    n = len(q_scores)
+    middle = q_scores[n // 4 : 3 * n // 4]
+    ifds_in_middle = sum(1 for q, _ in middle if is_ifds(q))
+    total_middle = len(middle)
+    lines.append("")
+    lines.append(
+        f"In the middle 50% ({total_middle} questions), "
+        f"{ifds_in_middle} are IFDS/tombstone variants — "
+        f"jargon-heavy content incorrectly mixes with legitimate questions."
+    )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def section_interpretation() -> str:
+    lines = [
+        "## 4. What This Means\n",
+        "- The R/N/G axes **do** separate noise from frontier at the extremes. "
+        "Test posts sink, seed conjectures rise.",
+        "- The bottleneck is **rater quality**, not the formula. Haiku (central "
+        "tendency bias) and Qwen (pattern repetition) add noise. Opus and "
+        "Gemini Flash are useful.",
+        "- Content diversity is the **prerequisite**. The rating system cannot fix "
+        "a corpus dominated by one agent's loops.",
+        "- For v2: use only Opus + Gemini Flash as raters, seed diverse communities, "
+        "and the system should work.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def section_limitations(rater_maps: dict) -> str:
+    # Compute overall alpha across all axes for the disclaimer
+    all_alphas = []
+    for axis in AXES:
+        all_qids: set[str] = set()
+        for model in RATER_NAMES:
+            all_qids.update(rater_maps[axis].get(model, {}).keys())
+        matrix: list[dict[str, float]] = []
+        for qid in all_qids:
+            item: dict[str, float] = {}
+            for model in RATER_NAMES:
+                val = rater_maps[axis].get(model, {}).get(qid)
+                if val is not None:
+                    item[model] = val
+            if len(item) >= 2:
+                matrix.append(item)
+        all_alphas.append(krippendorff_alpha(matrix))
+
+    max_alpha = max(all_alphas) if all_alphas else 0
+
+    lines = [
+        "## 5. Limitations\n",
+        "- Human rated only 29/134 questions and is not an expert in all domains.",
+        "- Raters used a rating-only prompt that was iteratively improved during "
+        "the experiment.",
+        "- IFDS/tombstone concentration means most \"agent-generated\" questions "
+        "are from one model on one topic.",
+        f"- Krippendorff's alpha <= {max_alpha:.2f} across all axes — inter-rater "
+        "reliability is below the threshold (0.67) for publishable conclusions.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Charts (plotly)
+# ---------------------------------------------------------------------------
+
+
+def chart_content_breakdown(data: dict) -> str:
+    """Chart 1: Content breakdown — horizontal stacked bar."""
+    questions = data["questions"]
+    counts: dict[str, int] = defaultdict(int)
+    for q in questions:
+        counts[content_type(q)] += 1
+
+    labels = []
+    values = []
+    colors = ["#3498db", "#e74c3c", "#95a5a6", "#2ecc71"]
+    for i, ctype in enumerate(("seed", "ifds", "test", "other")):
+        labels.append(CONTENT_LABELS[ctype])
+        values.append(counts.get(ctype, 0))
+
+    fig = go.Figure(
+        go.Bar(
+            y=["Questions"],
+            x=[values[0]],
+            name=labels[0],
+            orientation="h",
+            marker_color=colors[0],
+            text=[f"{labels[0]}: {values[0]}"],
+            textposition="inside",
+        )
+    )
+    for i in range(1, len(labels)):
+        fig.add_trace(
+            go.Bar(
+                y=["Questions"],
+                x=[values[i]],
+                name=labels[i],
+                orientation="h",
+                marker_color=colors[i],
+                text=[f"{labels[i]}: {values[i]}"],
+                textposition="inside",
+            )
+        )
+
+    fig.update_layout(
+        title=f"Content Breakdown ({sum(values)} questions)",
+        barmode="stack",
+        height=200,
+        width=900,
+        font=dict(size=14),
+        yaxis=dict(showticklabels=False),
+        xaxis_title="Number of questions",
+        showlegend=True,
+        legend=dict(orientation="h", y=-0.3),
+    )
+    return pio.to_html(fig, full_html=False)
+
+
+def chart_rater_profiles(rater_maps: dict) -> str:
+    """Chart 2: Model personalities — grouped bar chart of avg R, N, G per rater."""
     fig = go.Figure()
+    colors = {"rigour": "#e74c3c", "novelty": "#3498db", "generativity": "#2ecc71"}
 
-    for group, color, label in [(seeds, "blue", "[Seed]"), (agents, "orange", "Agent-generated")]:
-        x = [q.get("frontier_score") or 0 for q in group]
-        y = [q.get("answer_count") or 0 for q in group]
-        texts = [q["title"][:60] for q in group]
-        fig.add_trace(go.Scatter(
-            x=x, y=y,
-            mode="markers",
-            marker=dict(color=color, size=8, opacity=0.7),
-            text=texts,
-            hoverinfo="text+x+y",
-            name=label,
-        ))
+    rater_order = RATER_NAMES + [HUMAN_RATER]
+    x_labels = [DISPLAY[r] for r in rater_order]
 
-    # OLS trendline
-    all_x = [q.get("frontier_score") or 0 for q in questions if q.get("frontier_score") is not None]
-    all_y = [q.get("answer_count") or 0 for q in questions if q.get("frontier_score") is not None]
-    if len(all_x) > 2:
-        mean_x = statistics.mean(all_x)
-        mean_y = statistics.mean(all_y)
-        cov = sum((xi - mean_x) * (yi - mean_y) for xi, yi in zip(all_x, all_y))
-        var_x = sum((xi - mean_x) ** 2 for xi in all_x)
-        if var_x > 0:
-            slope = cov / var_x
-            intercept = mean_y - slope * mean_x
-            x_line = [min(all_x), max(all_x)]
-            y_line = [slope * xi + intercept for xi in x_line]
-            fig.add_trace(go.Scatter(
-                x=x_line, y=y_line,
-                mode="lines",
-                line=dict(color="gray", dash="dash"),
-                name=f"OLS (slope={slope:.2f})",
-            ))
-
-    fig.update_layout(
-        title="Frontier Score vs Discussion Depth",
-        xaxis_title="frontier_score",
-        yaxis_title="answer_count",
-        height=500,
-        width=800,
-        font=dict(size=13),
-    )
-    return pio.to_html(fig, full_html=False)
-
-
-def chart_human_vs_opus(rater_maps: dict) -> str:
-    """Chart 4: Scatter — Morgan vs Opus on 29 overlapping questions, 3 subplots."""
-    fig = make_subplots(
-        rows=1, cols=3,
-        subplot_titles=["Rigour", "Novelty", "Generativity"],
-        horizontal_spacing=0.08,
-    )
-
-    for col, axis in enumerate(AXES, 1):
-        opus_scores = rater_maps[axis].get(OPUS_RATER, {})
-        human_scores = rater_maps[axis].get(HUMAN_RATER, {})
-        shared_qids = sorted(set(opus_scores) & set(human_scores))
-
-        x = [opus_scores[qid] for qid in shared_qids]
-        y = [human_scores[qid] for qid in shared_qids]
-
-        # Perfect agreement diagonal
-        if x:
-            lo = min(min(x), min(y)) - 0.5
-            hi = max(max(x), max(y)) + 0.5
-        else:
-            lo, hi = 0.5, 5.5
+    for axis in AXES:
+        avgs = []
+        for rater in rater_order:
+            scores = list(rater_maps[axis].get(rater, {}).values())
+            avgs.append(statistics.mean(scores) if scores else 0)
         fig.add_trace(
-            go.Scatter(
-                x=[lo, hi], y=[lo, hi],
-                mode="lines",
-                line=dict(color="lightgray", dash="dash"),
-                showlegend=False,
-            ),
-            row=1, col=col,
+            go.Bar(
+                name=axis.capitalize(),
+                x=x_labels,
+                y=avgs,
+                marker_color=colors[axis],
+            )
         )
 
-        # Data points
-        fig.add_trace(
-            go.Scatter(
-                x=x, y=y,
-                mode="markers",
-                marker=dict(color="#8e44ad", size=9, opacity=0.8),
-                showlegend=False,
-            ),
-            row=1, col=col,
-        )
-
-        fig.update_xaxes(title_text="Opus score", row=1, col=col)
-        fig.update_yaxes(title_text="Morgan score", row=1, col=col)
-
-    n_points = len(set(rater_maps[AXES[0]].get(OPUS_RATER, {})) &
-                    set(rater_maps[AXES[0]].get(HUMAN_RATER, {})))
     fig.update_layout(
-        title=f"Human vs Opus Agreement (n={n_points})",
+        title="Rater Profiles: Average Score by Axis",
+        barmode="group",
+        yaxis_title="Average score (1-5)",
         height=450,
-        width=1200,
-        font=dict(size=13),
+        width=900,
+        font=dict(size=14),
+        yaxis=dict(range=[0, 5.5]),
     )
     return pio.to_html(fig, full_html=False)
 
 
-def build_html(data: dict, rater_maps: dict, model_errors: dict) -> str:
+def chart_content_type_comparison(data: dict, rater_maps: dict) -> str:
+    """Chart 3: Seeds vs IFDS vs Other — grouped bar chart of avg R, N, G."""
+    questions = data["questions"]
+    colors = {"rigour": "#e74c3c", "novelty": "#3498db", "generativity": "#2ecc71"}
+
+    type_axis: dict[str, dict[str, list[float]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    for q in questions:
+        ctype = content_type(q)
+        if ctype == "test":
+            continue  # too few to be interesting
+        qid = q["id"]
+        for model in RATER_NAMES:
+            for axis in AXES:
+                v = rater_maps[axis].get(model, {}).get(qid)
+                if v is not None:
+                    type_axis[ctype][axis].append(v)
+
+    x_labels = [CONTENT_LABELS[c] for c in ("seed", "ifds", "other")]
+    fig = go.Figure()
+    for axis in AXES:
+        avgs = []
+        for ctype in ("seed", "ifds", "other"):
+            vals = type_axis[ctype][axis]
+            avgs.append(statistics.mean(vals) if vals else 0)
+        fig.add_trace(
+            go.Bar(
+                name=axis.capitalize(),
+                x=x_labels,
+                y=avgs,
+                marker_color=colors[axis],
+            )
+        )
+
+    fig.update_layout(
+        title="Content Type Rating Comparison",
+        barmode="group",
+        yaxis_title="Average score (1-5)",
+        height=450,
+        width=700,
+        font=dict(size=14),
+        yaxis=dict(range=[0, 5.5]),
+    )
+    return pio.to_html(fig, full_html=False)
+
+
+def chart_calibration_vs_human(rater_maps: dict) -> str:
+    """Chart 4: Bar chart — MAE vs Morgan (overall) per model."""
+    models = []
+    maes = []
+    for model in RATER_NAMES:
+        axis_maes = mae_per_axis(rater_maps, model, HUMAN_RATER)
+        vals = [m for m, _ in axis_maes.values() if not math.isnan(m)]
+        overall = statistics.mean(vals) if vals else float("nan")
+        if not math.isnan(overall):
+            models.append(DISPLAY[model])
+            maes.append(overall)
+
+    # Color: highlight the lowest
+    min_mae = min(maes) if maes else 0
+    bar_colors = [
+        "#2ecc71" if abs(m - min_mae) < 0.001 else "#3498db" for m in maes
+    ]
+
+    fig = go.Figure(
+        go.Bar(
+            x=models,
+            y=maes,
+            marker_color=bar_colors,
+            text=[f"{m:.2f}" for m in maes],
+            textposition="outside",
+        )
+    )
+    fig.update_layout(
+        title="Model Calibration Error vs Human (n=29)",
+        yaxis_title="Mean Absolute Error",
+        height=400,
+        width=700,
+        font=dict(size=14),
+        yaxis=dict(range=[0, max(maes) * 1.3] if maes else [0, 2]),
+    )
+    return pio.to_html(fig, full_html=False)
+
+
+def chart_heatmap(data: dict, rater_maps: dict) -> str:
+    """Chart 5: Heatmap — all questions x 5 models, 3 side-by-side subplots."""
+    questions = data["questions"]
+
+    # Compute average frontier_score per question for sorting
+    q_with_fs: list[tuple[dict, float]] = []
+    for q in questions:
+        model_fs = []
+        for model in RATER_NAMES:
+            fs = frontier_score_for(rater_maps, model, q["id"])
+            if fs is not None:
+                model_fs.append(fs)
+        avg_fs = statistics.mean(model_fs) if model_fs else 0
+        q_with_fs.append((q, avg_fs))
+
+    q_with_fs.sort(key=lambda x: x[1], reverse=True)
+    sorted_questions = [q for q, _ in q_with_fs]
+    qids = [q["id"] for q in sorted_questions]
+    q_labels = [f"Q{i + 1}" for i in range(len(qids))]
+    hover_titles = [q.get("title", "")[:60] for q in sorted_questions]
+
+    rater_order = RATER_NAMES
+    short_names = [SHORT_DISPLAY[m] for m in rater_order]
+
+    fig = make_subplots(
+        rows=1,
+        cols=3,
+        subplot_titles=["Rigour", "Novelty", "Generativity"],
+        horizontal_spacing=0.05,
+    )
+
+    colorscale = [
+        [0, "#d32f2f"],
+        [0.25, "#ff9800"],
+        [0.5, "#ffeb3b"],
+        [0.75, "#8bc34a"],
+        [1, "#2e7d32"],
+    ]
+
+    for col_idx, axis in enumerate(AXES, 1):
+        z = []
+        hover_text = []
+        for i, qid in enumerate(qids):
+            row_scores = []
+            row_hover = []
+            for rater in rater_order:
+                score = rater_maps.get(axis, {}).get(rater, {}).get(qid)
+                row_scores.append(score if score is not None else 0)
+                row_hover.append(
+                    f"Q{i + 1}: {hover_titles[i]}<br>"
+                    f"{SHORT_DISPLAY[rater]}: {score}"
+                )
+            z.append(row_scores)
+            hover_text.append(row_hover)
+
+        fig.add_trace(
+            go.Heatmap(
+                z=z,
+                x=short_names,
+                y=q_labels,
+                colorscale=colorscale,
+                zmin=1,
+                zmax=5,
+                showscale=(col_idx == 3),
+                text=hover_text,
+                hoverinfo="text",
+                colorbar=dict(title="Score", x=1.02)
+                if col_idx == 3
+                else None,
+            ),
+            row=1,
+            col=col_idx,
+        )
+
+    fig.update_layout(
+        title="All Questions x All Raters (sorted by frontier_score, Q1=highest)",
+        height=max(400, len(qids) * 4 + 100),
+        width=1200,
+        yaxis=dict(autorange="reversed", tickfont=dict(size=6)),
+        yaxis2=dict(autorange="reversed", tickfont=dict(size=6)),
+        yaxis3=dict(autorange="reversed", tickfont=dict(size=6)),
+    )
+    return pio.to_html(fig, full_html=False, include_plotlyjs=False)
+
+
+def build_html(data: dict, rater_maps: dict) -> str:
     log.info("Building charts...")
-    chart1 = chart_small_model_error_vs_opus(model_errors)
-    chart2 = chart_score_distributions(rater_maps)
-    chart3 = chart_frontier_vs_discussion(data)
-    chart4 = chart_human_vs_opus(rater_maps)
+    chart1 = chart_content_breakdown(data)
+    chart2 = chart_rater_profiles(rater_maps)
+    chart3 = chart_content_type_comparison(data, rater_maps)
+    chart4 = chart_calibration_vs_human(rater_maps)
+    chart5 = chart_heatmap(data, rater_maps)
 
     return "\n".join([
         "<!DOCTYPE html>",
@@ -856,14 +1136,16 @@ def build_html(data: dict, rater_maps: dict, model_errors: dict) -> str:
         "</style>",
         "</head><body>",
         "<h1>Rating Analysis Charts (2026-03-19)</h1>",
-        "<h2>1. Small Model Calibration Error vs Opus</h2>",
+        "<h2>1. Content Breakdown</h2>",
         f'<div class="chart">{chart1}</div>',
-        "<h2>2. Score Distributions by Rater</h2>",
+        "<h2>2. Rater Profiles</h2>",
         f'<div class="chart">{chart2}</div>',
-        "<h2>3. Frontier Score vs Discussion Depth</h2>",
+        "<h2>3. Content Type Comparison</h2>",
         f'<div class="chart">{chart3}</div>',
-        "<h2>4. Human vs Opus Agreement</h2>",
+        "<h2>4. Model Calibration vs Human</h2>",
         f'<div class="chart">{chart4}</div>',
+        "<h2>5. All Questions x All Raters</h2>",
+        f'<div class="chart">{chart5}</div>',
         "</body></html>",
     ])
 
@@ -873,55 +1155,43 @@ def build_html(data: dict, rater_maps: dict, model_errors: dict) -> str:
 # ---------------------------------------------------------------------------
 
 
-def build_report(data: dict) -> tuple[str, dict, dict]:
-    """Assemble markdown report. Returns (markdown, rater_maps, model_errors)."""
+def build_report(data: dict) -> tuple[str, dict]:
+    """Assemble markdown report. Returns (markdown, rater_maps)."""
     log.info("Computing stats...")
     rater_maps = build_rater_axis_maps(data)
 
-    n_questions = len(data["questions"])
-    n_seeds = sum(1 for q in data["questions"] if is_seed(q))
-    n_rated = len(data["ratings"])
-
-    # Count questions Opus rated
-    opus_qids = set()
-    for axis in AXES:
-        opus_qids.update(rater_maps[axis].get(OPUS_RATER, {}).keys())
-    n_opus = len(opus_qids)
-
-    # Count questions human rated
-    human_qids = set()
-    for axis in AXES:
-        human_qids.update(rater_maps[axis].get(HUMAN_RATER, {}).keys())
-    n_human = len(human_qids)
-
     header = (
-        f"# Rating Analysis Report (2026-03-19)\n\n"
-        f"**{n_questions} questions** | **{n_seeds} seeds** | **{n_rated} rated**\n\n"
-        f"**Reference:** Opus 4.6 ({n_opus} questions) | "
-        f"**Validator:** Morgan ({n_human} questions) | "
-        f"**Calibration targets:** 4 small models\n"
+        "# Rating Experiment Report -- 2026-03-19\n\n"
+        "*5 AI models + 1 human rated 134 questions on "
+        "Rigour/Novelty/Generativity (1-5 Likert scales)*\n"
     )
 
-    s1_md, human_opus_mae = section_human_validates_opus(rater_maps)
-    s2_md, model_errors = section_small_vs_opus(rater_maps)
-    s3_md, frontier_stats = section_frontier_ranking(data)
-    s4_md, correlations = section_discussion_correlation(data)
-    s5_md, controversial = section_disagreement(data, rater_maps)
-    s6_md = section_key_findings(
-        human_opus_mae, model_errors, frontier_stats, correlations, controversial,
-    )
+    s1 = section_platform_overview(data)
+    s2 = section_experiment_setup()
+    s3_header = "## 3. Surprising Findings\n"
+    f1 = section_finding_1(rater_maps)
+    f2 = section_finding_2(data, rater_maps)
+    f3 = section_finding_3(data, rater_maps)
+    f4 = section_finding_4(data, rater_maps)
+    f5 = section_finding_5(data, rater_maps)
+    s4 = section_interpretation()
+    s5 = section_limitations(rater_maps)
 
     report = "\n".join([
         header,
-        s1_md,
-        s2_md,
-        s3_md,
-        s4_md,
-        s5_md,
-        s6_md,
+        s1,
+        s2,
+        s3_header,
+        f1,
+        f2,
+        f3,
+        f4,
+        f5,
+        s4,
+        s5,
     ])
 
-    return report, rater_maps, model_errors
+    return report, rater_maps
 
 
 # ---------------------------------------------------------------------------
@@ -940,11 +1210,11 @@ def main() -> None:
 
     OUTPUT_MD.parent.mkdir(parents=True, exist_ok=True)
 
-    report, rater_maps, model_errors = build_report(data)
+    report, rater_maps = build_report(data)
     log.info("Writing report to %s", OUTPUT_MD)
     OUTPUT_MD.write_text(report)
 
-    html = build_html(data, rater_maps, model_errors)
+    html = build_html(data, rater_maps)
     log.info("Writing charts to %s", OUTPUT_HTML)
     OUTPUT_HTML.write_text(html)
 
