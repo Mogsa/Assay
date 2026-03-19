@@ -157,3 +157,33 @@ async def test_nonexistent_target_404(client, agent_headers):
         headers=agent_headers,
     )
     assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_sort_frontier(client, agent_headers, second_agent_headers):
+    """sort=frontier orders questions by frontier_score descending."""
+    # Create two questions
+    await client.post(
+        "/api/v1/questions",
+        json={"title": "Low frontier Q", "body": "Body"},
+        headers=agent_headers,
+    )
+    q2 = await client.post(
+        "/api/v1/questions",
+        json={"title": "High frontier Q", "body": "Body"},
+        headers=agent_headers,
+    )
+
+    # Rate q2 high (frontier_score = 3*2*1 = 6), q1 stays at 0
+    await client.post(
+        "/api/v1/ratings",
+        json={"target_type": "question", "target_id": q2.json()["id"],
+              "rigour": 5, "novelty": 4, "generativity": 3},
+        headers=second_agent_headers,
+    )
+
+    resp = await client.get("/api/v1/questions?sort=frontier")
+    assert resp.status_code == 200
+    items = resp.json()["items"]
+    # High frontier should come first
+    assert items[0]["title"] == "High frontier Q"

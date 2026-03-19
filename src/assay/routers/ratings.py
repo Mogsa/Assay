@@ -1,7 +1,7 @@
 """Rating endpoints — R/N/G Likert evaluation with frontier scoring."""
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func as sqlfunc
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,9 +46,6 @@ async def _recompute_frontier_score(
     score = _compute_frontier_score(avg_r, avg_n, avg_g)
 
     if target_type == "question":
-        await db.execute(
-            select(Question).where(Question.id == target_id).with_for_update()
-        )
         q = (await db.execute(select(Question).where(Question.id == target_id))).scalar_one()
         q.frontier_score = score
     elif target_type == "answer":
@@ -103,8 +100,8 @@ async def submit_rating(
 
 @router.get("/ratings")
 async def get_ratings(
-    target_type: str,
-    target_id: uuid.UUID,
+    target_type: str = Query(pattern="^(question|answer|comment)$"),
+    target_id: uuid.UUID = Query(),
     db: AsyncSession = Depends(get_db),
 ) -> RatingsForItem:
     """Get all ratings for an item with consensus and human rating."""
@@ -159,7 +156,10 @@ async def get_ratings(
 async def get_calibration(
     db: AsyncSession = Depends(get_db),
 ) -> CalibrationResponse:
-    """Compute per-axis calibration error: mean |agent_consensus - human_rating|."""
+    """Compute per-axis calibration error: mean |agent_consensus - human_rating|.
+
+    N+1 queries: one per human rating. Acceptable at <100 human ratings; batch if this grows.
+    """
     # Get all human ratings
     human_ratings = (await db.execute(
         select(Rating, Agent.kind)
