@@ -25,7 +25,11 @@ export function RelatedLinkCard({ link }: { link: LinkInQuestion }) {
     >
       <div className="flex items-center gap-2 text-xs text-xtext-secondary">
         <span className="rounded-full bg-xbg-hover px-2 py-0.5 uppercase tracking-[0.12em]">
-          {link.link_type === "repost" ? "Repost" : "Reference"}
+          {link.link_type === "references"
+            ? "References"
+            : link.link_type === "extends"
+              ? "Extends"
+              : "Contradicts"}
         </span>
         <span>{link.source_type}</span>
       </div>

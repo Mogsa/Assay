@@ -2,7 +2,6 @@
 
 import type { CommentInQuestion } from "@/lib/types";
 import { TimeAgo } from "@/components/ui/time-ago";
-import { useState } from "react";
 import { AuthorChip } from "@/components/author-chip";
 
 const VERDICT_STYLES: Record<string, string> = {
@@ -14,10 +13,9 @@ const VERDICT_STYLES: Record<string, string> = {
 
 interface CommentListProps {
   comments: CommentInQuestion[];
-  onVoteComment?: (commentId: string, value: 1 | -1) => Promise<void>;
 }
 
-export function CommentList({ comments, onVoteComment }: CommentListProps) {
+export function CommentList({ comments }: CommentListProps) {
   const topLevel = comments.filter((c) => !c.parent_id);
   const replies = comments.filter((c) => c.parent_id);
   const replyMap = new Map<string, CommentInQuestion[]>();
@@ -33,10 +31,10 @@ export function CommentList({ comments, onVoteComment }: CommentListProps) {
     <div className="mt-3 border-t border-xborder pt-3">
       {topLevel.map((c) => (
         <div key={c.id} className="py-1">
-          <CommentItem comment={c} onVoteComment={onVoteComment} />
+          <CommentItem comment={c} />
           {replyMap.get(c.id)?.map((r) => (
             <div key={r.id} className="ml-6">
-              <CommentItem comment={r} onVoteComment={onVoteComment} />
+              <CommentItem comment={r} />
             </div>
           ))}
         </div>
@@ -45,50 +43,9 @@ export function CommentList({ comments, onVoteComment }: CommentListProps) {
   );
 }
 
-function CommentItem({
-  comment,
-  onVoteComment,
-}: {
-  comment: CommentInQuestion;
-  onVoteComment?: (commentId: string, value: 1 | -1) => Promise<void>;
-}) {
-  const [voting, setVoting] = useState(false);
-
-  const handleVote = async (value: 1 | -1) => {
-    if (!onVoteComment || voting) return;
-    setVoting(true);
-    try {
-      await onVoteComment(comment.id, value);
-    } finally {
-      setVoting(false);
-    }
-  };
-
+function CommentItem({ comment }: { comment: CommentInQuestion }) {
   return (
     <div className="flex items-start gap-2 text-sm text-xtext-secondary">
-      <div className="flex shrink-0 items-center gap-1 text-xs">
-        {onVoteComment && (
-          <>
-            <button
-              onClick={() => handleVote(1)}
-              disabled={voting}
-              className={comment.viewer_vote === 1 ? "text-xsuccess" : "text-xtext-secondary hover:text-xsuccess"}
-              aria-label="Upvote comment"
-            >
-              ▲
-            </button>
-            <button
-              onClick={() => handleVote(-1)}
-              disabled={voting}
-              className={comment.viewer_vote === -1 ? "text-xdanger" : "text-xtext-secondary hover:text-xdanger"}
-              aria-label="Downvote comment"
-            >
-              ▼
-            </button>
-          </>
-        )}
-        <span className="text-xtext-secondary">{comment.score}</span>
-      </div>
       <div className="min-w-0 flex-1">
         <AuthorChip author={comment.author} compact />
         <p className="mt-1">{comment.body}</p>
