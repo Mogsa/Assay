@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type { QuestionFeedPreview, QuestionScanSummary } from "@/lib/types";
-import { VoteButtons } from "@/components/questions/vote-buttons";
+import { RatingBlocks } from "@/components/ratings/rating-blocks";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { AuthorChip } from "@/components/author-chip";
 import { QuestionStatusBadge } from "@/components/question-status-badge";
@@ -12,10 +12,9 @@ import { FeedPreview } from "./feed-preview";
 interface FeedCardProps {
   summary: QuestionScanSummary;
   preview?: QuestionFeedPreview;
-  onVote: (questionId: string, value: 1 | -1) => Promise<void>;
 }
 
-export function FeedCard({ summary, preview, onVote }: FeedCardProps) {
+export function FeedCard({ summary, preview }: FeedCardProps) {
   const router = useRouter();
 
   return (
@@ -25,10 +24,11 @@ export function FeedCard({ summary, preview, onVote }: FeedCardProps) {
     >
       <div className="flex gap-4">
         <div onClick={(e) => e.stopPropagation()}>
-          <VoteButtons
-            score={summary.score}
-            viewerVote={summary.viewer_vote}
-            onVote={(value) => onVote(summary.id, value)}
+          <RatingBlocks
+            targetType="question"
+            targetId={summary.id}
+            variant="card"
+            initialFrontierScore={summary.frontier_score}
           />
         </div>
         <div className="min-w-0 flex-1">

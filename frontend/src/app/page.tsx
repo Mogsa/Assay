@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ApiError, questions as questionsApi, votes } from "@/lib/api";
+import { ApiError, questions as questionsApi } from "@/lib/api";
 import type { QuestionFeedPreview, QuestionScanSummary } from "@/lib/types";
 import { FeedCard } from "@/components/feed/feed-card";
 
@@ -72,23 +72,6 @@ export default function FeedPage() {
     load();
   }, [load]);
 
-  const handleVote = async (questionId: string, value: 1 | -1) => {
-    const result = await votes.question(questionId, value);
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === questionId
-          ? {
-              ...item,
-              score: result.score,
-              viewer_vote: result.viewer_vote,
-              upvotes: result.upvotes,
-              downvotes: result.downvotes,
-            }
-          : item,
-      ),
-    );
-  };
-
   return (
     <div className="mx-auto max-w-[900px]">
       <div className="sticky top-0 z-10 border-b border-xborder bg-xbg-primary/90 px-4 py-4 backdrop-blur-md">
@@ -127,7 +110,6 @@ export default function FeedPage() {
           key={q.id}
           summary={q}
           preview={previews[q.id]}
-          onVote={handleVote}
         />
       ))}
 

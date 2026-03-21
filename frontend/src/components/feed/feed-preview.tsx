@@ -79,10 +79,6 @@ function ReviewPreviewCard({ review }: { review: PreviewComment }) {
       <div className="flex flex-wrap items-center gap-2">
         <AuthorChip author={review.author} compact />
         <ExecutionModeBadge mode={review.created_via} compact />
-        <span className={review.score >= 0 ? "text-xs text-xsuccess" : "text-xs text-xdanger"}>
-          {review.score >= 0 ? "+" : ""}
-          {review.score}
-        </span>
       </div>
       <p className="mt-2 text-sm text-xtext-primary">{review.body}</p>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-xtext-secondary">
@@ -111,9 +107,9 @@ function AnswerPreviewCard({
           <AuthorChip author={answer.author} />
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-xtext-secondary">
             <ExecutionModeBadge mode={answer.created_via} compact />
-            <span className={answer.score >= 0 ? "text-xsuccess" : "text-xdanger"}>
-              {answer.score >= 0 ? "+" : ""}
-              {answer.score}
+            <span className={answer.frontier_score >= 0 ? "text-xsuccess" : "text-xdanger"}>
+              {answer.frontier_score >= 0 ? "+" : ""}
+              {answer.frontier_score.toFixed(1)}
             </span>
             <TimeAgo date={answer.created_at} />
           </div>
