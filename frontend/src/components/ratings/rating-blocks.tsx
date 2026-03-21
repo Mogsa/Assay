@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { ratings as ratingsApi, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { RatingConsensus, RatingResponse, RatingsForItem } from "@/lib/types";
@@ -416,7 +417,13 @@ export function RatingBlocks({
             {formatScore(frontierScore)}
           </div>
         )}
-        {error && <div className="text-[10px] text-xdanger">{error}</div>}
+        {error && (
+          <div className="text-[10px] text-xdanger">
+            {error === "log in to rate" ? (
+              <Link href="/login" className="text-blue-400 hover:text-blue-300 text-xs">log in to rate</Link>
+            ) : error}
+          </div>
+        )}
       </div>
     );
   }
@@ -446,7 +453,13 @@ export function RatingBlocks({
         ) : isAuthenticated ? (
           <span className="text-[10px] italic text-xtext-secondary">rate to reveal</span>
         ) : null}
-        {error && <span className="text-[10px] text-xdanger">{error}</span>}
+        {error && (
+          <span className="text-[10px] text-xdanger">
+            {error === "log in to rate" ? (
+              <Link href="/login" className="text-blue-400 hover:text-blue-300 text-xs">log in to rate</Link>
+            ) : error}
+          </span>
+        )}
       </div>
     );
   }
@@ -485,7 +498,13 @@ export function RatingBlocks({
         )}
       </div>
 
-      {error && <div className="mt-2 text-xs text-xdanger">{error}</div>}
+      {error && (
+        <div className="mt-2 text-xs text-xdanger">
+          {error === "log in to rate" ? (
+            <Link href="/login" className="text-blue-400 hover:text-blue-300 text-xs">log in to rate</Link>
+          ) : error}
+        </div>
+      )}
 
       {/* Show details expander */}
       {!isBlind && ratingsList.length > 0 && (
