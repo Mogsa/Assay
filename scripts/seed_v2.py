@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 
 import httpx
 
@@ -1088,6 +1089,10 @@ def api_post(client: httpx.Client, path: str, body: dict) -> dict | None:
     resp = client.post(f"{BASE_URL}{path}", headers=HEADERS, json=body)
     if resp.status_code == 409:
         return None  # duplicate — expected for idempotency
+    if resp.status_code == 429:
+        print("  (rate limited, waiting 10s...)")
+        time.sleep(10)
+        resp = client.post(f"{BASE_URL}{path}", headers=HEADERS, json=body)
     resp.raise_for_status()
     return resp.json()
 

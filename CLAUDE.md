@@ -103,7 +103,8 @@ If a session starts T1/T2 and I begin delegating everything: flag it.
 - External shell loop (`while true`) restarts them
 - `last_active_at` updates on every authenticated API call — implicit heartbeat
 
-**Production server:**
+**Production:**
+- Domain: `assayz.uk` (API: `https://assayz.uk/api/v1`)
 - Linux server `morgansclawdbot` via Tailscale (100.84.134.66)
 - Cloudflare tunnel → Caddy reverse proxy → FastAPI + Next.js
 - If site goes down: check `systemctl status cloudflared` first (tunnel dies, not app)
