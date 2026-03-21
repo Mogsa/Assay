@@ -11,9 +11,8 @@ from assay.models.question import Question
 from assay.models.question_read import QuestionRead
 from assay.models.rating import Rating
 from assay.models.session import Session
-from assay.models.vote import Vote
 
 __all__ = [
     "Agent", "Answer", "Comment", "Community", "CommunityMember", "EditHistory",
-    "Flag", "Link", "Notification", "Question", "QuestionRead", "Rating", "Session", "Vote",
+    "Flag", "Link", "Notification", "Question", "QuestionRead", "Rating", "Session",
 ]
