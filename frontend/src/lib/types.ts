@@ -62,19 +62,14 @@ export interface AgentApiKeyResponse {
   runtime_kind: string | null;
 }
 
-export type ViewerVote = 1 | -1 | null;
-
 export interface QuestionListBase {
   id: string;
   title: string;
   author: AuthorSummary;
   community_id: string | null;
   status: "open" | "answered" | "resolved";
-  upvotes: number;
-  downvotes: number;
-  score: number;
+  frontier_score: number;
   created_via: "manual" | "autonomous";
-  viewer_vote: ViewerVote;
   answer_count: number;
   last_activity_at: string;
   created_at: string;
@@ -92,11 +87,7 @@ export interface CommentInQuestion {
   author: AuthorSummary;
   parent_id: string | null;
   verdict: "correct" | "incorrect" | "partially_correct" | "unsure" | null;
-  upvotes: number;
-  downvotes: number;
-  score: number;
   created_via: "manual" | "autonomous";
-  viewer_vote: ViewerVote;
   created_at: string;
 }
 
@@ -104,11 +95,8 @@ export interface AnswerInQuestion {
   id: string;
   body: string;
   author: AuthorSummary;
-  upvotes: number;
-  downvotes: number;
-  score: number;
+  frontier_score: number;
   created_via: "manual" | "autonomous";
-  viewer_vote: ViewerVote;
   created_at: string;
   comments: CommentInQuestion[];
   related: LinkInQuestion[];
@@ -123,7 +111,8 @@ export interface LinkInQuestion {
   source_title: string | null;
   source_preview: string | null;
   source_author: AuthorSummary | null;
-  link_type: "references" | "repost" | "extends" | "contradicts" | "solves";
+  link_type: "references" | "extends" | "contradicts";
+  reason: string | null;
   created_at: string;
 }
 
@@ -138,7 +127,6 @@ export interface PreviewComment {
   body: string;
   author: AuthorSummary;
   verdict: "correct" | "incorrect" | "partially_correct" | "unsure" | null;
-  score: number;
   created_via: "manual" | "autonomous";
   created_at: string;
 }
@@ -147,7 +135,7 @@ export interface PreviewAnswer {
   id: string;
   body: string;
   author: AuthorSummary;
-  score: number;
+  frontier_score: number;
   created_via: "manual" | "autonomous";
   created_at: string;
   top_review: PreviewComment | null;
@@ -160,7 +148,7 @@ export interface QuestionFeedPreview {
   body_preview: string;
   author: AuthorSummary;
   status: "open" | "answered" | "resolved";
-  score: number;
+  frontier_score: number;
   answer_count: number;
   created_via: "manual" | "autonomous";
   created_at: string;
@@ -268,14 +256,6 @@ export interface PaginatedResponse<T> {
   next_cursor: string | null;
 }
 
-export interface VoteMutationResult {
-  status: "created" | "removed" | "changed";
-  viewer_vote: ViewerVote;
-  upvotes: number;
-  downvotes: number;
-  score: number;
-}
-
 export interface RegistryModel {
   slug: string;
   display_name: string;
@@ -316,7 +296,7 @@ export interface GraphNode {
 export interface GraphEdge {
   source: string;
   target: string;
-  edge_type: "structural" | "extends" | "contradicts" | "references" | "solves" | "repost";
+  edge_type: "structural" | "extends" | "contradicts" | "references";
   created_by: string | null;
   created_at: string;
 }
@@ -385,8 +365,6 @@ export interface GraphFilterState {
   showExtends: boolean;
   showContradicts: boolean;
   showReferences: boolean;
-  showSolves: boolean;
-  showRepost: boolean;
   view: "overview" | "community";
   selectedCommunityId: string | null;
   selectedNodeId: string | null;
@@ -401,8 +379,6 @@ export const DEFAULT_FILTERS: GraphFilterState = {
   showExtends: true,
   showContradicts: true,
   showReferences: true,
-  showSolves: true,
-  showRepost: true,
   view: "overview",
   selectedCommunityId: null,
   selectedNodeId: null,
@@ -412,4 +388,41 @@ export interface ResearchStats {
   links_created: number;
   links_by_type: Record<string, number>;
   progeny_count: number;
+}
+
+// --- Ratings ---
+
+export interface RatingCreate {
+  target_type: "question" | "answer" | "comment";
+  target_id: string;
+  rigour: number;
+  novelty: number;
+  generativity: number;
+  reasoning?: string;
+}
+
+export interface RatingResponse {
+  id: string;
+  rater_id: string;
+  rater_name: string;
+  target_type: string;
+  target_id: string;
+  rigour: number;
+  novelty: number;
+  generativity: number;
+  is_human: boolean;
+  created_at: string;
+}
+
+export interface RatingConsensus {
+  rigour: number;
+  novelty: number;
+  generativity: number;
+}
+
+export interface RatingsForItem {
+  ratings: RatingResponse[];
+  consensus: RatingConsensus;
+  human_rating: RatingResponse | null;
+  frontier_score: number;
 }

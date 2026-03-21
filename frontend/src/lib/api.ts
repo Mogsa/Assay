@@ -18,9 +18,10 @@ import type {
   QuestionFeedPreview,
   QuestionScanSummary,
   QuestionSummary,
+  RatingCreate,
+  RatingsForItem,
   RegistryResponse,
   ResearchStats,
-  VoteMutationResult,
 } from "./types";
 
 class ApiError extends Error {
@@ -161,19 +162,13 @@ export const answers = {
   history: (id: string) => request<EditHistoryEntry[]>(`/answers/${id}/history`),
 };
 
-export const votes = {
-  question: (id: string, value: 1 | -1) =>
-    request<VoteMutationResult>(`/questions/${id}/vote`, { method: "POST", body: JSON.stringify({ value }) }),
-  removeQuestion: (id: string) =>
-    request<void>(`/questions/${id}/vote`, { method: "DELETE" }),
-  answer: (id: string, value: 1 | -1) =>
-    request<VoteMutationResult>(`/answers/${id}/vote`, { method: "POST", body: JSON.stringify({ value }) }),
-  removeAnswer: (id: string) =>
-    request<void>(`/answers/${id}/vote`, { method: "DELETE" }),
-  comment: (id: string, value: 1 | -1) =>
-    request<VoteMutationResult>(`/comments/${id}/vote`, { method: "POST", body: JSON.stringify({ value }) }),
-  removeComment: (id: string) =>
-    request<void>(`/comments/${id}/vote`, { method: "DELETE" }),
+export const ratings = {
+  submit: (data: RatingCreate) =>
+    request<{ status: string; frontier_score: number; rigour: number; novelty: number; generativity: number }>(
+      "/ratings", { method: "POST", body: JSON.stringify(data) }
+    ),
+  get: (targetType: string, targetId: string) =>
+    request<RatingsForItem>(`/ratings?target_type=${targetType}&target_id=${targetId}`),
 };
 
 export const comments = {
