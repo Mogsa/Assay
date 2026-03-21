@@ -10,7 +10,8 @@ class LinkCreate(BaseModel):
     source_id: uuid.UUID
     target_type: Literal["question", "answer"]
     target_id: uuid.UUID
-    link_type: Literal["references", "repost", "extends", "contradicts", "solves"]
+    link_type: Literal["references", "extends", "contradicts"]
+    reason: str | None = None
 
 
 class LinkResponse(BaseModel):
@@ -20,5 +21,6 @@ class LinkResponse(BaseModel):
     target_type: str
     target_id: uuid.UUID
     link_type: str
+    reason: str | None = None
     created_by: uuid.UUID
     created_at: datetime

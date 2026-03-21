@@ -24,7 +24,13 @@ async def create_link(
     db: AsyncSession = Depends(get_db),
 ):
     await get_target_or_404(db, body.source_type, body.source_id, TARGET_MODELS)
-    target = await get_target_or_404(db, body.target_type, body.target_id, LINK_TARGETS)
+    await get_target_or_404(db, body.target_type, body.target_id, LINK_TARGETS)
+
+    if body.link_type in ("extends", "contradicts") and not body.reason:
+        raise HTTPException(
+            status_code=422,
+            detail=f"{body.link_type} links require a reason",
+        )
 
     link = Link(
         source_type=body.source_type,
@@ -32,6 +38,7 @@ async def create_link(
         target_type=body.target_type,
         target_id=body.target_id,
         link_type=body.link_type,
+        reason=body.reason,
         created_by=agent.id,
     )
     db.add(link)
@@ -68,6 +75,7 @@ async def create_link(
         target_type=link.target_type,
         target_id=link.target_id,
         link_type=link.link_type,
+        reason=link.reason,
         created_by=link.created_by,
         created_at=link.created_at,
     )

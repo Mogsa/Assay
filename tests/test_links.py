@@ -59,6 +59,7 @@ async def test_link_appears_in_question_detail(client, agent_headers):
             "target_type": "question",
             "target_id": q1.json()["id"],
             "link_type": "extends",
+            "reason": "Q2 extends the original",
         },
         headers=agent_headers,
     )
@@ -102,6 +103,7 @@ async def test_answer_contradicts_answer(client, agent_headers, second_agent_hea
             "target_type": "answer",
             "target_id": a1.json()["id"],
             "link_type": "contradicts",
+            "reason": "Answer B directly contradicts Answer A",
         },
         headers=second_agent_headers,
     )
@@ -285,7 +287,7 @@ async def test_comment_can_be_link_source(client, agent_headers, second_agent_he
     assert detail.json()["related"][0]["source_type"] == "comment"
 
 
-async def test_repost_resurfaces_question(client, agent_headers, second_agent_headers):
+async def test_link_resurfaces_question(client, agent_headers, second_agent_headers):
     target_q = await client.post(
         "/api/v1/questions",
         json={"title": "Original", "body": "Body"},
@@ -305,7 +307,7 @@ async def test_repost_resurfaces_question(client, agent_headers, second_agent_he
             "source_id": source_q.json()["id"],
             "target_type": "question",
             "target_id": target_q.json()["id"],
-            "link_type": "repost",
+            "link_type": "references",
         },
         headers=second_agent_headers,
     )
@@ -314,4 +316,150 @@ async def test_repost_resurfaces_question(client, agent_headers, second_agent_he
     detail = await client.get(f"/api/v1/questions/{target_q.json()['id']}")
     assert detail.status_code == 200
     assert detail.json()["last_activity_at"] >= original_activity
-    assert detail.json()["related"][0]["link_type"] == "repost"
+    assert detail.json()["related"][0]["link_type"] == "references"
+
+
+async def test_extends_requires_reason(client, agent_headers):
+    """extends link without reason -> 422."""
+    q1 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q1", "body": "B"},
+        headers=agent_headers,
+    )
+    q2 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q2", "body": "B"},
+        headers=agent_headers,
+    )
+    resp = await client.post(
+        "/api/v1/links",
+        json={
+            "source_type": "question",
+            "source_id": q1.json()["id"],
+            "target_type": "question",
+            "target_id": q2.json()["id"],
+            "link_type": "extends",
+        },
+        headers=agent_headers,
+    )
+    assert resp.status_code == 422
+
+
+async def test_extends_with_reason_succeeds(client, agent_headers):
+    """extends link with reason -> 201."""
+    q1 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q1r", "body": "B"},
+        headers=agent_headers,
+    )
+    q2 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q2r", "body": "B"},
+        headers=agent_headers,
+    )
+    resp = await client.post(
+        "/api/v1/links",
+        json={
+            "source_type": "question",
+            "source_id": q1.json()["id"],
+            "target_type": "question",
+            "target_id": q2.json()["id"],
+            "link_type": "extends",
+            "reason": "Q1 generalises Q2's approach to the non-compact case",
+        },
+        headers=agent_headers,
+    )
+    assert resp.status_code == 201
+
+
+async def test_references_without_reason_succeeds(client, agent_headers):
+    """references link without reason -> 201."""
+    q1 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q1ref", "body": "B"},
+        headers=agent_headers,
+    )
+    q2 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q2ref", "body": "B"},
+        headers=agent_headers,
+    )
+    resp = await client.post(
+        "/api/v1/links",
+        json={
+            "source_type": "question",
+            "source_id": q1.json()["id"],
+            "target_type": "question",
+            "target_id": q2.json()["id"],
+            "link_type": "references",
+        },
+        headers=agent_headers,
+    )
+    assert resp.status_code == 201
+
+
+async def test_solves_link_type_rejected(client, agent_headers):
+    """solves link type -> 422 (no longer valid)."""
+    q1 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q1s", "body": "B"},
+        headers=agent_headers,
+    )
+    q2 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q2s", "body": "B"},
+        headers=agent_headers,
+    )
+    resp = await client.post(
+        "/api/v1/links",
+        json={
+            "source_type": "question",
+            "source_id": q1.json()["id"],
+            "target_type": "question",
+            "target_id": q2.json()["id"],
+            "link_type": "solves",
+        },
+        headers=agent_headers,
+    )
+    assert resp.status_code == 422
+
+
+async def test_competing_links_same_pair(client, agent_headers, second_agent_headers):
+    """Two agents can create different links between same pair."""
+    q1 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q1c", "body": "B"},
+        headers=agent_headers,
+    )
+    q2 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q2c", "body": "B"},
+        headers=agent_headers,
+    )
+    q1id, q2id = q1.json()["id"], q2.json()["id"]
+    r1 = await client.post(
+        "/api/v1/links",
+        json={
+            "source_type": "question",
+            "source_id": q1id,
+            "target_type": "question",
+            "target_id": q2id,
+            "link_type": "extends",
+            "reason": "Agent 1 thinks this extends",
+        },
+        headers=agent_headers,
+    )
+    assert r1.status_code == 201
+    r2 = await client.post(
+        "/api/v1/links",
+        json={
+            "source_type": "question",
+            "source_id": q1id,
+            "target_type": "question",
+            "target_id": q2id,
+            "link_type": "references",
+            "reason": "Agent 2 thinks this is just a reference",
+        },
+        headers=second_agent_headers,
+    )
+    assert r2.status_code == 201
