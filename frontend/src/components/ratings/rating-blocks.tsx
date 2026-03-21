@@ -26,6 +26,8 @@ interface RatingBlocksProps {
 // Constants
 // ---------------------------------------------------------------------------
 
+const ERR_AUTH = "log in to rate";
+
 const AXES: Axis[] = ["rigour", "novelty", "generativity"];
 const AXIS_LABELS: Record<Axis, string> = { rigour: "R", novelty: "N", generativity: "G" };
 const MAX_RATING = 5;
@@ -68,13 +70,7 @@ function formatScore(score: number): string {
 
 function isBlindGate(data: RatingsForItem, isAuthenticated: boolean): boolean {
   if (!isAuthenticated) return false;
-  // Blind: authenticated, empty ratings, consensus all zero
-  return (
-    data.ratings.length === 0 &&
-    data.consensus.rigour === 0 &&
-    data.consensus.novelty === 0 &&
-    data.consensus.generativity === 0
-  );
+  return data.ratings.length === 0 && data.human_rating === null;
 }
 
 // ---------------------------------------------------------------------------
@@ -259,7 +255,6 @@ export function RatingBlocks({
   const [consensus, setConsensus] = useState<RatingConsensus>(initialConsensus ?? ZERO_CONSENSUS);
   const [frontierScore, setFrontierScore] = useState<number>(initialFrontierScore ?? 0);
   const [ratingsList, setRatingsList] = useState<RatingResponse[]>([]);
-  const [ratingCount, setRatingCount] = useState(0);
 
   // Interaction state
   const [selections, setSelections] = useState<Record<Axis, number | null>>({
@@ -279,6 +274,9 @@ export function RatingBlocks({
   const [error, setError] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
+  // Derived — always in sync with ratingsList, no separate state needed
+  const ratingCount = ratingsList.length;
+
   // ------- Fetch ratings -------
   const fetchRatings = useCallback(async () => {
     try {
@@ -286,7 +284,6 @@ export function RatingBlocks({
       setConsensus(data.consensus);
       setFrontierScore(data.frontier_score);
       setRatingsList(data.ratings);
-      setRatingCount(data.ratings.length);
 
       const isAuthed = !!user;
       if (isBlindGate(data, isAuthed)) {
@@ -333,11 +330,15 @@ export function RatingBlocks({
         setHasRated(true);
         setIsBlind(false);
         // Re-fetch to get full consensus + ratings list
-        await fetchRatings();
-        onRated?.();
+        try {
+          await fetchRatings();
+          onRated?.();
+        } catch {
+          // Re-fetch failed but rating was saved — don't fire callback with stale data
+        }
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
-          setError("log in to rate");
+          setError(ERR_AUTH);
         } else {
           setError("rating failed");
         }
@@ -419,7 +420,7 @@ export function RatingBlocks({
         )}
         {error && (
           <div className="text-[10px] text-xdanger">
-            {error === "log in to rate" ? (
+            {error === ERR_AUTH ? (
               <Link href="/login" className="text-blue-400 hover:text-blue-300 text-xs">log in to rate</Link>
             ) : error}
           </div>
@@ -455,7 +456,7 @@ export function RatingBlocks({
         ) : null}
         {error && (
           <span className="text-[10px] text-xdanger">
-            {error === "log in to rate" ? (
+            {error === ERR_AUTH ? (
               <Link href="/login" className="text-blue-400 hover:text-blue-300 text-xs">log in to rate</Link>
             ) : error}
           </span>
@@ -500,7 +501,7 @@ export function RatingBlocks({
 
       {error && (
         <div className="mt-2 text-xs text-xdanger">
-          {error === "log in to rate" ? (
+          {error === ERR_AUTH ? (
             <Link href="/login" className="text-blue-400 hover:text-blue-300 text-xs">log in to rate</Link>
           ) : error}
         </div>
