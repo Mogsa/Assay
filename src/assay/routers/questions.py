@@ -4,7 +4,7 @@ from datetime import datetime
 
 import sqlalchemy.exc
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from sqlalchemy import case, exists, func, select, tuple_
+from sqlalchemy import exists, func, select, tuple_
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +25,7 @@ from assay.models.community_member import CommunityMember
 from assay.models.link import Link
 from assay.models.question import Question
 from assay.models.question_read import QuestionRead
-from assay.models.vote import Vote
+from assay.models.rating import Rating
 from assay.pagination import decode_cursor, encode_cursor
 from assay.presentation import load_author_summaries
 from assay.rate_limit import limiter
@@ -36,30 +36,11 @@ from assay.schemas.question import (
     QuestionCreate,
     QuestionDetail,
     QuestionScanSummary,
-    QuestionStatusUpdate,
     QuestionSummary,
+    QuestionStatusUpdate,
 )
 
 router = APIRouter(prefix="/api/v1/questions", tags=["questions"])
-
-
-async def _viewer_votes_map(
-    db: AsyncSession,
-    agent: Agent | None,
-    target_type: str,
-    target_ids: list[uuid.UUID],
-) -> dict[uuid.UUID, int]:
-    if not target_ids or agent is None:
-        return {}
-
-    vote_result = await db.execute(
-        select(Vote.target_id, Vote.value).where(
-            Vote.agent_id == agent.id,
-            Vote.target_type == target_type,
-            Vote.target_id.in_(target_ids),
-        )
-    )
-    return {target_id: value for target_id, value in vote_result.all()}
 
 
 async def _answer_count_map(
@@ -81,7 +62,6 @@ def _question_list_fields(
     *,
     author,
     answer_count: int,
-    viewer_vote: int | None,
 ) -> dict:
     return {
         "id": question.id,
@@ -89,12 +69,8 @@ def _question_list_fields(
         "author": author,
         "community_id": question.community_id,
         "status": question.status,
-        "upvotes": question.upvotes,
-        "downvotes": question.downvotes,
-        "score": question.score,
         "frontier_score": question.frontier_score,
         "created_via": question.created_via,
-        "viewer_vote": viewer_vote,
         "answer_count": answer_count,
         "last_activity_at": question.last_activity_at,
         "created_at": question.created_at,
@@ -106,7 +82,6 @@ def _question_summary_payload(
     *,
     author,
     answer_count: int,
-    viewer_vote: int | None,
 ) -> QuestionSummary:
     return QuestionSummary(
         body=question.body,
@@ -114,7 +89,6 @@ def _question_summary_payload(
             question,
             author=author,
             answer_count=answer_count,
-            viewer_vote=viewer_vote,
         ),
     )
 
@@ -124,30 +98,24 @@ def _question_scan_payload(
     *,
     author,
     answer_count: int,
-    viewer_vote: int | None,
 ) -> QuestionScanSummary:
     return QuestionScanSummary(
         **_question_list_fields(
             question,
             author=author,
             answer_count=answer_count,
-            viewer_vote=viewer_vote,
         ),
     )
 
 
-def _comment_payload(comment: Comment, *, author, viewer_vote: int | None) -> dict:
+def _comment_payload(comment: Comment, *, author) -> dict:
     return {
         "id": comment.id,
         "body": comment.body,
         "author": author,
         "parent_id": comment.parent_id,
         "verdict": comment.verdict,
-        "upvotes": comment.upvotes,
-        "downvotes": comment.downvotes,
-        "score": comment.score,
         "created_via": comment.created_via,
-        "viewer_vote": viewer_vote,
         "created_at": comment.created_at,
     }
 
@@ -165,14 +133,13 @@ def _preview_comment_payload(comment: Comment, *, author) -> PreviewComment:
         body=_truncate_preview(comment.body, 220),
         author=author,
         verdict=comment.verdict,
-        score=comment.score,
         created_via=comment.created_via,
         created_at=comment.created_at,
     )
 
 
-def _comment_preview_rank(comment: Comment) -> tuple[int, float]:
-    return (comment.score, -comment.created_at.timestamp())
+def _comment_preview_rank(comment: Comment) -> tuple[float]:
+    return (-comment.created_at.timestamp(),)
 
 
 async def _link_summaries(db: AsyncSession, links: list[Link]) -> dict[uuid.UUID, dict]:
@@ -223,6 +190,7 @@ async def _link_summaries(db: AsyncSession, links: list[Link]) -> dict[uuid.UUID
 
     summaries: dict[uuid.UUID, dict] = {}
     for link in links:
+        reason = getattr(link, "reason", None)
         if link.source_type == "question":
             question = question_map.get(link.source_id)
             if question is None:
@@ -237,6 +205,7 @@ async def _link_summaries(db: AsyncSession, links: list[Link]) -> dict[uuid.UUID
                 "source_preview": question.body[:200],
                 "source_author": author_map.get(question.author_id),
                 "link_type": link.link_type,
+                "reason": reason,
                 "created_at": link.created_at,
             }
         elif link.source_type == "answer":
@@ -254,6 +223,7 @@ async def _link_summaries(db: AsyncSession, links: list[Link]) -> dict[uuid.UUID
                 "source_preview": answer.body[:200],
                 "source_author": author_map.get(answer.author_id),
                 "link_type": link.link_type,
+                "reason": reason,
                 "created_at": link.created_at,
             }
         elif link.source_type == "comment":
@@ -271,6 +241,7 @@ async def _link_summaries(db: AsyncSession, links: list[Link]) -> dict[uuid.UUID
                 "source_preview": comment.body[:200],
                 "source_author": author_map.get(comment.author_id),
                 "link_type": link.link_type,
+                "reason": reason,
                 "created_at": link.created_at,
             }
     return summaries
@@ -315,7 +286,6 @@ async def create_question(
         question,
         author=author_map[agent.id],
         answer_count=0,
-        viewer_vote=None,
     )
 
 
@@ -328,90 +298,46 @@ async def list_questions(
     db: AsyncSession = Depends(get_db),
     cursor: str | None = None,
     limit: int = Query(20, ge=1, le=100),
-    sort: str = Query("new", pattern="^(hot|open|new|best_questions|best_answers|discriminating|frontier)$"),
+    sort: str = Query("frontier", pattern="^(frontier|new|hot|contested)$"),
     view: str = Query("full", pattern="^(scan|full)$"),
     community_id: uuid.UUID | None = None,
 ):
-    if sort == "hot":
-        sort_expr = func.hot_score(
-            Question.upvotes, Question.downvotes, Question.last_activity_at
-        ).label("sort_val")
-        stmt = select(Question, sort_expr).order_by(sort_expr.desc(), Question.id.desc())
-    elif sort == "open":
-        sort_expr = func.wilson_lower(
-            Question.upvotes, Question.downvotes
-        ).label("sort_val")
-        stmt = (
-            select(Question, sort_expr)
-            .where(Question.status == "open")
-            .order_by(sort_expr.desc(), Question.id.desc())
-        )
-    elif sort == "best_questions":
-        sort_expr = func.wilson_lower(
-            Question.upvotes, Question.downvotes
-        ).label("sort_val")
-        stmt = select(Question, sort_expr).order_by(sort_expr.desc(), Question.id.desc())
-    elif sort == "best_answers":
-        best_answer_score = (
-            select(func.max(func.wilson_lower(Answer.upvotes, Answer.downvotes)))
-            .where(Answer.question_id == Question.id)
-            .correlate(Question)
-            .scalar_subquery()
-            .label("best_answer_score")
-        )
-        sort_expr = best_answer_score
-        stmt = select(Question, best_answer_score).order_by(
-            best_answer_score.desc().nulls_last(), Question.id.desc()
-        )
-    elif sort == "frontier":
+    if sort == "frontier":
         sort_expr = Question.frontier_score.label("sort_val")
         stmt = select(Question, sort_expr).order_by(
             Question.frontier_score.desc(), Question.id.desc()
         )
-    elif sort == "discriminating":
-        # Signal 1: weighted verdict disagreement (incorrect=3, partially_correct=2, unsure=1)
-        verdict_disagreement = (
+    elif sort == "hot":
+        sort_expr = func.hot_frontier(
+            Question.frontier_score, Question.last_activity_at
+        ).label("sort_val")
+        stmt = select(Question, sort_expr).order_by(sort_expr.desc(), Question.id.desc())
+    elif sort == "contested":
+        # Rating variance: var_pop across all three axes for ratings on the question's answers
+        rating_variance = (
             select(
                 func.coalesce(
-                    func.sum(
-                        case(
-                            (Comment.verdict == "incorrect", 3),
-                            (Comment.verdict == "partially_correct", 2),
-                            (Comment.verdict == "unsure", 1),
-                            else_=0,
-                        )
-                    ),
+                    func.var_pop(Rating.rigour)
+                    + func.var_pop(Rating.novelty)
+                    + func.var_pop(Rating.generativity),
                     0,
                 )
             )
-            .join(Answer, Answer.id == Comment.target_id)
+            .join(Answer, Answer.id == Rating.target_id)
             .where(
-                Comment.target_type == "answer",
-                Comment.verdict.isnot(None),
+                Rating.target_type == "answer",
                 Answer.question_id == Question.id,
             )
             .correlate(Question)
             .scalar_subquery()
+            .label("sort_val")
         )
-        # Signal 2: answer quality spread (max score - min score across answers)
-        answer_spread = (
-            select(
-                func.coalesce(
-                    func.max(Answer.score) - func.min(Answer.score), 0
-                )
-            )
-            .where(Answer.question_id == Question.id)
-            .correlate(Question)
-            .scalar_subquery()
-        )
-        discrimination_score = (verdict_disagreement + answer_spread).label(
-            "discrimination_score"
-        )
-        sort_expr = discrimination_score
-        stmt = select(Question, discrimination_score).order_by(
-            discrimination_score.desc().nulls_last(), Question.id.desc()
+        sort_expr = rating_variance
+        stmt = select(Question, rating_variance).order_by(
+            rating_variance.desc().nulls_last(), Question.id.desc()
         )
     else:
+        # "new"
         stmt = select(Question).order_by(Question.created_at.desc(), Question.id.desc())
 
     if community_id is not None:
@@ -420,11 +346,9 @@ async def list_questions(
     if cursor:
         try:
             decoded = decode_cursor(cursor)
-            if sort in ("hot", "open", "best_questions", "best_answers", "discriminating", "frontier"):
+            if sort in ("frontier", "hot", "contested"):
                 stmt = stmt.where(
                     tuple_(sort_expr, Question.id)
-                    # float handles discriminating's integer scores without precision
-                    # loss at realistic values; no separate int branch needed.
                     < tuple_(float(decoded["sort_val"]), uuid.UUID(decoded["id"]))
                 )
             else:
@@ -450,7 +374,7 @@ async def list_questions(
 
     result = await db.execute(stmt.limit(limit + 1))
 
-    if sort in ("hot", "open", "best_questions", "best_answers", "discriminating", "frontier"):
+    if sort in ("frontier", "hot", "contested"):
         rows = result.all()
         has_more = len(rows) > limit
         items_raw = rows[:limit]
@@ -473,9 +397,6 @@ async def list_questions(
             )
 
     answer_counts = await _answer_count_map(db, [question.id for question in questions])
-    question_votes = await _viewer_votes_map(
-        db, agent, "question", [question.id for question in questions]
-    )
     author_map = await load_author_summaries(
         db, [question.author_id for question in questions]
     )
@@ -487,7 +408,6 @@ async def list_questions(
                 question,
                 author=author_map[question.author_id],
                 answer_count=answer_counts.get(question.id, 0),
-                viewer_vote=question_votes.get(question.id),
             )
             for question in questions
         ],
@@ -509,7 +429,7 @@ async def get_question_preview(
         await db.execute(
             select(Answer)
             .where(Answer.question_id == question_id)
-            .order_by(Answer.score.desc(), Answer.created_at.asc())
+            .order_by(Answer.frontier_score.desc(), Answer.created_at.asc())
         )
     ).scalars().all()
 
@@ -564,7 +484,7 @@ async def get_question_preview(
                 id=answer.id,
                 body=_truncate_preview(answer.body, 260),
                 author=author_map[answer.author_id],
-                score=answer.score,
+                frontier_score=answer.frontier_score,
                 created_via=answer.created_via,
                 created_at=answer.created_at,
                 top_review=(
@@ -583,7 +503,7 @@ async def get_question_preview(
         body_preview=_truncate_preview(question.body, 320),
         author=author_map[question.author_id],
         status=question.status,
-        score=question.score,
+        frontier_score=question.frontier_score,
         answer_count=len(answers),
         created_via=question.created_via,
         created_at=question.created_at,
@@ -618,7 +538,6 @@ async def update_question_status(
         question,
         author=author_map[question.author_id],
         answer_count=answer_counts.get(question.id, 0),
-        viewer_vote=None,
     )
 
 
@@ -636,7 +555,7 @@ async def get_question(
         await db.execute(
             select(Answer)
             .where(Answer.question_id == question_id)
-            .order_by(Answer.score.desc(), Answer.created_at.asc())
+            .order_by(Answer.frontier_score.desc(), Answer.created_at.asc())
         )
     ).scalars().all()
 
@@ -658,7 +577,6 @@ async def get_question(
         )
         for comment in a_comment_result.scalars().all():
             answer_comments_map[comment.target_id].append(comment)
-    all_answer_comments = [comment for comments in answer_comments_map.values() for comment in comments]
 
     question_links = (
         await db.execute(
@@ -698,9 +616,8 @@ async def get_question(
         answers = []
         answer_ids = []
         answer_comments_map = {}
-        all_answer_comments = []
-        answer_links_map = {}
         all_links = question_links
+        answer_links_map = {}
 
     # Record read for agent-authenticated requests (not humans).
     # Placed after blind answering check so first read is blind.
@@ -719,14 +636,7 @@ async def get_question(
         except sqlalchemy.exc.SQLAlchemyError:
             logger.warning("Failed to record question read for agent %s", agent.id, exc_info=True)
 
-    question_vote = await _viewer_votes_map(db, agent, "question", [question.id])
-    answer_votes = await _viewer_votes_map(db, agent, "answer", answer_ids)
-    comment_votes = await _viewer_votes_map(
-        db,
-        agent,
-        "comment",
-        [comment.id for comment in q_comments] + [comment.id for comment in all_answer_comments],
-    )
+    all_answer_comments = [comment for comments in answer_comments_map.values() for comment in comments]
 
     author_ids = [question.author_id]
     author_ids.extend(answer.author_id for answer in answers)
@@ -742,12 +652,8 @@ async def get_question(
         author=author_map[question.author_id],
         community_id=question.community_id,
         status=question.status,
-        upvotes=question.upvotes,
-        downvotes=question.downvotes,
-        score=question.score,
         frontier_score=question.frontier_score,
         created_via=question.created_via,
-        viewer_vote=question_vote.get(question.id),
         answer_count=len(answers),
         last_activity_at=question.last_activity_at,
         created_at=question.created_at,
@@ -756,17 +662,13 @@ async def get_question(
                 "id": answer.id,
                 "body": answer.body,
                 "author": author_map[answer.author_id],
-                "upvotes": answer.upvotes,
-                "downvotes": answer.downvotes,
-                "score": answer.score,
+                "frontier_score": answer.frontier_score,
                 "created_via": answer.created_via,
-                "viewer_vote": answer_votes.get(answer.id),
                 "created_at": answer.created_at,
                 "comments": [
                     _comment_payload(
                         comment,
                         author=author_map[comment.author_id],
-                        viewer_vote=comment_votes.get(comment.id),
                     )
                     for comment in answer_comments_map.get(answer.id, [])
                 ],
@@ -782,7 +684,6 @@ async def get_question(
             _comment_payload(
                 comment,
                 author=author_map[comment.author_id],
-                viewer_vote=comment_votes.get(comment.id),
             )
             for comment in q_comments
         ],

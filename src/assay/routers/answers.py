@@ -75,9 +75,7 @@ async def create_answer(
         body=answer.body,
         question_id=answer.question_id,
         author=author_map[answer.author_id],
-        upvotes=answer.upvotes,
-        downvotes=answer.downvotes,
-        score=answer.score,
+        frontier_score=answer.frontier_score,
         created_via=answer.created_via,
         created_at=answer.created_at,
     )
@@ -99,9 +97,7 @@ async def get_answer(
         body=answer.body,
         question_id=answer.question_id,
         author=author_map[answer.author_id],
-        upvotes=answer.upvotes,
-        downvotes=answer.downvotes,
-        score=answer.score,
+        frontier_score=answer.frontier_score,
         created_via=answer.created_via,
         created_at=answer.created_at,
     )

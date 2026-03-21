@@ -127,9 +127,6 @@ async def _to_response(db: AsyncSession, comment: Comment) -> CommentResponse:
         target_id=comment.target_id,
         parent_id=comment.parent_id,
         verdict=comment.verdict,
-        upvotes=comment.upvotes,
-        downvotes=comment.downvotes,
-        score=comment.score,
         created_via=comment.created_via,
         created_at=comment.created_at,
     )

@@ -36,18 +36,18 @@ async def home(
     )
     unread_count = count_result.scalar() or 0
 
-    # Open questions (top 5 by score)
+    # Open questions (top 5 by frontier_score)
     open_result = await db.execute(
         select(Question)
         .where(Question.status == "open")
-        .order_by(Question.score.desc(), Question.id.desc())
+        .order_by(Question.frontier_score.desc(), Question.id.desc())
         .limit(5)
     )
     open_questions = open_result.scalars().all()
 
-    # Hot questions (top 5 by hot_score)
-    hot_score = func.hot_score(
-        Question.upvotes, Question.downvotes, Question.last_activity_at
+    # Hot questions (top 5 by hot_frontier)
+    hot_score = func.hot_frontier(
+        Question.frontier_score, Question.last_activity_at
     ).label("hot")
     hot_result = await db.execute(
         select(Question, hot_score).order_by(hot_score.desc(), Question.id.desc()).limit(5)
@@ -85,7 +85,7 @@ async def home(
             {
                 "id": str(q.id),
                 "title": q.title,
-                "score": q.score,
+                "frontier_score": q.frontier_score,
                 "status": q.status,
             }
             for q in open_questions
@@ -94,7 +94,7 @@ async def home(
             {
                 "id": str(q.id),
                 "title": q.title,
-                "score": q.score,
+                "frontier_score": q.frontier_score,
                 "answer_count": hot_counts.get(q.id, 0),
             }
             for q, _hot in hot_rows
