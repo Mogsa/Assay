@@ -27,8 +27,10 @@ from assay.schemas.analytics import (
     GraphNode,
     GraphResponse,
     IsolatedQuestion,
-    SpawnedFrom,
 )
+
+EXPLORED_THRESHOLD = 4    # answer_count >= this → "explored"
+FRONTIER_MAX_ANSWERS = 3  # answer_count <= this → eligible for frontier
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 
@@ -236,65 +238,54 @@ async def get_frontier(
             )
         )).scalars().all()
 
-    # Build lookup sets
-    inbound_extends: dict[uuid.UUID, list[Link]] = {}  # target_id -> links
-    outbound_extends: set[uuid.UUID] = set()  # source IDs that have extends out
+    # Build question_of: maps both question IDs and answer IDs to parent question ID
+    question_of: dict[uuid.UUID, uuid.UUID] = {}
+    for q, _ in rows:
+        question_of[q.id] = q.id
+    for a in open_answers:
+        question_of[a.id] = a.question_id
+
+    # Build linked_neighbors: lift all links to question-level adjacency
+    linked_neighbors: dict[uuid.UUID, set[uuid.UUID]] = {}
     contradicts_links: list[Link] = []
     linked_ids: set[uuid.UUID] = set()
 
     for lnk in all_links:
         linked_ids.add(lnk.source_id)
         linked_ids.add(lnk.target_id)
-        if lnk.link_type == "extends":
-            inbound_extends.setdefault(lnk.target_id, []).append(lnk)
-            outbound_extends.add(lnk.source_id)
+        src_q = question_of.get(lnk.source_id)
+        tgt_q = question_of.get(lnk.target_id)
+        if src_q and tgt_q and src_q != tgt_q:
+            linked_neighbors.setdefault(src_q, set()).add(tgt_q)
+            linked_neighbors.setdefault(tgt_q, set()).add(src_q)
         if lnk.link_type == "contradicts":
             contradicts_links.append(lnk)
 
-    # Check which questions have outbound extends (via their answers)
-    questions_with_progeny: set[uuid.UUID] = set()
-    for a in open_answers:
-        if a.id in outbound_extends:
-            questions_with_progeny.add(a.question_id)
+    # Compute explored_ids: questions with enough answers
+    answer_counts: dict[uuid.UUID, int] = {q.id: cnt for q, cnt in rows}
+    explored_ids: set[uuid.UUID] = {
+        qid for qid, cnt in answer_counts.items() if cnt >= EXPLORED_THRESHOLD
+    }
 
     # Classify questions
     frontier_questions: list[FrontierQuestion] = []
     isolated_questions: list[IsolatedQuestion] = []
 
     for question, answer_count in rows:
-        has_inbound_extends = question.id in inbound_extends
-        has_progeny = question.id in questions_with_progeny
-        is_linked = question.id in linked_ids
+        neighbors = linked_neighbors.get(question.id, set())
+        touches_explored = bool(neighbors & explored_ids)
 
         # Check if this question or any of its answers are linked
         q_answer_ids = answers_by_question.get(question.id, [])
-        q_linked = is_linked or any(aid in linked_ids for aid in q_answer_ids)
+        q_linked = question.id in linked_ids or any(
+            aid in linked_ids for aid in q_answer_ids
+        )
 
-        if has_inbound_extends and answer_count <= 3 and not has_progeny:
-            # Frontier: spawned via extends, under-explored
-            spawned_from = None
-            extends_links = inbound_extends.get(question.id, [])
-            if extends_links:
-                src_link = extends_links[0]
-                src_answer = answer_map.get(src_link.source_id)
-                if src_answer:
-                    parent_q = next(
-                        (q for q, _ in rows if q.id == src_answer.question_id),
-                        None,
-                    )
-                    if parent_q is None:
-                        parent_q_result = await db.get(
-                            Question, src_answer.question_id
-                        )
-                        parent_title = (
-                            parent_q_result.title if parent_q_result else "unknown"
-                        )
-                    else:
-                        parent_title = parent_q.title
-                    spawned_from = SpawnedFrom(
-                        answer_id=src_answer.id,
-                        question_title=parent_title,
-                    )
+        if (
+            touches_explored
+            and answer_count <= FRONTIER_MAX_ANSWERS
+            and question.status != "resolved"
+        ):
             frontier_questions.append(
                 FrontierQuestion(
                     id=question.id,
@@ -306,12 +297,10 @@ async def get_frontier(
                         if lnk.source_id == question.id
                         or lnk.target_id == question.id
                     ),
-                    spawned_from=spawned_from,
                     created_at=question.created_at,
                 )
             )
         elif not q_linked:
-            # Isolated: no cross-links at all
             isolated_questions.append(
                 IsolatedQuestion(
                     id=question.id,

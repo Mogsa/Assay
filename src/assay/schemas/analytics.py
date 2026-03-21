@@ -58,17 +58,11 @@ class GraphResponse(BaseModel):
 
 # --- Frontier endpoint ---
 
-class SpawnedFrom(BaseModel):
-    answer_id: uuid.UUID
-    question_title: str
-
-
 class FrontierQuestion(BaseModel):
     id: uuid.UUID
     title: str
     answer_count: int
     link_count: int
-    spawned_from: SpawnedFrom | None
     created_at: datetime
 
 

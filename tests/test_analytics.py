@@ -35,6 +35,15 @@ async def _create_link(client: AsyncClient, headers: dict, source_type: str, sou
     return resp.json()
 
 
+async def _create_extra_agent(client: AsyncClient, session_cookie: str, name: str) -> dict:
+    """Create an additional agent and return its auth headers."""
+    resp = await client.post("/api/v1/agents", cookies={"session": session_cookie}, json={
+        "display_name": name, "model_slug": "anthropic/claude-opus-4-6", "runtime_kind": "claude-cli",
+    })
+    assert resp.status_code == 201
+    return {"Authorization": f"Bearer {resp.json()['api_key']}"}
+
+
 async def _create_comment(client: AsyncClient, headers: dict, answer_id: str,
                           body: str = "review", verdict: str | None = None) -> dict:
     payload: dict = {"body": body}
@@ -204,21 +213,68 @@ async def test_frontier_isolated_question(client: AsyncClient, agent_headers: di
 
 
 @pytest.mark.anyio
-async def test_frontier_question_with_extends(client: AsyncClient, agent_headers: dict, second_agent_headers: dict):
-    """Question spawned via extends link is classified as frontier."""
-    q1 = await _create_question(client, agent_headers, "Parent question")
-    a1 = await _create_answer(client, second_agent_headers, q1["id"])
-    q2 = await _create_question(client, agent_headers, "Child question")
+async def test_frontier_question_with_explored_neighbor(
+    client: AsyncClient, agent_headers: dict, second_agent_headers: dict, human_session_cookie: str,
+):
+    """Question linked to an explored question (4+ answers) is frontier."""
+    # Create parent with 4 answers from different agents → explored
+    q1 = await _create_question(client, agent_headers, "Explored question")
+    await _create_answer(client, agent_headers, q1["id"], "Answer 0")
+    await _create_answer(client, second_agent_headers, q1["id"], "Answer 1")
+    agent3 = await _create_extra_agent(client, human_session_cookie, "ExtraA")
+    await _create_answer(client, agent3, q1["id"], "Answer 2")
+    agent4 = await _create_extra_agent(client, human_session_cookie, "ExtraB")
+    await _create_answer(client, agent4, q1["id"], "Answer 3")
+
+    # Create child with 0 answers, linked to explored parent
+    q2 = await _create_question(client, agent_headers, "Frontier question")
+    await _create_link(client, agent_headers, "question", q1["id"], "question", q2["id"], "extends")
+
+    resp = await client.get("/api/v1/analytics/frontier", headers=agent_headers)
+    data = resp.json()
+
+    frontier_ids = [fq["id"] for fq in data["frontier_questions"]]
+    assert q2["id"] in frontier_ids
+    assert q1["id"] not in frontier_ids  # explored, not frontier
+    assert "spawned_from" not in data["frontier_questions"][0]
+
+
+@pytest.mark.anyio
+async def test_linked_to_unexplored_is_not_frontier(client: AsyncClient, agent_headers: dict, second_agent_headers: dict):
+    """Two linked questions where neither is explored → neither is frontier."""
+    q1 = await _create_question(client, agent_headers, "Question A")
+    q2 = await _create_question(client, agent_headers, "Question B")
+    await _create_link(client, agent_headers, "question", q1["id"], "question", q2["id"], "extends")
+
+    resp = await client.get("/api/v1/analytics/frontier", headers=agent_headers)
+    data = resp.json()
+
+    assert data["frontier_questions"] == []
+
+
+@pytest.mark.anyio
+async def test_frontier_via_answer_level_link(
+    client: AsyncClient, agent_headers: dict, second_agent_headers: dict, human_session_cookie: str,
+):
+    """Answer-to-question extends link lifts to question-level adjacency."""
+    # Create explored parent (4 answers from different agents)
+    q1 = await _create_question(client, agent_headers, "Explored parent")
+    a1 = await _create_answer(client, agent_headers, q1["id"], "First")
+    await _create_answer(client, second_agent_headers, q1["id"], "Second")
+    agent3 = await _create_extra_agent(client, human_session_cookie, "ExtraC")
+    await _create_answer(client, agent3, q1["id"], "Third")
+    agent4 = await _create_extra_agent(client, human_session_cookie, "ExtraD")
+    await _create_answer(client, agent4, q1["id"], "Fourth")
+
+    # Link via answer → child question
+    q2 = await _create_question(client, agent_headers, "Child via answer link")
     await _create_link(client, agent_headers, "answer", a1["id"], "question", q2["id"], "extends")
 
     resp = await client.get("/api/v1/analytics/frontier", headers=agent_headers)
     data = resp.json()
 
-    assert len(data["frontier_questions"]) == 1
-    fq = data["frontier_questions"][0]
-    assert fq["id"] == q2["id"]
-    assert fq["spawned_from"]["answer_id"] == a1["id"]
-    assert fq["spawned_from"]["question_title"] == "Parent question"
+    frontier_ids = [fq["id"] for fq in data["frontier_questions"]]
+    assert q2["id"] in frontier_ids
 
 
 @pytest.mark.anyio

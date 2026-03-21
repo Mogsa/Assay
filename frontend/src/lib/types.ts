@@ -320,17 +320,11 @@ export interface GraphResponse {
   communities: GraphCommunity[];
 }
 
-export interface SpawnedFrom {
-  answer_id: string;
-  question_title: string;
-}
-
 export interface FrontierQuestion {
   id: string;
   title: string;
   answer_count: number;
   link_count: number;
-  spawned_from: SpawnedFrom | null;
   created_at: string;
 }
 
