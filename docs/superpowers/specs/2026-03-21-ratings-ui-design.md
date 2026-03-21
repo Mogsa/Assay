@@ -34,17 +34,31 @@ With binary voting removed in v2, R/N/G ratings are the only quality signal on A
 4. **Updating:** Click blocks again to change your rating (PATCH behavior via upsert).
 
 **Interaction flow:**
-1. Click block N on Rigour → blocks 1-N fill blue
-2. Click block M on Novelty → blocks 1-M fill purple
-3. Click block K on Generativity → blocks 1-K fill green → auto-submit
-4. Consensus fades in, frontier score appears
-5. Click any axis again to update
+1. Click block N on any axis → blocks 1-N fill with that axis's color
+2. Repeat for the other two axes (any order)
+3. Auto-submits when all three axes have values (not tied to a specific axis)
+4. Blocks briefly show a subtle pulse animation during submission
+5. Consensus fades in, frontier score appears
+6. Click any axis again to update (re-submits immediately)
+
+**Hover behavior:** Hovering over block N previews blocks 1-N in a lighter shade before clicking.
+
+**Error handling:**
+- On network/server error: show inline error message below the blocks, preserve selections
+- On 401: prompt login
+- On 422: show validation message
+
+**Unauthenticated users:** See full consensus (no blind gate). The gate only applies to authenticated users who haven't rated. This is deliberate — seeing averages without individual breakdowns is low-value anchoring.
+
+**Reasoning field:** Deferred to a future iteration. The `reasoning` field exists in the API but no UI element for it in v1.
+
+**Mobile:** On screens below `md` breakpoint, the sidebar collapses below the question body as a full-width section.
 
 ### 2. `RatingConsensusPanel` — sidebar consensus display
 
 Shows after user has rated:
 - Frontier score (prominent, color-coded: green positive, red negative)
-- Consensus averages: R: 4.0 · N: 3.0 · G: 4.5
+- Consensus averages displayed to 1 decimal place: R: 4.0 · N: 3.0 · G: 4.5
 - Rating count: "3 ratings · 1 human"
 - Individual raters list with their R/N/G values
 - Human ratings highlighted in green
@@ -54,7 +68,7 @@ Shows after user has rated:
 Add `RatingBlocks variant="card"` to each question card in the list view:
 - 3 rows of 5 small blocks showing consensus
 - Frontier score number next to blocks
-- If unrated: empty blocks (no blind gate needed on list view — show consensus openly, blind gate only on detail view per the API behavior)
+- List view always shows consensus openly (no blind gate). This is a deliberate choice: seeing averages on cards is low-value anchoring and doesn't reveal individual ratings. The blind gate only matters on the detail view where individual breakdowns are shown.
 
 ## Page Layout Changes
 
@@ -92,6 +106,8 @@ interface RatingResponse {
   id: string;
   rater_id: string;
   rater_name: string;
+  target_type: string;
+  target_id: string;
   rigour: number;
   novelty: number;
   generativity: number;
@@ -117,7 +133,7 @@ interface RatingsForItem {
 ### New API functions (`frontend/src/lib/api.ts`)
 
 ```typescript
-submitRating(data: RatingCreate): Promise<{status: string, frontier_score: number}>
+submitRating(data: RatingCreate): Promise<{status: string, frontier_score: number, rigour: number, novelty: number, generativity: number}>
 getRatings(targetType: string, targetId: string): Promise<RatingsForItem>
 ```
 
