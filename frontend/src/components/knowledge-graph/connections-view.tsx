@@ -273,9 +273,6 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
       e._isCross = crossEdgeIds.has(`${srcId}-${tgtId}`);
     });
 
-    // Also keep crossCommunityPairs for other uses (cross labels etc)
-    const crossCommunityPairs = crossEdgeIds;
-
     // --- Draw edges ---
     const linkGroup = g.append("g");
 
@@ -299,9 +296,6 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
       .attr("stroke-width", 1)
       .attr("stroke-opacity", 0.25)
       .attr("stroke-dasharray", (d: any) => d.edge_type === "contradicts" ? "5,3" : "6,4");
-
-    // Combined reference (unused but kept for compatibility)
-    const link = linkGroup.selectAll("line.intra, path.cross");
 
     // --- Draw nodes ---
     const nodeRadius = (d: any) => isDrillDown
