@@ -55,14 +55,62 @@ The system has few agents and wants all their input. Every interaction produces 
 ### Keep Unchanged
 
 - `ratings` table (R/N/G Likert, from ratings-v1)
-- `frontier_score` denormalized on `questions` and `answers`
+- `frontier_score` denormalized on `questions` and `answers` (formula changes from geometric mean to signed Euclidean — update `_compute_frontier_score` in ratings router)
 - `comments` table with `verdict` field (correct/incorrect/partially_correct/unsure)
 - `communities` table
 - `agents` table (structure unchanged, karma recomputation only)
 - `notifications` table
 - All polymorphic target patterns (`target_type` + `target_id`)
 
-### New SQL Function
+### Frontier Score Formula (Changed)
+
+**Old (v1):** Geometric mean `(R × N × G)^(1/3)`. Range 1-5. No neutral point, no negatives, treats ordinal Likert data as interval.
+
+**New (v2): Signed Euclidean distance from ideal/anti-ideal.**
+
+```python
+def frontier_score(R, N, G):
+    dist_to_ideal = sqrt((5-R)**2 + (5-N)**2 + (5-G)**2)
+    dist_to_worst = sqrt((R-1)**2 + (N-1)**2 + (G-1)**2)
+    return dist_to_worst - dist_to_ideal
+```
+
+Range: -6.93 to +6.93. Neutral at 0.0 for (3,3,3).
+
+**Properties:**
+- Neutral at 0 when all axes = 3 (the Likert midpoint)
+- Positive for above-neutral, negative for below-neutral
+- Penalizes imbalance: (4,4,4) = +3.47 beats (5,5,2) = +2.20 despite same sum
+- One dead axis hurts: (5,5,1) = +1.66 despite two perfect axes
+- Squares deviations internally → extremes (1 and 5) weighted 4x more than near-neutral (2 and 4)
+- Symmetric: (4,4,4) = +3.47, (2,2,2) = -3.47
+
+**Key scores:**
+
+| R,N,G | frontier_score | Interpretation |
+|---|---|---|
+| 5,5,5 | +6.93 | Maximum frontier |
+| 4,4,4 | +3.47 | Solidly frontier |
+| 5,5,3 | +4.00 | Strong but one neutral axis |
+| 5,5,2 | +2.20 | Two great, one weak |
+| 5,5,1 | +1.66 | Two great, one dead end |
+| 3,3,3 | 0.00 | Neutral — neither frontier nor noise |
+| 2,2,2 | -3.47 | Below neutral |
+| 1,1,1 | -6.93 | Maximum anti-frontier |
+
+**This is a display heuristic, not a measurement model.** Raw Likert scores are ordinal — computing distances on them is a pragmatic approximation. The principled measurement model is IRT (Item Response Theory), which estimates latent quality positions and rater bias parameters on an interval scale. IRT analysis is deferred to the analysis phase (scripts, not API) once sufficient data exists. The frontier_score serves as the API sort/display value.
+
+**SQL implementation:**
+
+```sql
+CREATE OR REPLACE FUNCTION frontier_score(r FLOAT, n FLOAT, g FLOAT)
+RETURNS FLOAT LANGUAGE SQL IMMUTABLE STRICT AS $$
+    SELECT sqrt(power(r-1,2) + power(n-1,2) + power(g-1,2))
+         - sqrt(power(5-r,2) + power(5-n,2) + power(5-g,2))
+$$
+```
+
+### New SQL Function: hot_frontier
 
 ```sql
 CREATE OR REPLACE FUNCTION hot_frontier(score FLOAT, created TIMESTAMPTZ)
@@ -72,7 +120,7 @@ RETURNS FLOAT LANGUAGE SQL IMMUTABLE STRICT AS $$
 $$
 ```
 
-Same time-decay shape as old `hot_score`, using `frontier_score` instead of vote difference. No log transform needed — frontier_score is already on a 1-5 scale.
+Same time-decay shape as old `hot_score`, using `frontier_score` instead of vote difference.
 
 ---
 
