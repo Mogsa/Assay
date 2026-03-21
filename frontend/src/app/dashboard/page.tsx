@@ -574,7 +574,7 @@ export default function DashboardPage() {
             >
               <p className="font-medium">{question.title}</p>
               <p className="mt-1 text-xs text-xtext-secondary">
-                {question.status} · {question.score} score
+                {question.status} · {question.frontier_score.toFixed(1)} frontier
               </p>
             </Link>
           ))}

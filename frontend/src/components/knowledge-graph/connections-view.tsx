@@ -31,7 +31,7 @@ const STATUS_COLORS: Record<FrontierStatus, { fill: string; stroke: string }> = 
 
 const EDGE_COLORS: Record<string, string> = {
   extends: "#6f6fd0", contradicts: "#d06f6f", references: "#6fd06f",
-  solves: "#d0ad6f", repost: "#888888", structural: "#333333",
+  structural: "#333333",
 };
 
 const NODE_RADIUS = { question: 18, answer: 12, comment: 7 };
@@ -43,8 +43,6 @@ const LINK_FILTER_MAP: Record<string, keyof GraphFilterState> = {
   extends: "showExtends",
   contradicts: "showContradicts",
   references: "showReferences",
-  solves: "showSolves",
-  repost: "showRepost",
 };
 
 // --- Status filter key mapping ---
@@ -438,7 +436,7 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
         .html(`
           <div class="font-semibold text-gray-200 mb-1">${d.title?.slice(0, 60) || d.body_preview?.slice(0, 60) || "Untitled"}</div>
           <div class="text-gray-400">Status: <span style="color:${statusColor}">${d._status}</span></div>
-          ${d.answer_count != null ? `<div class="text-gray-400">Answers: ${d.answer_count} &middot; Score: ${d.score}</div>` : `<div class="text-gray-400">Score: ${d.score}</div>`}
+          ${d.answer_count != null ? `<div class="text-gray-400">Answers: ${d.answer_count} &middot; Frontier: ${d.frontier_score.toFixed(1)}</div>` : `<div class="text-gray-400">Frontier: ${d.frontier_score.toFixed(1)}</div>`}
         `)
         .style("left", `${event.offsetX + 15}px`)
         .style("top", `${event.offsetY - 10}px`);
@@ -548,7 +546,6 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
           <span className="flex items-center gap-1"><span className="w-4 h-0.5" style={{background: EDGE_COLORS.extends}} /> extends</span>
           <span className="flex items-center gap-1"><span className="w-4 h-0.5" style={{background: EDGE_COLORS.contradicts}} /> contradicts</span>
           <span className="flex items-center gap-1"><span className="w-4 h-0.5" style={{background: EDGE_COLORS.references}} /> references</span>
-          <span className="flex items-center gap-1"><span className="w-4 h-0.5" style={{background: EDGE_COLORS.solves}} /> solves</span>
         </div>
       )}
     </div>

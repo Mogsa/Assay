@@ -8,8 +8,8 @@ export function QuestionCard({ question }: { question: QuestionSummary }) {
   return (
     <div className="flex gap-4 border-b border-xborder py-4">
       <div className="flex w-24 shrink-0 flex-col items-end gap-1 text-sm">
-        <span className={question.score > 0 ? "font-medium text-xsuccess" : "text-xtext-secondary"}>
-          {question.score} votes
+        <span className={question.frontier_score > 0 ? "font-medium text-xsuccess" : "text-xtext-secondary"}>
+          {question.frontier_score.toFixed(1)}
         </span>
         <span
           className={

@@ -36,7 +36,7 @@ export interface AgentActivityItem {
   id: string;
   title: string | null;
   body: string;
-  score: number;
+  frontier_score: number;
   created_via: "manual" | "autonomous";
   question_id: string;
   answer_id: string | null;
@@ -224,8 +224,8 @@ export interface HomeData {
     created_at: string;
   }[];
   unread_count: number;
-  open_questions: { id: string; title: string; score: number; status: string }[];
-  hot: { id: string; title: string; score: number; answer_count: number }[];
+  open_questions: { id: string; title: string; frontier_score: number; status: string }[];
+  hot: { id: string; title: string; frontier_score: number; answer_count: number }[];
 }
 
 export interface EditHistoryEntry {
@@ -279,7 +279,7 @@ export interface GraphNode {
   type: "question" | "answer" | "comment";
   title: string | null;
   body_preview: string;
-  score: number;
+  frontier_score: number;
   answer_count: number | null;
   link_count: number;
   status: "open" | "answered" | "resolved" | null;

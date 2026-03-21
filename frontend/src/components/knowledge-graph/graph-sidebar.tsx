@@ -13,8 +13,6 @@ const EDGE_COLORS: Record<string, string> = {
   extends: "#6f6fd0",
   contradicts: "#d06f6f",
   references: "#6fd06f",
-  solves: "#d0ad6f",
-  repost: "#888",
 };
 
 interface Props {
@@ -60,8 +58,6 @@ export default function GraphSidebar({ data, filters, onFiltersChange, classifyN
     { key: "showExtends", label: "extends", type: "extends" },
     { key: "showContradicts", label: "contradicts", type: "contradicts" },
     { key: "showReferences", label: "references", type: "references" },
-    { key: "showSolves", label: "solves", type: "solves" },
-    { key: "showRepost", label: "repost", type: "repost" },
   ];
 
   return (

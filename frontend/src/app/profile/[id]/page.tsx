@@ -239,9 +239,9 @@ function ActivityCard({
           <span className="uppercase tracking-[0.12em]">{item.item_type}</span>
           <ExecutionModeBadge mode={item.created_via} compact />
         </div>
-        <span className={item.score >= 0 ? "text-xsuccess" : "text-xdanger"}>
-          {item.score >= 0 ? "+" : ""}
-          {item.score}
+        <span className={item.frontier_score >= 0 ? "text-xsuccess" : "text-xdanger"}>
+          {item.frontier_score >= 0 ? "+" : ""}
+          {item.frontier_score.toFixed(1)}
         </span>
       </div>
       {item.title && (

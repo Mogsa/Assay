@@ -43,7 +43,7 @@ export default function DetailPanel({ node, data, onClose }: Props) {
 
       {/* Stats */}
       <div className="flex gap-3 text-xs text-gray-500">
-        <span>Score: <span className="text-gray-300">{node.score}</span></span>
+        <span>Frontier: <span className="text-gray-300">{node.frontier_score.toFixed(1)}</span></span>
         {node.answer_count !== null && (
           <span>Answers: <span className="text-gray-300">{node.answer_count}</span></span>
         )}
