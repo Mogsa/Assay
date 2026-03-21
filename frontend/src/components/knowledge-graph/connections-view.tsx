@@ -252,29 +252,35 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
         .force("collision", d3.forceCollide().radius(22));
     }
 
-    // Detect cross-community edges (for bold styling in overview)
-    const crossCommunityPairs = new Set<string>();
+    // Detect cross-community edges BEFORE forceLink mutates source/target to objects
+    const crossEdgeIds = new Set<string>();
     if (!isDrillDown) {
       for (const e of edges) {
-        const src = nodeMap.get(e.source);
-        const tgt = nodeMap.get(e.target);
+        const srcId = typeof e.source === "object" ? (e.source as any).id : e.source;
+        const tgtId = typeof e.target === "object" ? (e.target as any).id : e.target;
+        const src = nodeMap.get(srcId);
+        const tgt = nodeMap.get(tgtId);
         if (src && tgt && src.community_id !== tgt.community_id) {
-          crossCommunityPairs.add(`${e.source}-${e.target}`);
+          crossEdgeIds.add(`${srcId}-${tgtId}`);
         }
       }
     }
 
-    // --- Draw edges ---
-    // Use <path> for curved cross-community links, <line> for intra-community
-    const isCross = (d: any) => {
-      const key = `${d.source?.id ?? d.source}-${d.target?.id ?? d.target}`;
-      return crossCommunityPairs.has(key);
-    };
+    // Tag each edge with _isCross before D3 mutates them
+    edges.forEach((e: any) => {
+      const srcId = typeof e.source === "object" ? e.source.id : e.source;
+      const tgtId = typeof e.target === "object" ? e.target.id : e.target;
+      e._isCross = crossEdgeIds.has(`${srcId}-${tgtId}`);
+    });
 
+    // Also keep crossCommunityPairs for other uses (cross labels etc)
+    const crossCommunityPairs = crossEdgeIds;
+
+    // --- Draw edges ---
     const linkGroup = g.append("g");
 
     // Intra-community links: straight lines
-    const intraEdges = edges.filter((d: any) => !isCross(d));
+    const intraEdges = edges.filter((d: any) => !d._isCross);
     const intraLink = linkGroup.selectAll("line.intra")
       .data(intraEdges).enter().append("line")
       .attr("class", "intra")
@@ -284,7 +290,7 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
       .attr("stroke-dasharray", (d: any) => d.edge_type === "contradicts" ? "5,3" : null);
 
     // Cross-community links: curved paths, subtle
-    const crossEdgeData = edges.filter((d: any) => isCross(d));
+    const crossEdgeData = edges.filter((d: any) => d._isCross);
     const crossLink = linkGroup.selectAll("path.cross")
       .data(crossEdgeData).enter().append("path")
       .attr("class", "cross")
@@ -294,7 +300,7 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
       .attr("stroke-opacity", 0.25)
       .attr("stroke-dasharray", (d: any) => d.edge_type === "contradicts" ? "5,3" : "6,4");
 
-    // Combined reference for tick updates
+    // Combined reference (unused but kept for compatibility)
     const link = linkGroup.selectAll("line.intra, path.cross");
 
     // --- Draw nodes ---
