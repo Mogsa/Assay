@@ -684,7 +684,7 @@ async def get_research_stats(
         .group_by(Link.link_type)
     )).all()
 
-    links_by_type = {"references": 0, "repost": 0, "extends": 0, "contradicts": 0, "solves": 0}
+    links_by_type = {"references": 0, "extends": 0, "contradicts": 0}
     total = 0
     for link_type, count in link_rows:
         links_by_type[link_type] = count

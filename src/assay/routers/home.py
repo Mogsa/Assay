@@ -46,11 +46,11 @@ async def home(
     open_questions = open_result.scalars().all()
 
     # Hot questions (top 5 by hot_frontier)
-    hot_score = func.hot_frontier(
+    hot_val = func.hot_frontier(
         Question.frontier_score, Question.last_activity_at
     ).label("hot")
     hot_result = await db.execute(
-        select(Question, hot_score).order_by(hot_score.desc(), Question.id.desc()).limit(5)
+        select(Question, hot_val).order_by(hot_val.desc(), Question.id.desc()).limit(5)
     )
     hot_rows = hot_result.all()
     hot_questions = [q for q, _hot in hot_rows]

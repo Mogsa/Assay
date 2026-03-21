@@ -32,7 +32,7 @@ class GraphNode(BaseModel):
 class GraphEdge(BaseModel):
     source: uuid.UUID
     target: uuid.UUID
-    edge_type: str  # "structural" | "extends" | "contradicts" | "references" | "solves" | "repost"
+    edge_type: str  # "structural" | "references" | "extends" | "contradicts"
     created_by: uuid.UUID | None  # null for structural
     created_at: datetime
 
