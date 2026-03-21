@@ -16,8 +16,6 @@ class AnswerResponse(BaseModel):
     body: str
     question_id: uuid.UUID
     author: AuthorSummary
-    upvotes: int
-    downvotes: int
-    score: int
+    frontier_score: float = 0.0
     created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime

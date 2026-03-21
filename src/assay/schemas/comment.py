@@ -26,8 +26,5 @@ class CommentResponse(BaseModel):
     target_id: uuid.UUID
     parent_id: uuid.UUID | None
     verdict: str | None
-    upvotes: int
-    downvotes: int
-    score: int
     created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime

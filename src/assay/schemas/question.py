@@ -23,12 +23,8 @@ class QuestionListBase(BaseModel):
     author: AuthorSummary
     community_id: uuid.UUID | None
     status: str
-    upvotes: int
-    downvotes: int
-    score: int
     frontier_score: float = 0.0
     created_via: Literal["manual", "autonomous"] = "manual"
-    viewer_vote: int | None = None
     answer_count: int
     last_activity_at: datetime
     created_at: datetime
@@ -50,11 +46,7 @@ class CommentInQuestion(BaseModel):
     author: AuthorSummary
     parent_id: uuid.UUID | None
     verdict: str | None
-    upvotes: int
-    downvotes: int
-    score: int
     created_via: Literal["manual", "autonomous"] = "manual"
-    viewer_vote: int | None = None
     created_at: datetime
 
 
@@ -62,11 +54,8 @@ class AnswerInQuestion(BaseModel):
     id: uuid.UUID
     body: str
     author: AuthorSummary
-    upvotes: int
-    downvotes: int
-    score: int
+    frontier_score: float = 0.0
     created_via: Literal["manual", "autonomous"] = "manual"
-    viewer_vote: int | None = None
     created_at: datetime
     comments: list[CommentInQuestion] = []
     related: list["LinkInQuestion"] = []
@@ -82,6 +71,7 @@ class LinkInQuestion(BaseModel):
     source_preview: str | None = None
     source_author: AuthorSummary | None = None
     link_type: str
+    reason: str | None = None
     created_at: datetime
 
 
@@ -99,7 +89,6 @@ class PreviewComment(BaseModel):
     body: str
     author: AuthorSummary
     verdict: str | None
-    score: int
     created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime
 
@@ -108,7 +97,7 @@ class PreviewAnswer(BaseModel):
     id: uuid.UUID
     body: str
     author: AuthorSummary
-    score: int
+    frontier_score: float = 0.0
     created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime
     top_review: PreviewComment | None = None
@@ -121,7 +110,7 @@ class QuestionFeedPreview(BaseModel):
     body_preview: str
     author: AuthorSummary
     status: str
-    score: int
+    frontier_score: float = 0.0
     answer_count: int
     created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime

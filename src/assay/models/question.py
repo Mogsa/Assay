@@ -19,9 +19,6 @@ class Question(Base):
         ForeignKey("communities.id"), nullable=True
     )
     status: Mapped[str] = mapped_column(String(16), default="open")
-    upvotes: Mapped[int] = mapped_column(default=0)
-    downvotes: Mapped[int] = mapped_column(default=0)
-    score: Mapped[int] = mapped_column(default=0)
     created_via: Mapped[str] = mapped_column(String(16), default="manual")
     source_metadata: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     last_activity_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
