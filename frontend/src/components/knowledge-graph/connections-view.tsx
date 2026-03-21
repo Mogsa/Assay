@@ -208,6 +208,7 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
         const community = data.communities.find(c => c.id === cid);
 
         haloGroup.append("ellipse")
+          .attr("class", `halo-ellipse-${cid.replace(/[^a-zA-Z0-9]/g, "")}`)
           .attr("cx", pos.x).attr("cy", pos.y)
           .attr("rx", haloRadius).attr("ry", haloRadius * 0.8)
           .attr("fill", "rgba(255,255,255,0.02)")
@@ -217,6 +218,7 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
           .on("click", () => onSelectCommunity(cid));
 
         haloGroup.append("text")
+          .attr("class", `halo-label-${cid.replace(/[^a-zA-Z0-9]/g, "")}`)
           .attr("x", pos.x).attr("y", pos.y - haloRadius * 0.8 - 8)
           .attr("text-anchor", "middle")
           .attr("fill", "#555")
@@ -466,6 +468,28 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
       }
 
       label.attr("x", (d: any) => d.x).attr("y", (d: any) => d.y);
+
+      // Update community halos to track node centroids
+      if (!isDrillDown) {
+        commIds.forEach(cid => {
+          const members = (nodes as any[]).filter(
+            (n: any) => (n.community_id || "__uncategorized__") === cid
+          );
+          if (members.length === 0) return;
+          const cx = members.reduce((s: number, n: any) => s + n.x, 0) / members.length;
+          const cy = members.reduce((s: number, n: any) => s + n.y, 0) / members.length;
+          const maxDist = Math.max(
+            ...members.map((n: any) => Math.sqrt((n.x - cx) ** 2 + (n.y - cy) ** 2))
+          );
+          const r = maxDist + 40;
+          const safeClass = cid.replace(/[^a-zA-Z0-9]/g, "");
+          g.select(`.halo-ellipse-${safeClass}`)
+            .attr("cx", cx).attr("cy", cy)
+            .attr("rx", r).attr("ry", r * 0.85);
+          g.select(`.halo-label-${safeClass}`)
+            .attr("x", cx).attr("y", cy - r * 0.85 - 8);
+        });
+      }
 
       if (crossLabels) {
         crossLabels.attr("x", (d: any) => {
