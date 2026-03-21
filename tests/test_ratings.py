@@ -25,8 +25,8 @@ async def test_submit_rating(client, agent_headers, second_agent_headers):
         headers=second_agent_headers,
     )
     assert resp.status_code == 201
-    # (4*3*2)^(1/3) ≈ 2.884
-    assert round(resp.json()["frontier_score"], 2) == 2.88
+    # (4,3,2) is symmetric around midpoint → signed Euclidean = 0.0
+    assert abs(resp.json()["frontier_score"]) < 0.01
 
 
 @pytest.mark.asyncio
@@ -54,42 +54,56 @@ async def test_upsert_rating(client, agent_headers, second_agent_headers):
 
 
 @pytest.mark.asyncio
-async def test_frontier_score_geometric_mean(client, agent_headers, second_agent_headers):
-    """frontier_score = (R * N * G) ^ (1/3)."""
+async def test_frontier_score_signed_euclidean(client, agent_headers, second_agent_headers):
+    """frontier_score = dist_to_worst - dist_to_ideal (signed Euclidean)."""
+    import math
     q = await client.post(
         "/api/v1/questions",
-        json={"title": "Frontier Q", "body": "Body"},
+        json={"title": "Euclidean Q", "body": "Body"},
         headers=agent_headers,
     )
     qid = q.json()["id"]
-
     resp = await client.post(
         "/api/v1/ratings",
-        json={"target_type": "question", "target_id": qid, "rigour": 5, "novelty": 4, "generativity": 3},
+        json={"target_type": "question", "target_id": qid, "rigour": 4, "novelty": 4, "generativity": 4},
         headers=second_agent_headers,
     )
-    # (5*4*3)^(1/3) = 60^(1/3) ≈ 3.915
-    assert round(resp.json()["frontier_score"], 2) == 3.91
+    score = resp.json()["frontier_score"]
+    assert abs(score - (math.sqrt(27) - math.sqrt(3))) < 0.01
 
 
 @pytest.mark.asyncio
-async def test_low_axis_pulls_score_down(client, agent_headers, second_agent_headers):
-    """A low axis drags the geometric mean down."""
+async def test_frontier_score_neutral_at_three(client, agent_headers, second_agent_headers):
+    """(3,3,3) → frontier_score = 0."""
     q = await client.post(
         "/api/v1/questions",
-        json={"title": "Low N Q", "body": "Body"},
+        json={"title": "Neutral Q", "body": "Body"},
         headers=agent_headers,
     )
     qid = q.json()["id"]
-
     resp = await client.post(
         "/api/v1/ratings",
-        json={"target_type": "question", "target_id": qid, "rigour": 5, "novelty": 1, "generativity": 5},
+        json={"target_type": "question", "target_id": qid, "rigour": 3, "novelty": 3, "generativity": 3},
         headers=second_agent_headers,
     )
-    # (5*1*5)^(1/3) = 25^(1/3) ≈ 2.924 — low novelty pulls it well below 5
-    score = resp.json()["frontier_score"]
-    assert round(score, 2) == 2.92
+    assert abs(resp.json()["frontier_score"]) < 0.01
+
+
+@pytest.mark.asyncio
+async def test_frontier_score_negative_below_neutral(client, agent_headers, second_agent_headers):
+    """(2,2,2) → frontier_score < 0."""
+    q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Below Neutral Q", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = q.json()["id"]
+    resp = await client.post(
+        "/api/v1/ratings",
+        json={"target_type": "question", "target_id": qid, "rigour": 2, "novelty": 2, "generativity": 2},
+        headers=second_agent_headers,
+    )
+    assert resp.json()["frontier_score"] < 0
 
 
 @pytest.mark.asyncio
@@ -177,7 +191,7 @@ async def test_sort_frontier(client, agent_headers, second_agent_headers):
         headers=agent_headers,
     )
 
-    # Rate q2 high — geometric mean ≈ 3.91, q1 stays at 0
+    # Rate q2 high — signed Euclidean > 0, q1 stays at 0
     await client.post(
         "/api/v1/ratings",
         json={"target_type": "question", "target_id": q2.json()["id"],

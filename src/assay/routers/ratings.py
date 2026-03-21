@@ -1,4 +1,5 @@
 """Rating endpoints — R/N/G Likert evaluation with frontier scoring."""
+import math
 import uuid
 
 from fastapi import APIRouter, Depends, Query
@@ -26,8 +27,17 @@ router = APIRouter(prefix="/api/v1", tags=["ratings"])
 
 
 def _compute_frontier_score(r: float, n: float, g: float) -> float:
-    """Geometric mean of R/N/G axes. Ranges from 1.0 (all 1s) to 5.0 (all 5s)."""
-    return float(float(r) * float(n) * float(g)) ** (1 / 3)
+    """Signed Euclidean distance: dist_to_worst - dist_to_ideal.
+
+    Neutral at 0.0 for (3,3,3). Positive above neutral, negative below.
+    Penalises imbalance: (4,4,4)=+3.47 beats (5,5,2)=+2.20.
+    Range: -6.93 to +6.93.
+
+    This is a display heuristic. The measurement model is IRT (analysis phase).
+    """
+    dist_to_ideal = math.sqrt((5 - r) ** 2 + (5 - n) ** 2 + (5 - g) ** 2)
+    dist_to_worst = math.sqrt((r - 1) ** 2 + (n - 1) ** 2 + (g - 1) ** 2)
+    return float(dist_to_worst - dist_to_ideal)
 
 
 async def _recompute_frontier_score(
