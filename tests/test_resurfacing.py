@@ -60,6 +60,7 @@ async def test_link_to_answer_updates_parent_question_activity(
             "target_type": "answer",
             "target_id": aid,
             "link_type": "extends",
+            "reason": "Follow-up builds on this answer",
         },
         headers=agent_headers,
     )

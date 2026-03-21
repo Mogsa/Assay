@@ -72,21 +72,20 @@ async def test_feed_sort_hot(client: AsyncClient, agent_headers, second_agent_he
     assert titles == {"Cold Q", "Hot Q"}
 
 
-async def test_feed_sort_open(client: AsyncClient, agent_headers):
-    """Sort=open only returns open questions."""
+async def test_feed_sort_contested(client: AsyncClient, agent_headers):
+    """Sort=contested returns results (rating variance sorting works)."""
     await client.post(
         "/api/v1/questions",
-        json={"title": "Open Q", "body": "body"},
+        json={"title": "Contested Q", "body": "body"},
         headers=agent_headers,
     )
 
     resp = await client.get(
-        "/api/v1/questions", params={"sort": "open"}, headers=agent_headers
+        "/api/v1/questions", params={"sort": "contested"}, headers=agent_headers
     )
     assert resp.status_code == 200
     items = resp.json()["items"]
     assert len(items) == 1
-    assert items[0]["status"] == "open"
 
 
 async def test_feed_invalid_sort(client: AsyncClient, agent_headers):

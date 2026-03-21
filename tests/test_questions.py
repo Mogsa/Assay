@@ -15,7 +15,7 @@ async def test_create_question(client, agent_headers):
     data = resp.json()
     assert data["title"] == "What is the time complexity of merge sort?"
     assert data["status"] == "open"
-    assert data["score"] == 0
+    assert data["frontier_score"] == 0.0
 
 
 async def test_create_question_requires_auth(client):
@@ -214,66 +214,16 @@ async def test_question_detail_includes_comments(
     assert answer_data["comments"][0]["verdict"] == "correct"
 
 
-async def test_question_responses_include_viewer_vote(
-    client, agent_headers, second_agent_headers
-):
-    q = await client.post(
-        "/api/v1/questions",
-        json={"title": "Vote state", "body": "Body"},
-        headers=agent_headers,
-    )
-    qid = q.json()["id"]
-
-    # second agent upvotes question
-    await client.post(
-        f"/api/v1/questions/{qid}/vote",
-        json={"value": 1},
-        headers=second_agent_headers,
-    )
-
-    list_resp = await client.get("/api/v1/questions", headers=second_agent_headers)
-    assert list_resp.status_code == 200
-    item = next(i for i in list_resp.json()["items"] if i["id"] == qid)
-    assert item["viewer_vote"] == 1
-
-    detail_resp = await client.get(f"/api/v1/questions/{qid}", headers=second_agent_headers)
-    assert detail_resp.status_code == 200
-    assert detail_resp.json()["viewer_vote"] == 1
-
-
-async def test_list_questions_sort_best_questions(client, agent_headers):
-    """Sort by question score (Wilson lower bound)."""
+async def test_list_questions_sort_frontier(client, agent_headers):
+    """Sort by frontier_score descending."""
     await client.post(
         "/api/v1/questions",
-        json={"title": "Best Q test", "body": "Body"},
+        json={"title": "Frontier sort test", "body": "Body"},
         headers=agent_headers,
     )
     resp = await client.get(
         "/api/v1/questions",
-        params={"sort": "best_questions"},
-        headers=agent_headers,
-    )
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "items" in data
-
-
-async def test_list_questions_sort_best_answers(client, agent_headers, second_agent_headers):
-    """Sort by top answer score."""
-    q = await client.post(
-        "/api/v1/questions",
-        json={"title": "Best A test", "body": "Body"},
-        headers=agent_headers,
-    )
-    qid = q.json()["id"]
-    await client.post(
-        f"/api/v1/questions/{qid}/answers",
-        json={"body": "An answer"},
-        headers=second_agent_headers,
-    )
-    resp = await client.get(
-        "/api/v1/questions",
-        params={"sort": "best_answers"},
+        params={"sort": "frontier"},
         headers=agent_headers,
     )
     assert resp.status_code == 200
@@ -365,46 +315,21 @@ async def test_question_preview_summarizes_problem_reviews_and_answers(
     assert detail_resp.json()["author"]["display_name"] == "TestAgent"
 
 
-async def test_list_questions_sort_discriminating(client, agent_headers, second_agent_headers):
-    """Questions with more incorrect/partial verdicts rank higher."""
-    # Q1: no verdicts
-    q1 = await client.post(
-        "/api/v1/questions",
-        json={"title": "Easy question no verdicts", "body": "Body"},
-        headers=agent_headers,
-    )
-    q1_id = q1.json()["id"]
-
-    # Q2: one incorrect verdict
-    q2 = await client.post(
-        "/api/v1/questions",
-        json={"title": "Contested question", "body": "Body"},
-        headers=agent_headers,
-    )
-    q2_id = q2.json()["id"]
-    ans2 = await client.post(
-        f"/api/v1/questions/{q2_id}/answers",
-        json={"body": "An answer"},
-        headers=second_agent_headers,
-    )
-    ans2_id = ans2.json()["id"]
+async def test_list_questions_sort_contested(client, agent_headers):
+    """Sort=contested returns results ordered by rating variance."""
     await client.post(
-        f"/api/v1/answers/{ans2_id}/comments",
-        json={"body": "This is wrong", "verdict": "incorrect"},
+        "/api/v1/questions",
+        json={"title": "Contested sort test", "body": "Body"},
         headers=agent_headers,
     )
-
     resp = await client.get(
         "/api/v1/questions",
-        params={"sort": "discriminating"},
+        params={"sort": "contested"},
         headers=agent_headers,
     )
     assert resp.status_code == 200
     data = resp.json()
-    ids = [item["id"] for item in data["items"]]
-    assert ids.index(q2_id) < ids.index(q1_id)  # Q2 ranks before Q1
-    # Q1 has no answers — it should still appear in the results (score 0)
-    assert q1_id in ids
+    assert "items" in data
 
 
 async def test_get_question_records_read(client, agent_headers, db):

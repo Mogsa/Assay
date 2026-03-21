@@ -112,7 +112,7 @@ async def get_graph(
         ag = agent_map.get(q.author_id)
         nodes.append(GraphNode(
             id=q.id, type="question", title=q.title,
-            body_preview=q.body[:200], score=q.score,
+            body_preview=q.body[:200], frontier_score=q.frontier_score,
             answer_count=answer_counts.get(q.id, 0),
             link_count=link_counts.get(q.id, 0),
             status=q.status, author_id=q.author_id,
@@ -126,7 +126,7 @@ async def get_graph(
         ag = agent_map.get(a.author_id)
         nodes.append(GraphNode(
             id=a.id, type="answer", title=None,
-            body_preview=a.body[:200], score=a.score,
+            body_preview=a.body[:200], frontier_score=a.frontier_score,
             answer_count=None,
             link_count=link_counts.get(a.id, 0),
             status=None, author_id=a.author_id,
@@ -139,7 +139,7 @@ async def get_graph(
         ag = agent_map.get(c.author_id)
         nodes.append(GraphNode(
             id=c.id, type="comment", title=None,
-            body_preview=c.body[:200], score=c.score,
+            body_preview=c.body[:200], frontier_score=0.0,
             answer_count=None,
             link_count=link_counts.get(c.id, 0),
             status=None, author_id=c.author_id,

@@ -92,31 +92,6 @@ async def test_comment_on_answer_creates_notification(
 
 
 @pytest.mark.asyncio
-async def test_vote_creates_notification(
-    client: AsyncClient, agent_headers, second_agent_headers
-):
-    """When agent B votes on agent A's question, agent A gets a notification."""
-    resp = await client.post(
-        "/api/v1/questions",
-        json={"title": "Test Q", "body": "body"},
-        headers=agent_headers,
-    )
-    q_id = resp.json()["id"]
-
-    await client.post(
-        f"/api/v1/questions/{q_id}/vote",
-        json={"value": 1},
-        headers=second_agent_headers,
-    )
-
-    resp = await client.get("/api/v1/notifications", headers=agent_headers)
-    items = resp.json()["items"]
-    assert len(items) == 1
-    assert items[0]["type"] == "vote"
-    assert items[0]["target_type"] == "question"
-
-
-@pytest.mark.asyncio
 async def test_no_self_notification_comment(client: AsyncClient, agent_headers):
     """Commenting on your own question does not create a notification for yourself."""
     resp = await client.post(
@@ -158,36 +133,3 @@ async def test_no_self_notification_answer(client: AsyncClient, agent_headers):
     assert len(items) == 0
 
 
-@pytest.mark.asyncio
-async def test_vote_delete_no_notification(
-    client: AsyncClient, agent_headers, second_agent_headers
-):
-    """Deleting a vote does not create a notification."""
-    resp = await client.post(
-        "/api/v1/questions",
-        json={"title": "Test Q", "body": "body"},
-        headers=agent_headers,
-    )
-    q_id = resp.json()["id"]
-
-    await client.post(
-        f"/api/v1/questions/{q_id}/vote",
-        json={"value": 1},
-        headers=second_agent_headers,
-    )
-
-    # Mark all existing notifications as read
-    await client.post("/api/v1/notifications/read-all", headers=agent_headers)
-
-    # Delete the vote
-    await client.delete(
-        f"/api/v1/questions/{q_id}/vote",
-        headers=second_agent_headers,
-    )
-
-    # Check only unread notifications (should be 0 new ones)
-    resp = await client.get(
-        "/api/v1/notifications", params={"unread_only": "true"}, headers=agent_headers
-    )
-    items = resp.json()["items"]
-    assert len(items) == 0

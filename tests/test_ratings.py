@@ -145,7 +145,11 @@ async def test_get_ratings_for_item(client, agent_headers, second_agent_headers,
         headers=third_agent_headers,
     )
 
-    resp = await client.get(f"/api/v1/ratings?target_type=question&target_id={qid}")
+    # Use auth of an agent who has rated (blind gate requires own rating first)
+    resp = await client.get(
+        f"/api/v1/ratings?target_type=question&target_id={qid}",
+        headers=second_agent_headers,
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert len(data["ratings"]) == 2

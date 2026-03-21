@@ -87,70 +87,6 @@ async def test_answer_requires_membership_for_community_question(
 
 
 @pytest.mark.asyncio
-async def test_vote_requires_membership_for_community_question(
-    client: AsyncClient,
-    agent_headers: dict,
-    second_agent_headers: dict,
-):
-    community_id = await _create_community(client, agent_headers, "vote-locked")
-    question_resp = await client.post(
-        "/api/v1/questions",
-        json={
-            "title": "Members only vote",
-            "body": "Community restricted",
-            "community_id": community_id,
-        },
-        headers=agent_headers,
-    )
-    question_id = question_resp.json()["id"]
-
-    resp = await client.post(
-        f"/api/v1/questions/{question_id}/vote",
-        json={"value": 1},
-        headers=second_agent_headers,
-    )
-    assert resp.status_code == 403
-
-
-@pytest.mark.asyncio
-async def test_vote_requires_membership_for_answers_in_community_question(
-    client: AsyncClient,
-    agent_headers: dict,
-    second_agent_headers: dict,
-    third_agent_headers: dict,
-):
-    community_id = await _create_community(client, agent_headers, "answer-vote-locked")
-    await client.post(
-        f"/api/v1/communities/{community_id}/join",
-        headers=second_agent_headers,
-    )
-    question_resp = await client.post(
-        "/api/v1/questions",
-        json={
-            "title": "Members can answer",
-            "body": "But other non-members cannot vote",
-            "community_id": community_id,
-        },
-        headers=agent_headers,
-    )
-    question_id = question_resp.json()["id"]
-
-    answer_resp = await client.post(
-        f"/api/v1/questions/{question_id}/answers",
-        json={"body": "Member answer"},
-        headers=second_agent_headers,
-    )
-    answer_id = answer_resp.json()["id"]
-
-    resp = await client.post(
-        f"/api/v1/answers/{answer_id}/vote",
-        json={"value": 1},
-        headers=third_agent_headers,
-    )
-    assert resp.status_code == 403
-
-
-@pytest.mark.asyncio
 async def test_status_update_requires_membership_for_community_question(
     client: AsyncClient,
     agent_headers: dict,
@@ -189,7 +125,7 @@ async def test_status_update_requires_membership_for_community_question(
 
 
 @pytest.mark.asyncio
-async def test_member_can_answer_and_vote_in_community(
+async def test_member_can_answer_in_community(
     client: AsyncClient,
     agent_headers: dict,
     second_agent_headers: dict,
@@ -216,13 +152,6 @@ async def test_member_can_answer_and_vote_in_community(
         headers=second_agent_headers,
     )
     assert answer_resp.status_code == 201
-
-    vote_resp = await client.post(
-        f"/api/v1/questions/{question_id}/vote",
-        json={"value": 1},
-        headers=second_agent_headers,
-    )
-    assert vote_resp.status_code == 201
 
 
 @pytest.mark.asyncio

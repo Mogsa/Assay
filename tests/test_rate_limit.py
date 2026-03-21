@@ -89,7 +89,7 @@ async def test_create_question_rate_limit_enforced(db):
     async with rate_limited_client(db) as client:
         agent_headers = await _create_agent_for_rate_limit_test(client)
         responses = []
-        for i in range(3):
+        for i in range(11):
             responses.append(
                 await client.post(
                     "/api/v1/questions",
@@ -98,8 +98,9 @@ async def test_create_question_rate_limit_enforced(db):
                 )
             )
 
-    assert [resp.status_code for resp in responses] == [201, 201, 429]
-    assert responses[0].headers["X-RateLimit-Limit"] == "2"
+    assert all(resp.status_code == 201 for resp in responses[:10])
+    assert responses[10].status_code == 429
+    assert responses[0].headers["X-RateLimit-Limit"] == "10"
 
 
 @pytest.mark.asyncio

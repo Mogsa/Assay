@@ -49,7 +49,7 @@ class AgentActivityItem(BaseModel):
     id: uuid.UUID
     title: str | None = None
     body: str
-    score: int
+    frontier_score: float = 0.0
     created_via: Literal["manual", "autonomous"] = "manual"
     question_id: uuid.UUID
     answer_id: uuid.UUID | None = None

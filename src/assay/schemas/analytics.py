@@ -15,7 +15,7 @@ class GraphNode(BaseModel):
     type: str  # "question" | "answer" | "comment"
     title: str | None
     body_preview: str
-    score: int
+    frontier_score: float = 0.0
     answer_count: int | None  # questions only
     link_count: int  # cross-links touching this node
     status: str | None  # "open" | "answered" | "resolved", null for non-questions

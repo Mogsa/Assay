@@ -99,7 +99,7 @@ async def test_get_answer_by_id(client, agent_headers):
     assert data["question_id"] == qid
     assert data["body"] == "My detailed answer"
     assert "author" in data
-    assert "score" in data
+    assert "frontier_score" in data
     assert "created_at" in data
 
 

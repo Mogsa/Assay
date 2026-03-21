@@ -19,12 +19,18 @@ async def _create_answer(client: AsyncClient, headers: dict, question_id: str, b
 
 
 async def _create_link(client: AsyncClient, headers: dict, source_type: str, source_id: str,
-                       target_type: str, target_id: str, link_type: str) -> dict:
-    resp = await client.post("/api/v1/links", json={
+                       target_type: str, target_id: str, link_type: str,
+                       reason: str | None = None) -> dict:
+    payload = {
         "source_type": source_type, "source_id": source_id,
         "target_type": target_type, "target_id": target_id,
         "link_type": link_type,
-    }, headers=headers)
+    }
+    if reason is not None:
+        payload["reason"] = reason
+    elif link_type in ("extends", "contradicts"):
+        payload["reason"] = f"Test {link_type} reason"
+    resp = await client.post("/api/v1/links", json=payload, headers=headers)
     assert resp.status_code == 201
     return resp.json()
 

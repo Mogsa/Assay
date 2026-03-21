@@ -63,7 +63,7 @@ def _activity_union(agent_id: uuid.UUID):
         literal("question").label("item_type"),
         Question.id.label("id"),
         Question.created_at.label("created_at"),
-        Question.score.label("score"),
+        Question.frontier_score.label("frontier_score"),
         Question.created_via.label("created_via"),
         Question.title.label("title"),
         Question.body.label("body"),
@@ -79,7 +79,7 @@ def _activity_union(agent_id: uuid.UUID):
             literal("answer").label("item_type"),
             Answer.id.label("id"),
             Answer.created_at.label("created_at"),
-            Answer.score.label("score"),
+            Answer.frontier_score.label("frontier_score"),
             Answer.created_via.label("created_via"),
             Question.title.label("title"),
             Answer.body.label("body"),
@@ -98,7 +98,7 @@ def _activity_union(agent_id: uuid.UUID):
             literal("comment").label("item_type"),
             Comment.id.label("id"),
             Comment.created_at.label("created_at"),
-            Comment.score.label("score"),
+            literal(0.0).label("frontier_score"),
             Comment.created_via.label("created_via"),
             Question.title.label("title"),
             Comment.body.label("body"),
@@ -117,7 +117,7 @@ def _activity_union(agent_id: uuid.UUID):
             literal("comment").label("item_type"),
             Comment.id.label("id"),
             Comment.created_at.label("created_at"),
-            Comment.score.label("score"),
+            literal(0.0).label("frontier_score"),
             Comment.created_via.label("created_via"),
             Question.title.label("title"),
             Comment.body.label("body"),
@@ -146,7 +146,7 @@ def _activity_item_from_row(row) -> AgentActivityItem:
         id=row["id"],
         title=row["title"],
         body=row["body"],
-        score=row["score"],
+        frontier_score=row["frontier_score"],
         created_via=row["created_via"],
         question_id=row["question_id"],
         answer_id=row["answer_id"],
@@ -437,7 +437,7 @@ async def _recent_questions(db: AsyncSession, agent_id: uuid.UUID) -> list[Agent
             id=question.id,
             title=question.title,
             body=question.body,
-            score=question.score,
+            frontier_score=question.frontier_score,
             created_via=question.created_via,
             question_id=question.id,
             created_at=question.created_at,
@@ -451,7 +451,7 @@ async def _top_answers(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActiv
         select(Answer, Question.title)
         .join(Question, Question.id == Answer.question_id)
         .where(Answer.author_id == agent_id)
-        .order_by(Answer.score.desc(), Answer.created_at.desc())
+        .order_by(Answer.frontier_score.desc(), Answer.created_at.desc())
         .limit(3)
     )
     return [
@@ -460,7 +460,7 @@ async def _top_answers(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActiv
             id=answer.id,
             title=question_title,
             body=answer.body,
-            score=answer.score,
+            frontier_score=answer.frontier_score,
             created_via=answer.created_via,
             question_id=answer.question_id,
             answer_id=answer.id,
@@ -495,7 +495,7 @@ async def _top_reviews(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActiv
             id=comment.id,
             title=question_title,
             body=comment.body,
-            score=comment.score,
+            frontier_score=0.0,
             created_via=comment.created_via,
             question_id=comment.target_id,
             target_type="question",
@@ -510,7 +510,7 @@ async def _top_reviews(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActiv
             id=comment.id,
             title=question_title,
             body=comment.body,
-            score=comment.score,
+            frontier_score=0.0,
             created_via=comment.created_via,
             question_id=question_id,
             answer_id=answer_id,
@@ -521,7 +521,7 @@ async def _top_reviews(db: AsyncSession, agent_id: uuid.UUID) -> list[AgentActiv
         )
         for comment, question_title, question_id, answer_id in answer_comment_rows
     ]
-    items.sort(key=lambda item: (item.score, item.created_at), reverse=True)
+    items.sort(key=lambda item: (item.frontier_score, item.created_at), reverse=True)
     return items[:3]
 
 

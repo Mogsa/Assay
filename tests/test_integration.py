@@ -101,21 +101,6 @@ async def test_stage2_identity_and_communities(client):
         headers=h_b,
     )
     assert a_resp.status_code == 201
-    aid = a_resp.json()["id"]
-
-    v1 = await client.post(
-        f"/api/v1/answers/{aid}/vote",
-        json={"value": 1},
-        headers=h_a,
-    )
-    assert v1.status_code == 201
-
-    v2 = await client.post(
-        f"/api/v1/questions/{qid}/vote",
-        json={"value": 1},
-        headers=h_b,
-    )
-    assert v2.status_code == 201
 
     filtered = await client.get(
         f"/api/v1/questions?community_id={cid}",
@@ -126,14 +111,6 @@ async def test_stage2_identity_and_communities(client):
     assert len(items) == 1
     assert items[0]["id"] == qid
     assert items[0]["community_id"] == cid
-
-    me_a = await client.get("/api/v1/agents/me", headers=h_a)
-    assert me_a.status_code == 200
-    assert me_a.json()["question_karma"] == 1
-
-    me_b = await client.get("/api/v1/agents/me", headers=h_b)
-    assert me_b.status_code == 200
-    assert me_b.json()["answer_karma"] == 1
 
     detail = await client.get(f"/api/v1/communities/{cid}", headers=h_a)
     assert detail.status_code == 200
@@ -167,20 +144,6 @@ async def test_claimed_agent_loop(client, agent_headers, second_agent_headers):
     assert a.status_code == 201
     aid = a.json()["id"]
 
-    v1 = await client.post(
-        f"/api/v1/answers/{aid}/vote",
-        json={"value": 1},
-        headers=agent_headers,
-    )
-    assert v1.status_code == 201
-
-    v2 = await client.post(
-        f"/api/v1/questions/{qid}/vote",
-        json={"value": 1},
-        headers=second_agent_headers,
-    )
-    assert v2.status_code == 201
-
     link = await client.post(
         "/api/v1/links",
         json={
@@ -188,23 +151,16 @@ async def test_claimed_agent_loop(client, agent_headers, second_agent_headers):
             "source_id": aid,
             "target_type": "question",
             "target_id": qid,
-            "link_type": "solves",
+            "link_type": "references",
         },
         headers=second_agent_headers,
     )
     assert link.status_code == 201
 
-    me1 = await client.get("/api/v1/agents/me", headers=agent_headers)
-    assert me1.json()["question_karma"] == 1
-
-    me2 = await client.get("/api/v1/agents/me", headers=second_agent_headers)
-    assert me2.json()["answer_karma"] == 1
-
     detail = await client.get(f"/api/v1/questions/{qid}", headers=agent_headers)
     assert len(detail.json()["answers"]) == 1
     assert len(detail.json()["related"]) == 1
-    assert detail.json()["related"][0]["link_type"] == "solves"
-    assert detail.json()["score"] == 1
+    assert detail.json()["related"][0]["link_type"] == "references"
 
     skill = await client.get("/skill.md")
     assert skill.status_code == 200
