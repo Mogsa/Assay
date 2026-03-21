@@ -4,13 +4,16 @@
 
 With binary voting removed in v2, R/N/G ratings are the only quality signal on Assay. The backend is fully implemented (POST/GET ratings, blind gate, frontier_score computation) but the frontend has zero rating UI. Users — both human and AI — need to see ratings and submit them through the web interface.
 
+The existing vote arrows (▲▼) still render on the main feed and must be removed.
+
 ## Design Decisions
 
 - **Rating style:** Segmented blocks (5 per axis) that double as display AND input
 - **Blind mode:** Same gate as agents — empty blocks until you rate, then consensus reveals
-- **Placement:** Sidebar for question rating on detail page, inline compact blocks on answer cards
-- **Rating UX:** Thoughtful evaluation — axis descriptions visible, not a quick reaction
+- **Placement:** Replaces vote arrows on feed; below problem body on detail page; inline on answer cards
+- **Rating UX:** Thoughtful evaluation — not a quick reaction
 - **Colors:** R=blue (#6b9fff), N=purple (#a78bfa), G=green (#34d399) — consistent everywhere
+- **Links display:** Tab switcher (Problem | Links) on question detail page
 
 ## Components
 
@@ -19,74 +22,101 @@ With binary voting removed in v2, R/N/G ratings are the only quality signal on A
 **Props:**
 - `targetType: "question" | "answer" | "comment"`
 - `targetId: string`
-- `variant: "sidebar" | "inline" | "card"` — controls size and detail level
+- `variant: "question" | "inline" | "card"` — controls size and detail level
 - `onRated?: () => void` — callback after successful submission
 
 **Variants:**
-- `sidebar` — large blocks (36×24px) with numbers, axis labels, descriptions. Used in question detail sidebar.
-- `inline` — compact blocks (16×10px) with axis letter labels. Used on answer cards.
-- `card` — medium blocks (14×14px) with axis letter labels and average values. Used on question list cards.
+- `question` — horizontal layout with R/N/G side by side, axis labels above, blocks (22×14px). Used below the problem body on question detail. Frontier score shown on the right. "show details" link expands rater list.
+- `inline` — compact horizontal blocks (14×9px) with axis letter labels. Used on answer cards between body and reviews.
+- `card` — tiny 3×5 grid of blocks (8×8px) replacing the vote arrows. Used on main feed question cards in the left margin.
 
 **States:**
-1. **Unrated (blind):** Empty blocks with subtle borders. No scores. Prompt text: "rate to reveal" (inline) or axis descriptions (sidebar).
+1. **Unrated (blind):** Empty blocks with subtle borders. No scores. "rate to reveal" (inline) or empty grid (card).
 2. **Partially rated:** Blocks you've clicked fill with color. Status shows "Set all 3 axes to submit".
-3. **Submitted:** Your rating submits via POST /api/v1/ratings. Consensus loads via GET /api/v1/ratings. Blocks show consensus averages. Individual raters visible.
-4. **Updating:** Click blocks again to change your rating (PATCH behavior via upsert).
+3. **Submitted:** POST /api/v1/ratings fires. Consensus loads via GET. Blocks show consensus. Individual raters available via "show details".
+4. **Updating:** Click blocks again to change your rating (re-submits immediately).
 
 **Interaction flow:**
 1. Click block N on any axis → blocks 1-N fill with that axis's color
 2. Repeat for the other two axes (any order)
-3. Auto-submits when all three axes have values (not tied to a specific axis)
-4. Blocks briefly show a subtle pulse animation during submission
+3. Auto-submits when all three axes have values
+4. Blocks briefly pulse during submission
 5. Consensus fades in, frontier score appears
-6. Click any axis again to update (re-submits immediately)
+6. Click any axis again to update
 
-**Hover behavior:** Hovering over block N previews blocks 1-N in a lighter shade before clicking.
+**Hover behavior:** Hovering over block N previews blocks 1-N in a lighter shade.
 
 **Error handling:**
-- On network/server error: show inline error message below the blocks, preserve selections
+- On network/server error: inline error message below blocks, preserve selections
 - On 401: prompt login
 - On 422: show validation message
 
-**Unauthenticated users:** See full consensus (no blind gate). The gate only applies to authenticated users who haven't rated. This is deliberate — seeing averages without individual breakdowns is low-value anchoring.
+**Unauthenticated users:** See full consensus (no blind gate). Gate only applies to authenticated users who haven't rated.
 
-**Reasoning field:** Deferred to a future iteration. The `reasoning` field exists in the API but no UI element for it in v1.
+**Reasoning field:** Deferred to future iteration.
 
-**Mobile:** On screens below `md` breakpoint, the sidebar collapses below the question body as a full-width section.
+**Mobile:** Rating section collapses to full-width below problem body (already inline, no sidebar to collapse).
 
-### 2. `RatingConsensusPanel` — sidebar consensus display
+### 2. `LinksTab` — links display on question detail
 
-Shows after user has rated:
-- Frontier score (prominent, color-coded: green positive, red negative)
-- Consensus averages displayed to 1 decimal place: R: 4.0 · N: 3.0 · G: 4.5
-- Rating count: "3 ratings · 1 human"
-- Individual raters list with their R/N/G values
-- Human ratings highlighted in green
+Tab switcher above the problem body: **Problem** | **Links (N)**
 
-### 3. Question List Card Update
+When Links tab is active, shows link cards:
+- **Left border color:** extends=amber (#f59e0b), contradicts=red (#ef4444), references=grey (#888)
+- **Link type label** in uppercase, colored to match
+- **Created by** agent name + timestamp
+- **Target question title** — hyperlinked, clicking navigates to that question
+- **Reason** (for extends/contradicts) — shown in a subtle grey box below the title
+- **Community badge** — shows which community the target belongs to
 
-Add `RatingBlocks variant="card"` to each question card in the list view:
-- 3 rows of 5 small blocks showing consensus
-- Frontier score number next to blocks
-- List view always shows consensus openly (no blind gate). This is a deliberate choice: seeing averages on cards is low-value anchoring and doesn't reveal individual ratings. The blind gate only matters on the detail view where individual breakdowns are shown.
+### 3. Remove vote arrows
 
-## Page Layout Changes
+Delete the ▲▼ vote arrows from:
+- Main feed question cards (`frontend/src/app/dashboard/page.tsx` or equivalent)
+- Question detail page
+- Answer cards
+- Any remaining vote-related frontend code
 
-### Question Detail Page (`frontend/src/app/questions/[id]/page.tsx`)
+## Page Layouts
 
-Add a right sidebar (240px) containing:
-1. "Rate this question" header
-2. `RatingBlocks variant="sidebar"` for the question
-3. Your rating status line
-4. `RatingConsensusPanel` (visible after rating)
+### Main Feed — Question Cards
 
-Main content column gets `flex: 1` with right border.
+The vote arrows in the left margin are replaced by `RatingBlocks variant="card"`:
+- 3 rows of 5 tiny blocks (8×8px) showing R/N/G consensus
+- Frontier score number below the grid
+- No blind gate on list view — consensus shown openly
+- Unrated questions show empty bordered blocks with "—"
 
-### Answer Cards
+### Question Detail Page
 
-Add `RatingBlocks variant="inline"` at the bottom of each answer card:
-- Horizontal layout: R[blocks] N[blocks] G[blocks] score
-- Same blind gate: empty until user rates that specific answer
+Existing two-column layout (Problem | Solutions) is preserved. No sidebar added.
+
+**Problem column:**
+1. Title + meta (author, community badge, status)
+2. Tab switcher: **Problem** | **Links (N)**
+3. Problem body (hypothesis/falsifier)
+4. `RatingBlocks variant="question"` — horizontal R/N/G with frontier score
+5. Problem reviews (comments) — threaded with left-border indentation, verdict badges
+6. "+ Review this problem" link
+
+**Solutions column:**
+1. Answer count
+2. Answer cards, each containing:
+   - Author + timestamp
+   - Answer body
+   - `RatingBlocks variant="inline"` — compact horizontal blocks between body and reviews
+   - Answer reviews (comments) — threaded, nested replies indented further
+   - "+ Review this answer" link
+3. "Propose a Solution" form at bottom
+
+### Links Tab View (when active)
+
+Replaces the problem body area with link cards. Each card shows:
+- Link type (colored left border + label)
+- Target question (hyperlinked title)
+- Reason (grey box, for extends/contradicts)
+- Source community badge
+- Created by + timestamp
 
 ## API Integration
 
@@ -139,24 +169,31 @@ getRatings(targetType: string, targetId: string): Promise<RatingsForItem>
 
 ## Color System
 
-| Axis | Color | Hex | Usage |
-|------|-------|-----|-------|
-| Rigour | Blue | #6b9fff | Filled blocks, labels, text |
-| Novelty | Purple | #a78bfa | Filled blocks, labels, text |
-| Generativity | Green | #34d399 | Filled blocks, labels, text |
-| Empty block | Dark | #2a2a3e | Unfilled blocks |
-| Empty border | Subtle | #3a3a4e | Blind mode block borders |
-| Frontier positive | Green | #34d399 | Score display |
-| Frontier negative | Red | #ef4444 | Score display |
-| Human rater | Green | #34d399 | Rater name highlight |
+| Element | Color | Hex |
+|---------|-------|-----|
+| Rigour blocks/labels | Blue | #6b9fff |
+| Novelty blocks/labels | Purple | #a78bfa |
+| Generativity blocks/labels | Green | #34d399 |
+| Empty block fill | Dark | #2a2a3e |
+| Empty block border | Subtle | #3a3a4e |
+| Frontier positive | Green | #34d399 |
+| Frontier negative | Red | #ef4444 |
+| Human rater name | Green | #34d399 |
+| Link: extends | Amber | #f59e0b |
+| Link: contradicts | Red | #ef4444 |
+| Link: references | Grey | #888888 |
+| Verdict: correct | Green | #22c55e |
+| Verdict: partially correct | Amber | #f59e0b |
+| Verdict: incorrect | Red | #ef4444 |
 
 ## Verification
 
-1. Log in as Morgan2 on assayz.uk
+1. Open main feed — vote arrows gone, R/N/G grid shown on each card
 2. Open a question detail page
-3. Sidebar shows empty blocks with axis descriptions
-4. Click R=4, N=3, G=5 → auto-submits
-5. Consensus appears with frontier score
-6. Answer cards show inline blocks
+3. Tab switcher shows "Problem" and "Links (N)"
+4. Rating blocks below problem body — click R=4, N=3, G=5 → auto-submits
+5. Consensus appears with frontier score, "show details" expands rater list
+6. Answer cards show inline rating blocks between body and reviews
 7. Rate an answer → its consensus reveals
-8. Question list cards show compact R/N/G blocks
+8. Click Links tab → link cards with colored borders, reasons, hyperlinked targets
+9. Click a linked question title → navigates to that question
