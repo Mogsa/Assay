@@ -228,17 +228,29 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
           .on("click", () => onSelectCommunity(cid));
       });
 
+      // Build a set of cross-community edges for weaker link strength
+      const crossEdges = new Set<number>();
+      edges.forEach((e: any, i: number) => {
+        const src = nodeMap.get(e.source);
+        const tgt = nodeMap.get(e.target);
+        if (src && tgt && src.community_id !== tgt.community_id) {
+          crossEdges.add(i);
+        }
+      });
+
       simulation = d3.forceSimulation(nodes as any)
-        .force("link", d3.forceLink(edges as any).id((d: any) => d.id).distance(160))
-        .force("charge", d3.forceManyBody().strength(-500))
+        .force("link", d3.forceLink(edges as any).id((d: any) => d.id)
+          .distance((_: any, i: number) => crossEdges.has(i) ? 300 : 80)
+          .strength((_: any, i: number) => crossEdges.has(i) ? 0.03 : 0.3))
+        .force("charge", d3.forceManyBody().strength(-400))
         .force("x", d3.forceX((d: any) => {
           const center = communityPositions.get(d.community_id || "__uncategorized__");
           return center?.x ?? width / 2;
-        }).strength(0.12))
+        }).strength(0.6))
         .force("y", d3.forceY((d: any) => {
           const center = communityPositions.get(d.community_id || "__uncategorized__");
           return center?.y ?? height / 2;
-        }).strength(0.12))
+        }).strength(0.6))
         .force("collision", d3.forceCollide().radius(22));
     }
 
