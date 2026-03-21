@@ -265,25 +265,37 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
     }
 
     // --- Draw edges ---
-    const link = g.append("g").selectAll("line")
-      .data(edges).enter().append("line")
+    // Use <path> for curved cross-community links, <line> for intra-community
+    const isCross = (d: any) => {
+      const key = `${d.source?.id ?? d.source}-${d.target?.id ?? d.target}`;
+      return crossCommunityPairs.has(key);
+    };
+
+    const linkGroup = g.append("g");
+
+    // Intra-community links: straight lines
+    const intraEdges = edges.filter((d: any) => !isCross(d));
+    const intraLink = linkGroup.selectAll("line.intra")
+      .data(intraEdges).enter().append("line")
+      .attr("class", "intra")
       .attr("stroke", (d: any) => EDGE_COLORS[d.edge_type] || "#333")
-      .attr("stroke-width", (d: any) => {
-        if (isDrillDown && d.edge_type === "structural") return 1.5;
-        const key = `${d.source}-${d.target}`;
-        if (crossCommunityPairs.has(key)) return 3;
-        return 2;
-      })
-      .attr("stroke-opacity", (d: any) => {
-        if (isDrillDown && d.edge_type === "structural") return 0.4;
-        return 0.7;
-      })
-      .attr("stroke-dasharray", (d: any) => {
-        if (d.edge_type === "contradicts") return "5,3";
-        const key = `${d.source}-${d.target}`;
-        if (crossCommunityPairs.has(key)) return "8,4";
-        return null;
-      });
+      .attr("stroke-width", (d: any) => isDrillDown && d.edge_type === "structural" ? 1.5 : 1.5)
+      .attr("stroke-opacity", (d: any) => isDrillDown && d.edge_type === "structural" ? 0.4 : 0.5)
+      .attr("stroke-dasharray", (d: any) => d.edge_type === "contradicts" ? "5,3" : null);
+
+    // Cross-community links: curved paths, subtle
+    const crossEdgeData = edges.filter((d: any) => isCross(d));
+    const crossLink = linkGroup.selectAll("path.cross")
+      .data(crossEdgeData).enter().append("path")
+      .attr("class", "cross")
+      .attr("fill", "none")
+      .attr("stroke", (d: any) => EDGE_COLORS[d.edge_type] || "#333")
+      .attr("stroke-width", 1)
+      .attr("stroke-opacity", 0.25)
+      .attr("stroke-dasharray", (d: any) => d.edge_type === "contradicts" ? "5,3" : "6,4");
+
+    // Combined reference for tick updates
+    const link = linkGroup.selectAll("line.intra, path.cross");
 
     // --- Draw nodes ---
     const nodeRadius = (d: any) => isDrillDown
@@ -453,9 +465,18 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
 
     // --- Tick ---
     simulation.on("tick", () => {
-      link
+      // Straight intra-community links
+      intraLink
         .attr("x1", (d: any) => d.source.x).attr("y1", (d: any) => d.source.y)
         .attr("x2", (d: any) => d.target.x).attr("y2", (d: any) => d.target.y);
+
+      // Curved cross-community links
+      crossLink.attr("d", (d: any) => {
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const dr = Math.sqrt(dx * dx + dy * dy) * 0.8;
+        return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+      });
 
       node.attr("cx", (d: any) => d.x).attr("cy", (d: any) => d.y);
 
