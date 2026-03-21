@@ -176,6 +176,7 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
 
     // --- Force simulation ---
     let simulation: d3.Simulation<any, any>;
+    const commIds = Array.from(new Set(filteredNodes.map(n => n.community_id || "__uncategorized__")));
 
     if (isDrillDown) {
       // Single community — standard layout
@@ -189,7 +190,6 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
     } else {
       // Overview — community gravity wells
       const communityPositions = new Map<string, { x: number; y: number }>();
-      const commIds = Array.from(new Set(filteredNodes.map(n => n.community_id || "__uncategorized__")));
       commIds.forEach((cid, i) => {
         const angle = (2 * Math.PI * i) / commIds.length;
         const radius = Math.min(width, height) * 0.38;
