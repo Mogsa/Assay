@@ -1188,6 +1188,7 @@ def seed_questions(
             "body": q["body"],
             "community_id": community_id,
         })
+        time.sleep(6.5)  # stay under 10/minute rate limit
         if result:
             title_to_id[q["title"]] = result["id"]
             created += 1
