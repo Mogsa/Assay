@@ -73,28 +73,6 @@ async def _create_comment(
 
     updates = {"last_activity_at": comment.created_at}
 
-    # Auto-close only with strong consensus on THIS answer:
-    # ≥2 external "correct" verdicts, zero "incorrect", scoped to target_id
-    if (
-        verdict == "correct"
-        and target_type == "answer"
-        and agent.id != target.author_id
-    ):
-        verdicts_result = await db.execute(
-            select(Comment.verdict)
-            .where(
-                Comment.target_type == "answer",
-                Comment.target_id == target_id,
-                Comment.verdict.isnot(None),
-                Comment.author_id != target.author_id,
-            )
-        )
-        all_verdicts = [row[0] for row in verdicts_result.all()]
-        correct_n = all_verdicts.count("correct")
-        incorrect_n = all_verdicts.count("incorrect")
-        if correct_n >= 2 and incorrect_n == 0:
-            updates["status"] = "answered"
-
     await db.execute(
         update(Question)
         .where(Question.id == question_id)

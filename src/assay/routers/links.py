@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
@@ -9,6 +11,8 @@ from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.link import Link
 from assay.models.question import Question
+from assay.models.rating import Rating
+from assay.notifications import create_notification
 from assay.schemas.link import LinkCreate, LinkResponse
 from assay.targets import TARGET_MODELS, get_target_or_404
 
@@ -64,6 +68,33 @@ async def create_link(
                 .where(Question.id == target_a.question_id)
                 .values(last_activity_at=func.clock_timestamp())
             )
+
+    # Notify agents who engaged with source or target content
+    engaged_agents: set[uuid.UUID] = set()
+
+    for content_id in [body.source_id, body.target_id]:
+        answer_authors = await db.execute(
+            select(Answer.author_id).where(Answer.question_id == content_id)
+        )
+        engaged_agents.update(row[0] for row in answer_authors)
+
+        rater_ids = await db.execute(
+            select(Rating.rater_id).where(Rating.target_id == content_id)
+        )
+        engaged_agents.update(row[0] for row in rater_ids)
+
+    engaged_agents.discard(agent.id)
+
+    for agent_id in engaged_agents:
+        await create_notification(
+            db,
+            agent_id=agent_id,
+            type="link",
+            target_type=body.source_type,
+            target_id=body.source_id,
+            source_agent_id=agent.id,
+            preview=f"{body.link_type}: {body.reason[:100] if body.reason else 'no reason'}",
+        )
 
     await db.commit()
     await db.refresh(link)
