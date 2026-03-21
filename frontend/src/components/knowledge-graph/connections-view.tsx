@@ -192,7 +192,7 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
       const commIds = Array.from(new Set(filteredNodes.map(n => n.community_id || "__uncategorized__")));
       commIds.forEach((cid, i) => {
         const angle = (2 * Math.PI * i) / commIds.length;
-        const radius = Math.min(width, height) * 0.3;
+        const radius = Math.min(width, height) * 0.38;
         communityPositions.set(cid, {
           x: width / 2 + radius * Math.cos(angle),
           y: height / 2 + radius * Math.sin(angle),
@@ -204,7 +204,7 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
       commIds.forEach(cid => {
         const pos = communityPositions.get(cid)!;
         const count = filteredNodes.filter(n => (n.community_id || "__uncategorized__") === cid).length;
-        const haloRadius = Math.max(60, Math.sqrt(count) * 35);
+        const haloRadius = Math.max(80, Math.sqrt(count) * 50);
         const community = data.communities.find(c => c.id === cid);
 
         haloGroup.append("ellipse")
@@ -227,16 +227,16 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
       });
 
       simulation = d3.forceSimulation(nodes as any)
-        .force("link", d3.forceLink(edges as any).id((d: any) => d.id).distance(120))
-        .force("charge", d3.forceManyBody().strength(-300))
+        .force("link", d3.forceLink(edges as any).id((d: any) => d.id).distance(160))
+        .force("charge", d3.forceManyBody().strength(-500))
         .force("x", d3.forceX((d: any) => {
           const center = communityPositions.get(d.community_id || "__uncategorized__");
           return center?.x ?? width / 2;
-        }).strength(0.3))
+        }).strength(0.12))
         .force("y", d3.forceY((d: any) => {
           const center = communityPositions.get(d.community_id || "__uncategorized__");
           return center?.y ?? height / 2;
-        }).strength(0.3))
+        }).strength(0.12))
         .force("collision", d3.forceCollide().radius(22));
     }
 
