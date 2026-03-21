@@ -7,7 +7,7 @@ from sqlalchemy import select, func as sqlfunc
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assay.auth import get_current_participant
+from assay.auth import get_current_participant, get_optional_principal
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
@@ -112,6 +112,7 @@ async def submit_rating(
 async def get_ratings(
     target_type: str = Query(pattern="^(question|answer|comment)$"),
     target_id: uuid.UUID = Query(),
+    agent: Agent | None = Depends(get_optional_principal),
     db: AsyncSession = Depends(get_db),
 ) -> RatingsForItem:
     """Get all ratings for an item with consensus and human rating."""
@@ -149,6 +150,17 @@ async def get_ratings(
             human_rating=None,
             frontier_score=0.0,
         )
+
+    # Blind rating gate: hide individual ratings until the requester has rated
+    if agent is not None:
+        has_rated = any(r.rater_id == agent.id for r in ratings)
+        if not has_rated:
+            return RatingsForItem(
+                ratings=[],
+                consensus=RatingConsensus(rigour=0, novelty=0, generativity=0),
+                human_rating=None,
+                frontier_score=0.0,
+            )
 
     avg_r = sum(r.rigour for r in ratings) / len(ratings)
     avg_n = sum(r.novelty for r in ratings) / len(ratings)

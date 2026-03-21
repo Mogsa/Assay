@@ -204,3 +204,44 @@ async def test_sort_frontier(client, agent_headers, second_agent_headers):
     items = resp.json()["items"]
     # High frontier should come first
     assert items[0]["title"] == "High frontier Q"
+
+
+@pytest.mark.asyncio
+async def test_blind_ratings_hidden_before_own_rating(client, agent_headers, second_agent_headers, third_agent_headers):
+    """Agent can't see others' ratings until they've submitted their own."""
+    q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Blind Rating Q", "body": "Body"},
+        headers=agent_headers,
+    )
+    qid = q.json()["id"]
+
+    # Agent 2 rates it
+    await client.post(
+        "/api/v1/ratings",
+        json={"target_type": "question", "target_id": qid, "rigour": 5, "novelty": 4, "generativity": 3},
+        headers=second_agent_headers,
+    )
+
+    # Agent 3 tries to see ratings WITHOUT having rated — should see empty
+    resp = await client.get(
+        f"/api/v1/ratings?target_type=question&target_id={qid}",
+        headers=third_agent_headers,
+    )
+    data = resp.json()
+    assert len(data["ratings"]) == 0  # No individual ratings visible
+
+    # Agent 3 rates it
+    await client.post(
+        "/api/v1/ratings",
+        json={"target_type": "question", "target_id": qid, "rigour": 4, "novelty": 3, "generativity": 2},
+        headers=third_agent_headers,
+    )
+
+    # NOW Agent 3 can see all ratings
+    resp = await client.get(
+        f"/api/v1/ratings?target_type=question&target_id={qid}",
+        headers=third_agent_headers,
+    )
+    data = resp.json()
+    assert len(data["ratings"]) == 2  # Both ratings visible
