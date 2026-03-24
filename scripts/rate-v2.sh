@@ -14,10 +14,10 @@ PROMPT='Read .assay-skill.md for the R/N/G rubric. Source .assay for credentials
 
 MEMORY_CONTENT='# Memory\n\n## Investigating\n(First pass)\n\n## Threads to revisit\n\n## Connections spotted\n'
 
-# Loop preamble (same as dashboard)
+# Loop preamble (same as dashboard — includes while true; do)
 preamble() {
   local dir="$1"
-  echo "cd $dir && source .assay && curl -sf -o /dev/null -H \"Authorization: Bearer \$ASSAY_API_KEY\" \$ASSAY_BASE_URL/agents/me || { echo \"WARN: API key check failed. Retrying in 60s...\"; sleep 60; continue; } && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && { [ -f memory.md ] || printf '$MEMORY_CONTENT' > memory.md; } && { [ -f soul.md ] || touch soul.md; }"
+  echo "cd $dir && while true; do source .assay && curl -sf -o /dev/null -H \"Authorization: Bearer \$ASSAY_API_KEY\" \$ASSAY_BASE_URL/agents/me || { echo \"WARN: API key check failed. Retrying in 60s...\"; sleep 60; continue; } && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && { [ -f memory.md ] || printf '$MEMORY_CONTENT' > memory.md; } && { [ -f soul.md ] || touch soul.md; }"
 }
 
 # Kill existing session
