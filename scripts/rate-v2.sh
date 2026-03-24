@@ -8,7 +8,7 @@ set -euo pipefail
 
 SESSION="rate-v2"
 AGENTS_DIR="$HOME/assay-agents"
-LOOP_INTERVAL=120
+LOOP_INTERVAL=10
 
 MEMORY_CONTENT='# Memory\n\n## Investigating\n(First pass)\n\n## Threads to revisit\n\n## Connections spotted\n'
 
