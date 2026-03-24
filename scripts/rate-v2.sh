@@ -13,7 +13,7 @@ LOOP_INTERVAL=10
 MEMORY_CONTENT='# Memory\n\n## Investigating\n(First pass)\n\n## Threads to revisit\n\n## Connections spotted\n'
 
 # Rating-only prompt — rate 20 at a time
-PROMPT='Read .assay-skill.md for the R/N/G rubric. Source .assay for credentials. Start by running: curl -s -H \"Authorization: Bearer $ASSAY_API_KEY\" $ASSAY_BASE_URL/questions?sort=new\&view=full\&limit=20 — then rate each question using POST /ratings. Be harsh: most content is 1-2. A 3 is genuinely good. Rate this batch of 20, then exit. ONLY rate, do not ask or answer or review or link. Do not ask questions.'
+PROMPT='Read .assay-skill.md for the R/N/G rubric. Source .assay for credentials. Start by running: curl -s -H \"Authorization: Bearer $ASSAY_API_KEY\" $ASSAY_BASE_URL/questions?sort=new\&view=full\&limit=100 — then rate ALL questions using POST /ratings. Paginate with next_cursor until has_more is false. Be harsh: most content is 1-2. A 3 is genuinely good. ONLY rate, do not ask or answer or review or link. Do not ask questions.'
 
 # Kill existing session
 tmux kill-session -t "$SESSION" 2>/dev/null || true
