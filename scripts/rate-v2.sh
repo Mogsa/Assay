@@ -3,82 +3,52 @@
 # Usage: ./scripts/rate-v2.sh
 # Run on: morgansclawdbot (Linux server)
 #
-# This is a one-shot experiment: each agent rates ALL questions once, then stops.
-# Uses the same agent accounts as launch-agents.sh.
+# Uses existing agent workspaces in ~/assay-agents/.
+# Each agent does ONE pass: rate all questions, then exit.
 
 set -euo pipefail
 
 SESSION="rate-v2"
-BASE_URL="https://assayz.uk/api/v1"
 AGENTS_DIR="$HOME/assay-agents"
 
-# Agent definitions: name|api_key|runtime_cmd|model_flag
-declare -a AGENTS=(
-  "Opus-1|sk_Eg9sISx6TXVBBiM0RCDQYxlUzAH04_79LUDzeTvmfRs|claude|--model claude-opus-4-6"
-  "Opus-2|sk_DtJmMSTU11w4SW6YX_IAZ8y1ajKZ21dUmKlVBiSlG1A|claude|--model claude-opus-4-6"
-  "Sonnet|sk_MHcW2r8y-GiAooMiiKfXZM99C3KNfzP39gPuv1K0gKk|claude|--model claude-sonnet-4-6"
-  "Haiku|sk_sz-cuxHFAqM7Ju7f_qb6auWWM-5a-hxlmln3djFTyl4|claude|--model claude-haiku-4-5"
-  "Gemini-Pro|sk_fqND_Jw3riAzQ9ooPbbETqa2R40oqUl1nFbdNFysnQk|gemini|"
-  "Gemini-Flash|sk_wAazz-HQsVE1RbRbKBrYsUD5HgRKyGlQAs9yuKB62hs|gemini|"
-  "GPT-54|sk_V3XlvyasMX9ZFe5weXwBd30n55ksFleRVK-jpwIuRjA|codex|"
-  "GPT-54-Mini|sk_F0tXGomKa1DaxHH4mJTbr7dcwtXyxpQJPpmJGO2lttI|codex|"
-)
+# Write the rating-only task file to each workspace
+TASK='Read .assay-skill.md for the R/N/G rubric. Source .assay for credentials. Start by running: curl -s -H "Authorization: Bearer $ASSAY_API_KEY" $ASSAY_BASE_URL/questions?sort=new\&view=full\&limit=100 — then rate EVERY question using POST /ratings. The bar is HIGH: most platform content is 1-2. A 3 is genuinely good. 5 is exceptional. Be harsh. Paginate with next_cursor until has_more is false. Do NOT ask questions, answer, review, or link. ONLY rate. When done, exit.'
 
-RATING_TASK='Read .assay-skill.md for the R/N/G rubric. Source .assay for credentials. Your ONLY job is to rate ALL questions. Do this:
-
-1. GET all questions: curl -s -H "Authorization: Bearer $ASSAY_API_KEY" "$ASSAY_BASE_URL/questions?sort=new&view=full&limit=100"
-2. For EACH question, read its title and body carefully.
-3. Rate it using POST /ratings with the R/N/G rubric from .assay-skill.md. Include reasoning.
-4. The bar is HIGH. Most content on this platform is 1-2. A 3 is genuinely good. 5 is exceptional.
-5. Be harsh. If it sounds like a platitude, it is a 1. If it rephrases known ideas, it is a 1-2.
-6. Paginate using next_cursor until has_more is false.
-7. Do NOT ask questions, answer threads, review, or create links. ONLY rate.
-8. When all questions are rated, exit.'
-
-# Kill existing rate-v2 session if any
+# Kill existing session
 tmux kill-session -t "$SESSION" 2>/dev/null || true
 
 # Create tmux session
 tmux new-session -d -s "$SESSION" -n agents
 
-# Create panes (7 more for 8 total)
+# Create 7 more panes (8 total)
 for i in $(seq 1 7); do
   tmux split-window -t "$SESSION"
   tmux select-layout -t "$SESSION" tiled
 done
 
-# Send commands to each pane
-for i in "${!AGENTS[@]}"; do
-  IFS='|' read -r name key runtime model_flag <<< "${AGENTS[$i]}"
-  dir="$AGENTS_DIR/$name"
+# --- Pane 0: Opus-1 (claude) ---
+tmux send-keys -t "$SESSION:0.0" "cd $AGENTS_DIR/Opus-1 && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ Opus-1 rating pass ══' && claude -p --dangerously-skip-permissions --model claude-opus-4-6 \"$TASK\"" Enter
 
-  # Ensure dir + credentials exist
-  mkdir -p "$dir"
-  cat > "$dir/.assay" << CRED
-export ASSAY_BASE_URL="$BASE_URL"
-export ASSAY_API_KEY="$key"
-CRED
-  chmod 600 "$dir/.assay"
+# --- Pane 1: Opus-2 (claude) ---
+tmux send-keys -t "$SESSION:0.1" "cd $AGENTS_DIR/Opus-2 && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ Opus-2 rating pass ══' && claude -p --dangerously-skip-permissions --model claude-opus-4-6 \"$TASK\"" Enter
 
-  # Build command: fetch skill, then run one rating pass
-  CMD="cd $dir && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ $name — Rating pass \$(date +%H:%M:%S) ══'"
+# --- Pane 2: Sonnet (claude) ---
+tmux send-keys -t "$SESSION:0.2" "cd $AGENTS_DIR/Sonnet && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ Sonnet rating pass ══' && claude -p --dangerously-skip-permissions --model claude-sonnet-4-6 \"$TASK\"" Enter
 
-  case "$runtime" in
-    claude)
-      CMD="$CMD && claude -p --dangerously-skip-permissions $model_flag \"$RATING_TASK\""
-      ;;
-    gemini)
-      CMD="$CMD && gemini -p \"$RATING_TASK\""
-      ;;
-    codex)
-      CMD="$CMD && codex -p \"$RATING_TASK\""
-      ;;
-  esac
+# --- Pane 3: Haiku (claude) ---
+tmux send-keys -t "$SESSION:0.3" "cd $AGENTS_DIR/Haiku && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ Haiku rating pass ══' && claude -p --dangerously-skip-permissions --model claude-haiku-4-5 \"$TASK\"" Enter
 
-  CMD="$CMD; echo '══ $name — DONE ══'"
+# --- Pane 4: Gemini-Pro (gemini — needs workspace) ---
+tmux send-keys -t "$SESSION:0.4" "cd $AGENTS_DIR/Gemini-Pro && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ Gemini-Pro rating pass ══' && gemini -p \"$TASK\"" Enter
 
-  tmux send-keys -t "$SESSION:0.$i" "$CMD" Enter
-done
+# --- Pane 5: Gemini-Flash (gemini — needs workspace) ---
+tmux send-keys -t "$SESSION:0.5" "cd $AGENTS_DIR/Gemini-Flash && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ Gemini-Flash rating pass ══' && gemini -p \"$TASK\"" Enter
+
+# --- Pane 6: GPT-54 (codex) ---
+tmux send-keys -t "$SESSION:0.6" "cd $AGENTS_DIR/GPT-54 && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ GPT-54 rating pass ══' && codex -p \"$TASK\"" Enter
+
+# --- Pane 7: GPT-54-Mini (codex) ---
+tmux send-keys -t "$SESSION:0.7" "cd $AGENTS_DIR/GPT-54-Mini && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ GPT-54-Mini rating pass ══' && codex -p \"$TASK\"" Enter
 
 echo ""
 echo "═══════════════════════════════════════════════"
@@ -88,7 +58,11 @@ echo "  8 agents, one-shot rating pass each"
 echo "═══════════════════════════════════════════════"
 echo ""
 echo "Agents:"
-for entry in "${AGENTS[@]}"; do
-  IFS='|' read -r name key runtime model_flag <<< "$entry"
-  echo "  $name ($runtime $model_flag)"
-done
+echo "  0: Opus-1     (claude-opus-4-6)"
+echo "  1: Opus-2     (claude-opus-4-6)"
+echo "  2: Sonnet     (claude-sonnet-4-6)"
+echo "  3: Haiku      (claude-haiku-4-5)"
+echo "  4: Gemini-Pro (gemini)"
+echo "  5: Gemini-Flash (gemini)"
+echo "  6: GPT-54     (codex)"
+echo "  7: GPT-54-Mini (codex)"
