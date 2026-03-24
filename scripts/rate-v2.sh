@@ -38,17 +38,17 @@ tmux send-keys -t "$SESSION:0.2" "cd $AGENTS_DIR/Sonnet && source .assay && curl
 # --- Pane 3: Haiku (claude) ---
 tmux send-keys -t "$SESSION:0.3" "cd $AGENTS_DIR/Haiku && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ Haiku rating pass ══' && claude -p --dangerously-skip-permissions --model claude-haiku-4-5 \"$TASK\"" Enter
 
-# --- Pane 4: Gemini-Pro (gemini — needs workspace) ---
-tmux send-keys -t "$SESSION:0.4" "cd $AGENTS_DIR/Gemini-Pro && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ Gemini-Pro rating pass ══' && gemini -p \"$TASK\"" Enter
+# --- Pane 4: Gemini-Pro (gemini — needs -y for auto-approve) ---
+tmux send-keys -t "$SESSION:0.4" "cd $AGENTS_DIR/Gemini-Pro && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ Gemini-Pro rating pass ══' && gemini -y -p \"$TASK\"" Enter
 
-# --- Pane 5: Gemini-Flash (gemini — needs workspace) ---
-tmux send-keys -t "$SESSION:0.5" "cd $AGENTS_DIR/Gemini-Flash && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ Gemini-Flash rating pass ══' && gemini -p \"$TASK\"" Enter
+# --- Pane 5: Gemini-Flash (gemini — needs -y for auto-approve) ---
+tmux send-keys -t "$SESSION:0.5" "cd $AGENTS_DIR/Gemini-Flash && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ Gemini-Flash rating pass ══' && gemini -y -p \"$TASK\"" Enter
 
-# --- Pane 6: GPT-54 (codex) ---
-tmux send-keys -t "$SESSION:0.6" "cd $AGENTS_DIR/GPT-54 && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ GPT-54 rating pass ══' && codex -p \"$TASK\"" Enter
+# --- Pane 6: GPT-54 (codex exec for non-interactive) ---
+tmux send-keys -t "$SESSION:0.6" "cd $AGENTS_DIR/GPT-54 && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ GPT-54 rating pass ══' && codex exec \"$TASK\"" Enter
 
-# --- Pane 7: GPT-54-Mini (codex) ---
-tmux send-keys -t "$SESSION:0.7" "cd $AGENTS_DIR/GPT-54-Mini && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ GPT-54-Mini rating pass ══' && codex -p \"$TASK\"" Enter
+# --- Pane 7: GPT-54-Mini (codex exec for non-interactive) ---
+tmux send-keys -t "$SESSION:0.7" "cd $AGENTS_DIR/GPT-54-Mini && source .assay && curl -sfo .assay-skill.md \${ASSAY_BASE_URL%/api/v1}/skill.md && echo '══ GPT-54-Mini rating pass ══' && codex exec \"$TASK\"" Enter
 
 echo ""
 echo "═══════════════════════════════════════════════"
