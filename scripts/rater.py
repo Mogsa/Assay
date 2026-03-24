@@ -132,33 +132,28 @@ def ollama_generate(client: httpx.Client, prompt: str, max_tokens: int = 2000) -
 
 RATING_PROMPT = """/no_think
 You are rating a discussion question on three axes. Score each 1-5.
+The bar is HIGH. Most AI-generated content scores 1-2. A 3 is genuinely good. A 5 is field-defining.
 
-RIGOUR (1-5): Is this correct, clear, and well-constructed?
-  1 — Wrong, incoherent, or meaningless
-  2 — Significant errors or gaps
-  3 — Correct but unremarkable
-  4 — Sound, clear, well-argued
-  5 — Exceptionally precise and thorough
+RIGOUR (1-5): Is the reasoning elegantly sound?
+  1 — Tautology dressed as reasoning. Sounds defensible, says nothing. No falsifiable claim. ("Robust evaluation requires both quantitative and qualitative dimensions." Platitude.)
+  2 — Sounds structured but logic doesn't hold. Overclaimed conclusion or hidden non-sequitur. ("LLMs are stochastic parrots because they predict the next token, therefore they can't understand." Two leaps as one.)
+  3 — Competent. Standard technique, correct, reviewable. Works but isn't elegant. (A correct induction proof. Nothing wrong, nothing special.)
+  4 — Sound throughout. Holds under hostile inspection. (Turing's halting problem — clean diagonal argument.)
+  5 — Every step necessary, sufficient, verifiable by a non-expert. Elegant simplicity. (Euclid's infinite primes — three sentences, 2,300 years, zero gaps.)
 
-NOVELTY (1-5): Does this add unresolved information?
-  1 — Already well-covered or duplicate
-  2 — Minor variation on existing discussion
-  3 — Somewhat new angle or information
-  4 — Genuinely new contribution
-  5 — Opens entirely new territory
+NOVELTY (1-5): Is this genuinely new information?
+  1 — Restates what's already been said, or rephrases the question as an answer. ("We should evaluate AI on multiple axes." The platform's own premise.)
+  2 — Cosmetically novel. New phrasing, same insight. Textbook answer to textbook question. ("Use Bradley-Terry for ranking" — first Google result.)
+  3 — Incremental. Known components combined usefully. (ResNet — skip connections over conv layers. Real contribution.)
+  4 — Genuinely new approach or synthesis with unexpected implications. ("Attention Is All You Need" — new architecture, new consequences.)
+  5 — Paradigm-shifting. The question didn't exist before the answer. (Gödel's incompleteness — nobody asked "can math prove itself?" before.)
 
-GENERATIVITY (1-5): Does answering this open new questions?
-  1 — Dead end, nothing follows
-  2 — Marginal further directions
-  3 — Some follow-up potential
-  4 — Clearly opens productive directions
-  5 — Spawns new lines of inquiry
-
-Calibration examples:
-- R=5,N=5,G=5: Godel's Incompleteness Theorems — rigorous, novel, spawned mathematical logic
-- R=5,N=1,G=1: "Prove sum of angles in triangle is 180" — correct but known dead end
-- R=2,N=2,G=2: "I think LLMs are stochastic parrots, thoughts?" — vague, derivative, no follow-up
-- R=3,N=1,G=4: Riemann Hypothesis restated — well-known but still generative (unresolved)
+GENERATIVITY (1-5): Does this open real research doors?
+  1 — Closes inquiry. Comprehensive summary that kills curiosity. ("A taxonomy of LLM evaluation: benchmarks, human eval, automated metrics." Neat, tidy, no new questions.)
+  2 — Self-contained. Answers neatly without raising new questions. (Complete comparison of 5 frameworks with pros/cons. "That's handled.")
+  3 — Some bounded follow-up. (Chain-of-thought prompting — led to tree-of-thought, a few variants. Finite.)
+  4 — Opens a research programme. At least one direction for years. (Scaling laws — led to GPT-3/4, chinchilla, emergent abilities.)
+  5 — Opens a field. Multiple research directions cascade. ("Can machines think?" Spawned AI as a discipline.)
 
 QUESTION TITLE: {title}
 QUESTION BODY: {body}
