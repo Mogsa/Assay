@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import uuid
-from datetime import datetime
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select, or_, and_
@@ -17,8 +19,12 @@ from assay.models.comment import Comment
 from assay.models.community import Community as CommunityModel
 from assay.models.link import Link
 from assay.models.question import Question
+from assay.models.rating import Rating
 from assay.schemas.analytics import (
     ActiveDebate,
+    ArcContributor,
+    ArcSummary,
+    ArcsResponse,
     FrontierQuestion,
     FrontierResponse,
     GraphAgent,
@@ -370,3 +376,332 @@ async def get_frontier(
         active_debates=active_debates,
         isolated_questions=isolated_questions,
     )
+
+
+# ---- Contributor scoring constants ----
+SCORE_RATING = 1
+SCORE_ANSWER = 2
+SCORE_REVIEW = 2  # comment on answer
+SCORE_QUESTION = 3
+SCORE_CONTRADICTS_LINK = 5
+BONUS_PROLIFIC_QUESTION = 5  # question spawns 3+ answers
+
+RECENCY_WINDOW = timedelta(hours=24)
+
+
+def _compute_lifecycle(
+    contradicts_count: int,
+    last_activity: datetime,
+    now: datetime,
+) -> str:
+    """Classify arc lifecycle based on contradicts and recency."""
+    recent = (now - last_activity) < RECENCY_WINDOW
+    if contradicts_count > 0 and recent:
+        return "contested"
+    if recent:
+        return "growing"
+    if contradicts_count > 0:
+        return "converging"
+    return "resolved"
+
+
+def _longest_path_from(
+    node: uuid.UUID,
+    children: dict[uuid.UUID, list[uuid.UUID]],
+) -> int:
+    """DFS to find longest directed path length from node."""
+    best = 0
+    for child in children.get(node, []):
+        best = max(best, 1 + _longest_path_from(child, children))
+    return best
+
+
+@router.get("/arcs", response_model=ArcsResponse)
+async def get_arcs(
+    db: AsyncSession = Depends(get_db),
+    _principal: Agent | None = Depends(get_optional_principal),
+    limit: int = Query(default=50, le=200),
+) -> ArcsResponse:
+    """Return question arcs — connected components via extends/contradicts links."""
+
+    # 1. Load all question-to-question extends + contradicts links
+    link_stmt = select(Link).where(
+        and_(
+            Link.source_type == "question",
+            Link.target_type == "question",
+            Link.link_type.in_(["extends", "contradicts"]),
+        )
+    )
+    all_edges = (await db.execute(link_stmt)).scalars().all()
+
+    if not all_edges:
+        return ArcsResponse(arcs=[], total=0)
+
+    # 2. Build adjacency structures
+    # Undirected for component detection
+    undirected: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
+    # Directed: parent -> children (extends only, for depth calc)
+    # extends: source extends target => target is parent, source is child
+    children: dict[uuid.UUID, list[uuid.UUID]] = defaultdict(list)
+    # Incoming extends count (to find roots — nodes with 0 incoming)
+    incoming_extends: dict[uuid.UUID, int] = defaultdict(int)
+
+    extends_count_total: dict[uuid.UUID, int] = defaultdict(int)  # per-node
+    contradicts_count_total: dict[uuid.UUID, int] = defaultdict(int)
+
+    all_question_ids: set[uuid.UUID] = set()
+
+    for edge in all_edges:
+        undirected[edge.source_id].add(edge.target_id)
+        undirected[edge.target_id].add(edge.source_id)
+        all_question_ids.add(edge.source_id)
+        all_question_ids.add(edge.target_id)
+
+        if edge.link_type == "extends":
+            # source extends target => target is parent of source
+            children[edge.target_id].append(edge.source_id)
+            incoming_extends[edge.source_id] += 1
+            extends_count_total[edge.source_id] += 1
+            extends_count_total[edge.target_id] += 0  # ensure key exists
+        elif edge.link_type == "contradicts":
+            contradicts_count_total[edge.source_id] += 1
+            contradicts_count_total[edge.target_id] += 0
+
+    # 3. BFS to find connected components
+    visited: set[uuid.UUID] = set()
+    components: list[set[uuid.UUID]] = []
+
+    for node in all_question_ids:
+        if node in visited:
+            continue
+        component: set[uuid.UUID] = set()
+        queue = [node]
+        while queue:
+            current = queue.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            component.add(current)
+            for neighbor in undirected[current]:
+                if neighbor not in visited:
+                    queue.append(neighbor)
+        components.append(component)
+
+    # 4. Fetch all questions in these components
+    q_stmt = select(Question).where(Question.id.in_(all_question_ids))
+    questions = (await db.execute(q_stmt)).scalars().all()
+    q_map: dict[uuid.UUID, Question] = {q.id: q for q in questions}
+
+    # 5. Fetch answers, comments, ratings for engagement + contributor scoring
+    answer_stmt = select(Answer).where(Answer.question_id.in_(all_question_ids))
+    answers = (await db.execute(answer_stmt)).scalars().all()
+    answers_by_q: dict[uuid.UUID, list[Answer]] = defaultdict(list)
+    for a in answers:
+        answers_by_q[a.question_id].append(a)
+
+    answer_ids = [a.id for a in answers]
+
+    comments: list[Comment] = []
+    if answer_ids:
+        comment_stmt = select(Comment).where(
+            and_(Comment.target_type == "answer", Comment.target_id.in_(answer_ids))
+        )
+        comments = (await db.execute(comment_stmt)).scalars().all()
+
+    # Ratings on questions and answers in these arcs
+    ratable_ids = list(all_question_ids) + answer_ids
+    ratings: list[Rating] = []
+    if ratable_ids:
+        rating_stmt = select(Rating).where(Rating.target_id.in_(ratable_ids))
+        ratings = (await db.execute(rating_stmt)).scalars().all()
+
+    # Index comments and ratings by question
+    comments_by_q: dict[uuid.UUID, list[Comment]] = defaultdict(list)
+    answer_id_to_q: dict[uuid.UUID, uuid.UUID] = {
+        a.id: a.question_id for a in answers
+    }
+    for c in comments:
+        q_id = answer_id_to_q.get(c.target_id)
+        if q_id:
+            comments_by_q[q_id].append(c)
+
+    ratings_by_q: dict[uuid.UUID, list[Rating]] = defaultdict(list)
+    for r in ratings:
+        # Direct question rating
+        if r.target_id in all_question_ids:
+            ratings_by_q[r.target_id].append(r)
+        # Answer rating -> map to question
+        q_id = answer_id_to_q.get(r.target_id)
+        if q_id:
+            ratings_by_q[q_id].append(r)
+
+    # 6. Fetch agents for contributor info
+    agent_ids: set[uuid.UUID] = set()
+    for q in questions:
+        agent_ids.add(q.author_id)
+    for a in answers:
+        agent_ids.add(a.author_id)
+    for c in comments:
+        agent_ids.add(c.author_id)
+    for r in ratings:
+        agent_ids.add(r.rater_id)
+    for edge in all_edges:
+        agent_ids.add(edge.created_by)
+
+    agents = (
+        await db.execute(select(Agent).where(Agent.id.in_(agent_ids)))
+    ).scalars().all()
+    agent_map: dict[uuid.UUID, Agent] = {a.id: a for a in agents}
+
+    # 7. Fetch community names
+    community_ids = {q.community_id for q in questions if q.community_id}
+    community_map: dict[uuid.UUID, str] = {}
+    if community_ids:
+        communities = (
+            await db.execute(
+                select(CommunityModel).where(CommunityModel.id.in_(community_ids))
+            )
+        ).scalars().all()
+        community_map = {c.id: c.display_name for c in communities}
+
+    # 8. Build arc summaries
+    now = datetime.now(timezone.utc)
+    arc_summaries: list[ArcSummary] = []
+
+    for component in components:
+        # Find root: question with no incoming extends; ties broken by earliest created_at
+        root_candidates = [
+            qid for qid in component if incoming_extends.get(qid, 0) == 0
+        ]
+        if not root_candidates:
+            # Cycle — pick earliest
+            root_candidates = list(component)
+
+        root_candidates.sort(
+            key=lambda qid: q_map[qid].created_at if qid in q_map else now
+        )
+        root_id = root_candidates[0]
+        root_q = q_map.get(root_id)
+        if root_q is None:
+            continue
+
+        # Depth: longest directed path from root
+        depth = _longest_path_from(root_id, children)
+
+        # Count links in this component
+        comp_extends = sum(
+            1
+            for e in all_edges
+            if e.link_type == "extends"
+            and e.source_id in component
+            and e.target_id in component
+        )
+        comp_contradicts = sum(
+            1
+            for e in all_edges
+            if e.link_type == "contradicts"
+            and e.source_id in component
+            and e.target_id in component
+        )
+
+        # Engagement inputs
+        comp_answers = sum(len(answers_by_q.get(qid, [])) for qid in component)
+        comp_comments = sum(len(comments_by_q.get(qid, [])) for qid in component)
+        comp_ratings = sum(len(ratings_by_q.get(qid, [])) for qid in component)
+
+        engagement = (comp_answers + comp_comments + comp_ratings) * (
+            1 + comp_contradicts * 5
+        )
+
+        # Contributor scoring
+        scores: dict[uuid.UUID, int] = defaultdict(int)
+        for qid in component:
+            q = q_map.get(qid)
+            if q:
+                scores[q.author_id] += SCORE_QUESTION
+                # Bonus: question with 3+ answers
+                if len(answers_by_q.get(qid, [])) >= 3:
+                    scores[q.author_id] += BONUS_PROLIFIC_QUESTION
+
+            for a in answers_by_q.get(qid, []):
+                scores[a.author_id] += SCORE_ANSWER
+            for c in comments_by_q.get(qid, []):
+                scores[c.author_id] += SCORE_REVIEW
+            for r in ratings_by_q.get(qid, []):
+                scores[r.rater_id] += SCORE_RATING
+
+        # Contradicts link creators get bonus
+        for edge in all_edges:
+            if (
+                edge.link_type == "contradicts"
+                and edge.source_id in component
+                and edge.target_id in component
+            ):
+                scores[edge.created_by] += SCORE_CONTRADICTS_LINK
+
+        contributors = sorted(
+            [
+                ArcContributor(
+                    agent_id=aid,
+                    display_name=agent_map[aid].display_name
+                    if aid in agent_map
+                    else "unknown",
+                    model_slug=agent_map[aid].model_slug
+                    if aid in agent_map
+                    else None,
+                    score=s,
+                )
+                for aid, s in scores.items()
+            ],
+            key=lambda c: c.score,
+            reverse=True,
+        )
+
+        # Timestamps
+        created_at = min(
+            (q_map[qid].created_at for qid in component if qid in q_map),
+            default=now,
+        )
+        last_activity = max(
+            (
+                q_map[qid].last_activity_at
+                for qid in component
+                if qid in q_map and q_map[qid].last_activity_at
+            ),
+            default=created_at,
+        )
+
+        lifecycle = _compute_lifecycle(comp_contradicts, last_activity, now)
+
+        # Deterministic arc_id from sorted question UUIDs
+        sorted_ids = sorted(str(qid) for qid in component)
+        arc_id = hashlib.sha256("".join(sorted_ids).encode()).hexdigest()[:12]
+
+        arc_summaries.append(
+            ArcSummary(
+                arc_id=arc_id,
+                root_question_id=root_id,
+                root_question_title=root_q.title,
+                depth=depth,
+                breadth=len(component),
+                contradicts_count=comp_contradicts,
+                extends_count=comp_extends,
+                answer_count=comp_answers,
+                rating_count=comp_ratings,
+                engagement_score=float(engagement),
+                contributors=contributors,
+                lifecycle=lifecycle,
+                root_community=community_map.get(root_q.community_id)
+                if root_q.community_id
+                else None,
+                created_at=created_at,
+                last_activity=last_activity,
+            )
+        )
+
+    # Sort by engagement descending
+    arc_summaries.sort(key=lambda a: a.engagement_score, reverse=True)
+    total = len(arc_summaries)
+    arc_summaries = arc_summaries[:limit]
+
+    return ArcsResponse(arcs=arc_summaries, total=total)
