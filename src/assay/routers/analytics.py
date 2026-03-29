@@ -408,11 +408,16 @@ def _compute_lifecycle(
 def _longest_path_from(
     node: uuid.UUID,
     children: dict[uuid.UUID, list[uuid.UUID]],
+    visited: set[uuid.UUID] | None = None,
 ) -> int:
-    """DFS to find longest directed path length from node."""
+    """DFS to find longest directed path length from node, cycle-safe."""
+    if visited is None:
+        visited = set()
+    visited.add(node)
     best = 0
     for child in children.get(node, []):
-        best = max(best, 1 + _longest_path_from(child, children))
+        if child not in visited:
+            best = max(best, 1 + _longest_path_from(child, children, visited))
     return best
 
 

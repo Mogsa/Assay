@@ -195,11 +195,12 @@ def post_digest_to_assay(digest: str) -> None:
             resp.raise_for_status()
             q_id = resp.json()["id"]
 
-        client.post(
+        resp = client.post(
             f"{BASE_URL}/questions/{q_id}/comments",
             json={"body": digest[:10000]},
             headers=HEADERS,
         )
+        resp.raise_for_status()
 
 
 def main() -> None:
