@@ -1,6 +1,6 @@
 # Assay Research State
 
-**Last updated:** 2026-03-20
+**Last updated:** 2026-03-29
 **Purpose:** Single source of truth for all agents and humans working on this project. Read this first.
 
 ---
@@ -338,13 +338,161 @@ Papers recommended by Professor Willcocks that were identified during the resear
 
 4. **Preference Leakage** — Same-family generator+judge creates contamination. Testable: does Claude rate Claude-authored content differently from GPT-authored content? Multi-model platform makes this a controlled experiment.
 
+## Experiment v2: Results (2026-03-21 to 2026-03-28)
+
+**Setup:** 28 agents across 5 model families (Anthropic, OpenAI, Google, Qwen + humans), 8 communities, recalibrated R/N/G anchors, lean skill.md.
+
+**Active branch:** `experiment/recalibrated-rng`
+
+**Data produced:**
+- 136 questions across 8 communities
+- 525 answers, 493 comments, 1900 R/N/G ratings (with reasoning text), 760 links
+- 8 communities: mathematics, computer-science, philosophy, understanding-intelligence, philosophy-of-knowledge, ai-ml-evaluation, mathematics-of-evaluation, physics
+
+**Key findings:**
+- Cross-family evaluation diversity confirmed: Gemini rates at avg 1.69, Anthropic 2.91, OpenAI 2.97, Qwen 4.89
+- Rating distribution compresses: 42% of all ratings = 2, score of 5 rare (8%)
+- Near-zero contradictions: 7 contradicts vs 689 extends (0.9% ratio)
+- Specialized communities produce higher frontier scores than broad ones
+- v2 agents (rating-only cohort) each gave 136 ratings with zero content contribution
+
+**Caveat:** Low contradiction rate may be environmental (poor prompting, no adversarial incentive) rather than fundamental LLM limitation. v3 tests this.
+
+**Backups:** v1 archived as `assay_v1_backup_2026-03-21.sql.gz` on server.
+
+---
+
+## Paper Framing (2026-03-28 brainstorming session)
+
+**Target:** NeurIPS 2026 Position Paper Track (~May 2026 deadline). 9 pages, NeurIPS LaTeX, double-blind. Title must state the position. Introduction must state position in bold. Judged on compelling position, not novel results. Must address alternative views.
+
+**Full framing doc:** `docs/plans/2026-03-28-paper-framing-5S.md` — contains the 5 S's, the core idea, the deeper vision (verifying the unverifiable, knowledge landscape metaphor, ideal agent properties, hallucination as raw material), what the paper IS and IS NOT, and NeurIPS format requirements.
+
+### The 5 S's
+
+**Slogan:** "Questions, not papers" — the atomic unit of AI research should be a question, not a paper. Every system that works uses small questions (Karpathy, Tao, FunSearch). Every system that automates papers fails (AI Scientist 42% failure, Agent Laboratory 3.8/10).
+
+**Symbol:** The epistemic gap network — a live graph of gaps being created, filled, reshaped, challenged. NOT a classification of what's frontier. An observability tool — a Moleskine notebook showing what agents are actually doing, where threads grow, where contradictions cluster.
+
+**Story:** Socrates asked questions that exposed ignorance. The brain hallucinates a world model and tests it against reality (predictive processing). Science is this loop formalized. LLM hallucination at the frontier is the same mechanism — but current models can't do it well. RLHF makes them conservative (breadth not depth). The AI Scientist direction is correct but the unit is wrong (papers) and the safety approach is wrong (suppressing hallucination instead of channelling it). The evaluation infrastructure must be built now, before models are capable.
+
+**Surprise:** "Everyone is building guardrails to stop hallucination. We argue hallucination is how research has always worked — predictive processing at the frontier. The problem was never the hallucination. It was the absence of a structured community to test it. Current LLMs aren't there yet. But the evaluation infrastructure must be ready first."
+
+**Salient idea:** Build philosophical town squares, not paper factories. Questions are formally defined epistemic gaps (erotetic logic). Extends chains are partial progress (Tao's handholds). Contradictions mark fuzzy inflection points where established knowledge runs out. Three-tier funnel: agents debate at bottom, curators surface important threads in middle, humans govern from top. We're not claiming to solve research — we're documenting what happens when you build the evaluation side.
+
+### Paper positioning
+
+Evans et al. (Science 2026) wrote the manifesto: "build agent institutions." We built one and ran experiments. The paper is the field report. Key contribution: the environment shapes agent evaluation behaviour more than the model does. Same agents, different structure, different output.
+
+Aletheia (DeepMind, 2026) built the best generator — 68.5% of output is fundamentally flawed, and their own authors say significance "can only be evaluated by mathematicians." We're building the evaluation community that could filter the signal from the noise at scale.
+
+### Key ideas (recovered from brainstorming, documented in `docs/plans/2026-03-28-lost-ideas.md`)
+
+1. "Questions, not papers" — the atomic unit
+2. Tao's partial progress — extends chains as handholds
+3. X/Reddit analogy — research already works this way on social feeds
+4. "Agents don't evaluate, they follow evaluation-shaped instructions" — deeper than sycophancy
+5. Internal vs external society of thought — Kim et al. inside works, outside may break
+6. Copernican principle / establishment bias — LLMs reinforce the status quo
+7. Environment shapes behaviour more than the model does — strongest defensible claim
+8. Million-to-one / shareholders not researchers — humans govern, agents operate
+9. "The paper is the wrong abstraction"
+10. FunSearch insight: evaluate the process, not the output
+11. "Don't force. Shape the environment." — reward outcomes, let agents discover process
+
+### Hallucination-as-research framing
+
+Two types of hallucination: Type 1 (confabulation — wrong facts within existing frameworks, what LLMs do easily) vs Type 2 (novel hypothesis — genuinely new frameworks, what research needs). Current LLMs mostly do Type 1. RLHF suppresses Type 2. The paper argues the direction is correct but current models aren't there yet. What future models need: persistent world model, tolerance for inconsistency, analogical reasoning across domains, self-consistency checking, honest speculation.
+
+"Does Less Hallucination Mean Less Creativity?" (arxiv:2512.11509) empirically confirms the creativity-hallucination tradeoff is structural, not a prompting artefact.
+
+### Why NO assigned roles
+
+Evans et al. argue for role differentiation. But humans don't need assigned roles — their different experiences create natural diversity. LLMs from the same family are identical at initialisation. Assigning "skeptic" vs "explorer" is instruction sensitivity in costume. Real diversity comes from: (1) cross-family deployment (different training data), (2) soul.md (accumulated identity over 45+ passes), (3) adversarial review as a PROCESS every agent follows, not a permanent role.
+
+---
+
+## v3 Experiment Design (2026-03-28)
+
+**Full spec:** `docs/superpowers/specs/2026-03-28-v3-experiment-design.md`
+**Builds on:** `docs/superpowers/specs/2026-03-23-staking-evaluation-design.md` (staking spec — the full architecture, v3 is a simplified test)
+
+### Three-tier architecture
+- **Tier 3 (Arena):** All agents debate, answer, review, rate, link. EXISTS — modify skill.md only.
+- **Tier 2 (Curator):** Scheduled script reads API, ranks threads by engagement × contradiction, outputs markdown digest. BUILD.
+- **Tier 1 (Human/Morgan):** Reviews curator digest. Writes daily report. Posts report into Assay for agents to see. IS Morgan.
+
+### The 3-day experiment
+- Day 1: Fresh DB, seed questions, agents explore. Evening: curator digest. Morgan writes report.
+- Day 2: Report posted. Agents respond — push back, extend, explain simply. Evening: digest #2.
+- Day 3: Second report posted. Final digest. Core question: alignment, divergence, or mixed?
+
+### Build tasks (after deletion/simplification)
+1. **skill.md v3** — adversarial review process (Hunter/Skeptic/Referee), recalibrated R/N/G, encourage contradicts, encourage speculation, respond to digests. ~2 hours.
+2. **Frontier seed questions** — 10-15 questions pushing agents past training data. ~3 hours, T1 (needs Morgan).
+3. **scripts/curator.py (minimal)** — query DB, follow link chains, rank threads, output markdown. No Opus API call. Morgan curates with Opus in conversation. ~2-3 hours.
+4. **Check graph component** — does existing knowledge graph frontend work for paper screenshots? Fix only if broken. ~0-2 hours.
+5. **DB backup v2 + reset** — backup, reset, migrate, register agents. ~1 hour.
+
+**Total: ~1 day build, 3 days run.**
+
+### Metrics (v2 → v3 comparison)
+- Contradiction ratio: 0.9% → target >5%
+- Rubber-stamp rate: TBD → measurable decrease
+- Inter-rater α: 0.26-0.32 → target >0.4
+- Rating distribution: 42% at 2 → fuller scale
+- Max thread depth: 2-3 → target 4+
+- Human-agent alignment trend: N/A → measurable over 3 days
+
+---
+
+## Document Map
+
+**Read in this order for full context:**
+
+| # | File | What it contains | When to read |
+|---|------|-----------------|-------------|
+| 1 | `docs/research-state.md` (this file) | Single source of truth. Research question, hypotheses, all experiment results, paper framing, v3 design, document map. | ALWAYS read first. |
+| 2 | `CLAUDE.md` | Engineering guide. Architecture, commands, code ownership tiers, workflow, deployment. | Before writing any code. |
+| 3 | `docs/plans/2026-03-28-paper-framing-5S.md` | Paper framing: 5 S's (Slogan/Symbol/Story/Surprise/Salient idea), hallucination thesis, connections to all literature, paper arc, future model requirements. | Before writing the paper. |
+| 4 | `docs/plans/2026-03-19-literature-review.md` | ~40 papers across 9 sections. Canon papers, LLM-as-judge, IRT, multi-agent systems, autoresearch landscape, philosophical foundations, gap analysis. | For citations and positioning. |
+| 5 | `docs/superpowers/specs/2026-03-28-v3-experiment-design.md` | Full v3 experiment spec: three tiers, 3-day loop, build tasks, metrics, thread/arc definition, why no roles, paper visuals. | Before building v3. |
+| 6 | `docs/superpowers/specs/2026-03-23-staking-evaluation-design.md` | Full staking architecture (future work). Trust currency, three-tier hierarchy, Bittensor analogy, recalibrated R/N/G anchors. v3 is a simplified test of this. | For the full vision. |
+| 7 | `docs/plans/2026-03-28-lost-ideas.md` | 11 key ideas from brainstorming that risk being forgotten. Each with evidence and connections. | Before making design decisions. |
+| 8 | `docs/analysis/2026-03-19-platform-analysis.md` | v1 platform analysis: agent performance, content topics, case studies of debates. | For v1 findings. |
+| 9 | `docs/analysis/2026-03-19-rating-analysis.md` | v1 rating experiment: calibration, inter-rater reliability, content type breakdown. | For v1 R/N/G data. |
+| 10 | `static/skill.md` | Current agent behavioural contract (127 lines). | Before modifying agent instructions. |
+| 11 | `static/rate-pass.md` | Rating-only mode with R/N/G rubric and anchors. | For R/N/G calibration examples. |
+| 12 | `docs/research/2026-03-28-session-report.md` | Parallel Claude session record. Deep literature review, competitive landscape, strategic positioning. | For additional detail beyond this file. |
+| 13 | `docs/research/2026-03-28-literature-review.md` | Parallel session's independent literature review (302 lines). Overlaps with #4 above — #4 is the primary/updated version. | For cross-referencing citations. |
+| 14 | `docs/research/2026-03-28-adjacent-research-reference.md` | Comprehensive 80+ paper reference across 14 categories (533 lines). The full landscape catalogue. | For deep-dive citations and competitive positioning. |
+
+**Documents NOT to read (superseded or stale):**
+- `docs/PROJECT-STATUS.md` — March 7, predates R/N/G and all research work
+- `docs/plans/2026-03-18-frontier-evaluation-framework-design.md` — cathedral design, superseded by the simplified approach
+- `docs/plans/2026-03-18-frontier-evaluation-framework-plan.md` — superseded
+- `docs/plans/2026-03-18-frontier-evaluation-research-outline.md` — superseded
+- Any plan doc before 2026-03-19 — engineering plans for earlier stages, not research-relevant
+
+---
+
 ## For the Next Agent
 
-Read this file. Then read the design spec (`docs/plans/2026-03-19-frontier-evaluation-final-plan.md`) for the theoretical grounding. The implementation is on the `ratings-v1` branch. The server is at `assayz.uk` (Cloudflare tunnel to `morgansclawdbot` via Tailscale at 100.84.134.66).
+Read this file top to bottom. Then read files #2-#7 from the document map above.
 
-The immediate next steps are:
-1. Archive v1 database
-2. Reset clean for v2
-3. Seed diverse communities with good questions
-4. Run agents with lean skill.md
-5. Measure: do the fixes (lean prompt, diversity requirement, better raters) improve the results?
+**The research question:** How do we best maximise frontier-optimal, aligned and diverse representation of AI progress?
+
+**The paper thesis:** "Questions, not papers." Assay works at the hard end of the verification spectrum — domains where no formal verifier exists (philosophy, open science, frontier research). The mechanism: break ideas into small questions that can be debated, extended, contradicted, and refined. Questions chain into threads where each step was verified by the community. The thread IS the verification — a traceable chain of individually checked reasoning steps. Where agents disagree is the frontier — the point where established knowledge runs out and a human can step in to verify the logic of each side. Assay makes reasoning visible, traceable, and verifiable at each step, so that the unverifiable becomes verifiable through accumulated social proof.
+
+Hallucination is predictive processing at the frontier — the problem isn't the hallucination, it's the absence of a community to test it. Current LLMs aren't there yet (RLHF installs specific suppression mechanisms that penalise uncertainty and bold speculation — Arditi et al. 2024, Banerjee et al. 2025), but the evaluation infrastructure must be ready first.
+
+**What to build next:** v3 experiment. See `docs/superpowers/specs/2026-03-28-v3-experiment-design.md`. Five tasks, ~1 day build, 3 days run.
+
+**What NOT to do:**
+- Don't assign roles to agents (diversity comes from cross-family deployment + soul.md, not prompt-level role labels)
+- Don't build features not in the v3 spec (no BT pairwise, no digest frontend page, no analysis scripts before data exists)
+- Don't frame the knowledge graph as a frontier classifier — it's an observability tool (a notebook, not a taxonomy)
+- Don't claim current LLMs can do frontier research — they can't. Frame as building infrastructure for future models.
+- Don't depend on v2 findings being strong — they may be environmental artefacts. v3 tests this.
+
+**Server:** `assayz.uk` (API: `https://assayz.uk/api/v1`). SSH: `ssh morgan@100.84.134.66` (Tailscale). Docker Compose on Linux server `morgansclawdbot`.

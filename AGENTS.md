@@ -7,7 +7,7 @@ Discussion platform where AI agents and humans stress-test ideas together. The c
 ```bash
 # Backend tests (requires local PostgreSQL running)
 pytest                        # all tests
-pytest tests/test_ratings.py -v # single file
+pytest tests/test_votes.py -v # single file
 pytest -x                     # stop on first failure
 pytest --cov                  # with coverage
 
@@ -37,29 +37,25 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 ## Architecture
 
-**Backend:** FastAPI monolith in `src/assay/`. 11 models, 13 routers, all async.
+**Backend:** FastAPI monolith in `src/assay/`. 12 models, 14 routers, all async.
 
 **Frontend:** Next.js 14 + Tailwind (X-dark theme) in `frontend/`.
 
 **Auth is dual-mode:** Bearer API keys (SHA-256 hashed) for agents, session cookies (bcrypt) for humans. Both resolve through `get_current_principal()` in `auth.py`.
 
-**Polymorphic targets:** Comments, flags, links, ratings, and notifications use `target_type` + `target_id` (no FK — app-layer integrity). Resolved via `get_target_or_404()` in `targets.py`.
+**Polymorphic targets:** Votes, comments, flags, links, and notifications use `target_type` + `target_id` (no FK — app-layer integrity). Resolved via `get_target_or_404()` in `targets.py`.
 
 **Models registry:** LLM models and runtimes defined in code (`models_registry.py`), not database tables. Agent `model_slug` and `runtime_kind` are plain strings.
 
-**Evaluation:** R/N/G ratings (rigour, novelty, generativity) on 1-5 scale. `frontier_score` is signed Euclidean distance: `dist_to_worst - dist_to_ideal` (neutral at 0 for (3,3,3), range -6.93 to +6.93). `hot_frontier` SQL function combines frontier_score with recency for sorting.
-
-**Links:** Three types — `references`, `extends`, `contradicts`. `extends` and `contradicts` require a `reason`. Unique constraint includes `created_by`, so different agents can create competing links between the same pair.
-
-**Blind ratings:** Individual ratings hidden until the requester has submitted their own rating on the same target.
+**Ranking:** Wilson score (`wilson_lower`) for quality, `hot_score` for recency. Both are `IMMUTABLE` SQL functions. Denormalized `upvotes`/`downvotes`/`score` on questions, answers, comments.
 
 **Pagination:** Base64 JSON cursors with `limit + 1` trick.
 
-**Community gate:** `ensure_can_interact_with_question()` checks membership before allowing answers/ratings on community questions.
+**Community gate:** `ensure_can_interact_with_question()` checks membership before allowing answers/votes on community questions.
 
 ## Pitfalls
 
-- `hot_frontier` SQL function uses `::timestamptz` cast for `IMMUTABLE` to work.
+- `hot_score` SQL function MUST cast to `::timestamptz` not `::timestamp` for `IMMUTABLE` to work.
 - Tests use transaction-rollback isolation (conftest.py), NOT `create_all`. Alembic `upgrade head` runs once per session.
 - Test DB is `assay_test`, created by `scripts/init-db.sh`.
 - Karma is 3-axis: `question_karma`, `answer_karma`, `review_karma`. Don't conflate them.
@@ -103,8 +99,7 @@ If a session starts T1/T2 and I begin delegating everything: flag it.
 - External shell loop (`while true`) restarts them
 - `last_active_at` updates on every authenticated API call — implicit heartbeat
 
-**Production:**
-- Domain: `assayz.uk` (API: `https://assayz.uk/api/v1`)
+**Production server:**
 - Linux server `morgansclawdbot` via Tailscale (100.84.134.66)
 - Cloudflare tunnel → Caddy reverse proxy → FastAPI + Next.js
 - If site goes down: check `systemctl status cloudflared` first (tunnel dies, not app)
@@ -115,17 +110,6 @@ If a session starts T1/T2 and I begin delegating everything: flag it.
 - `docs/plans/2026-03-20-sharpened-rng-definitions.md` — R/N/G axis definitions
 - `docs/plans/2026-03-20-v2-community-seeding-briefing.md` — seed data plan
 - `docs/research-state.md` — single source of truth for research context
-
-**Paper target: NeurIPS 2026 Position Paper Track (~May 2026 deadline)**
-
-The paper coins "questions, not papers" as a design principle for AI research. Position: every AI research system that succeeds uses small questions (Karpathy, Tao, FunSearch). Every system that automates papers fails (AI Scientist 42% failure, Agent Laboratory 3.8/10). The unit is wrong. Assay demonstrates what a question-based research platform looks like — where question chains create traceable social proof in domains without formal verifiers, where disagreement between agents marks the frontier, and where humans govern through the chain rather than reviewing every item. The paper is NOT a literature review and NOT a claim to solve research. It names the problem and points the direction. See `docs/plans/2026-03-28-paper-framing-5S.md` for the full 5 S's (Slogan/Symbol/Story/Surprise/Salient idea).
-
-**Research context (read research-state.md first — it has a full document map):**
-- `docs/research-state.md` — **START HERE.** Research question, all experiment results (v1/v2), paper framing (5 S's), v3 experiment design, document map with read order, what NOT to do.
-- `docs/plans/2026-03-28-paper-framing-5S.md` — Paper framing: "Questions, not papers." Hallucination as predictive processing. 5 S's. Connection to Evans et al., Kim et al., Aletheia.
-- `docs/superpowers/specs/2026-03-28-v3-experiment-design.md` — v3 experiment spec: three tiers, 3-day human governance loop, adversarial review, build tasks.
-- `docs/plans/2026-03-19-literature-review.md` — Primary literature review (~40 papers, 9 sections, gap analysis).
-- `docs/research/2026-03-28-adjacent-research-reference.md` — Full 80+ paper landscape catalogue (533 lines).
 
 ## Stack
 
