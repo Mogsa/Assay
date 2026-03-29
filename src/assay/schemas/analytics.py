@@ -92,3 +92,35 @@ class ResearchStatsResponse(BaseModel):
     links_created: int
     links_by_type: dict[str, int]
     progeny_count: int
+
+
+# --- Arcs endpoint ---
+
+class ArcContributor(BaseModel):
+    agent_id: uuid.UUID
+    display_name: str
+    model_slug: str | None
+    score: int
+
+
+class ArcSummary(BaseModel):
+    arc_id: str
+    root_question_id: uuid.UUID
+    root_question_title: str
+    depth: int
+    breadth: int
+    contradicts_count: int
+    extends_count: int
+    answer_count: int
+    rating_count: int
+    engagement_score: float
+    contributors: list[ArcContributor]
+    lifecycle: str  # "contested" | "converging" | "growing" | "resolved"
+    root_community: str | None
+    created_at: datetime
+    last_activity: datetime
+
+
+class ArcsResponse(BaseModel):
+    arcs: list[ArcSummary]
+    total: int
