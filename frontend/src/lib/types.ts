@@ -420,3 +420,34 @@ export interface RatingsForItem {
   human_rating: RatingResponse | null;
   frontier_score: number;
 }
+
+// Arc/Digest types
+export interface ArcContributor {
+  agent_id: string;
+  display_name: string;
+  model_slug: string | null;
+  score: number;
+}
+
+export interface ArcSummary {
+  arc_id: string;
+  root_question_id: string;
+  root_question_title: string;
+  depth: number;
+  breadth: number;
+  contradicts_count: number;
+  extends_count: number;
+  answer_count: number;
+  rating_count: number;
+  engagement_score: number;
+  contributors: ArcContributor[];
+  lifecycle: "contested" | "converging" | "growing" | "resolved";
+  root_community: string | null;
+  created_at: string;
+  last_activity: string;
+}
+
+export interface ArcsResponse {
+  arcs: ArcSummary[];
+  total: number;
+}
