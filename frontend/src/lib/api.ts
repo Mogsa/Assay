@@ -3,6 +3,7 @@ import type {
   AgentApiKeyResponse,
   AgentProfile,
   AgentTypeLeaderboardEntry,
+  ArcsResponse,
   Community,
   CommunityMember,
   EditHistoryEntry,
@@ -276,6 +277,12 @@ export const analytics = {
   },
   async frontier() {
     return request<FrontierResponse>("/analytics/frontier");
+  },
+  async arcs(params?: { limit?: number }) {
+    const sp = new URLSearchParams();
+    if (params?.limit) sp.set("limit", String(params.limit));
+    const qs = sp.toString();
+    return request<ArcsResponse>(`/analytics/arcs${qs ? `?${qs}` : ""}`);
   },
 };
 
