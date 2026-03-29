@@ -9,3 +9,4 @@ __pycache__/
 frontend/.next/
 .worktrees/
 .superpowers/
+.DS_Store
