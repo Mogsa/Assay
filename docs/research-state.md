@@ -324,7 +324,13 @@ Platforms where AI agents participate as first-class citizens on open intellectu
 
 **MiroFish** — Already documented in Ideas section. Multi-agent swarm prediction engine. No evaluation layer.
 
-**The gap:** Nobody has built an open platform where multiple AI agents from different model families evaluate each other's intellectual contributions, with human calibration, on content without objective ground truth. EinsteinArena has the platform architecture but relies on mathematical verifiers. Google Co-Scientist has the multi-agent evaluation agents but is closed. Chatbot Arena has the evaluation methodology but uses humans, not agents. Assay sits in the intersection.
+**AutoBench** (October 2025, arxiv:2510.22593) — Agents generate tasks, answer them, AND judge each other. Iterative weight convergence: models that perform well earn more judging influence. No ground truth. Correlates with MMLU-Pro (tau=0.64). Key difference: no agent interaction (parallel batch), no typed links, no human governance, ephemeral tasks. AutoBench is peer evaluation without community.
+
+**BenchBench** (March 2026, arxiv:2603.20807, KDD '26) — Meta-benchmarks how well LLMs design benchmarks. Key finding: benchmark design ability only moderately correlates with answering (rho=0.37). Static pipeline, no community dynamics. Shows benchmark generation is a distinct meta-capability.
+
+**HyperAgents** (March 2026, arxiv:2603.19461, Meta/UBC/Vector) — Self-improving agents that learn paper review (accuracy 0.0→0.710). Metacognitive self-modification — agents rewrite their own evaluation procedures. Cross-domain transfer of meta-level skills. Key difference: single agent lineage, not a community. No social dynamics or interaction.
+
+**The gap (updated March 2026):** Two fields are converging on the same wall from opposite sides. Benchmarks (ARC-AGI, AutoBench, BenchBench) are stuck on generating reliable evaluation without human curation. Autonomous researchers (AI Scientist, Co-Scientist, HyperAgents) are stuck on evaluating output without objective verifiers. Both need community evaluation without ground truth. Nobody has connected them as the same problem. Assay sits at the intersection: simultaneously a self-improving benchmark (agents generate and evaluate questions) and an autonomous research community (question chains build knowledge). Its failure modes are the shared failure modes of both fields.
 
 ## Advisor-Recommended Papers (Not Yet Fully Integrated)
 
@@ -337,6 +343,18 @@ Papers recommended by Professor Willcocks that were identified during the resear
 3. **RRD** (arXiv 2602.05125) — Advisor's own paper on rubric generation for LLM judges. The advisor's critique relevant to us: RRD doesn't consider Arrow's theorem — when axes genuinely conflict, no reweighting can fix the aggregation. Our response (displaying axes separately) addresses this directly.
 
 4. **Preference Leakage** — Same-family generator+judge creates contamination. Testable: does Claude rate Claude-authored content differently from GPT-authored content? Multi-model platform makes this a controlled experiment.
+
+## Sycophancy and Bayesian Stability Literature (added 2026-03-30)
+
+Papers formally establishing prior collapse and sycophancy as the two barriers to AI community evaluation:
+
+1. **BASIL** (arXiv 2508.16846, 2026) — Bayesian formalization of sycophancy. LLMs deviate from Bayesian updating more than humans. Proposes BayesDPO as mitigation.
+2. **"Rational Analysis of Sycophantic AI"** (arXiv 2602.14270, 2026) — Human experiment (N=557): unmodified LLM behavior yields 5× lower discovery rate than unbiased sampling. Sycophancy manufactures certainty without truth.
+3. **BeliefShift** (arXiv 2603.23848, 2026) — 2,400 trajectory benchmark. 78.5% persistence of sycophantic drift. Politics hardest domain.
+4. **SycEval** (arXiv 2502.08177, 2025) — 58.19% sycophancy rate across all models. 78.5% persistence once triggered.
+5. **"From Sycophancy to Sensemaking"** (arXiv 2602.02378, 2026) — Proposes external belief substrate with lifecycle governance. Functionally equivalent to Assay's knowledge graph at individual scale.
+
+These papers provide the formal backbone for our two-barrier finding. Assay's empirical data (0.9% contradictions, 97% rubber-stamp rate) is the community-level manifestation of what these papers measure at the individual level.
 
 ## Experiment v2: Results (2026-03-21 to 2026-03-28)
 

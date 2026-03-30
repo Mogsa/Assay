@@ -495,54 +495,183 @@ This is the deeper reason why the Rotten Tomatoes dual-display model matters —
 
 ---
 
+## 7.5 Sycophancy and Bayesian Stability (added 2026-03-30)
+
+### 7.5.1 BASIL — Bayesian Assessment of Sycophancy in LLMs (2026) ★
+
+**ArXiv:** 2508.16846
+
+Redefines sycophancy as residual social bias persisting after accounting for a model's own interpretation of evidence. Compares model responses across Abstract (neutral), Third-Party (social proof), and User (sycophancy-probed) settings. Establishes subjective rational baseline and isolates the "extra" update from user influence. Key finding: LLMs deviate from Bayesian updating more than humans do. Proposes BayesDPO — DPO modification where preferred completion minimizes distance to the model's own Bayesian-rational posterior.
+
+**Relevance:** Formally proves the "prior collapse" observation from our experiments. Our 0.9% contradiction rate and 97% rubber-stamp verdict rate are the community-level manifestation of what BASIL measures at the individual level.
+
+### 7.5.2 A Rational Analysis of the Effects of Sycophantic AI (2026)
+
+**ArXiv:** 2602.14270
+
+Human experiment (N=557). Unmodified LLM behavior suppressed discovery and inflated confidence comparably to explicitly sycophantic prompting. Unbiased sampling yielded 5× higher discovery rates. The Bayesian formalization: when data is sampled based on current hypothesis, agents become increasingly confident but make no progress toward truth.
+
+**Relevance:** Directly explains why community evaluation fails with sycophantic agents. Agents confirm each other's beliefs → posterior converges to shared prior → no discovery.
+
+### 7.5.3 BeliefShift (2026)
+
+**ArXiv:** 2603.23848
+
+Benchmark for belief drift across 2,400 multi-session trajectories. DCS score near 0 = sycophantic drift without evidential grounding. Politics hardest domain. 78.5% persistence rate — once sycophantic behavior is triggered, models maintain alignment with user cues.
+
+**Relevance:** Quantifies persistence of prior collapse. Once an agent agrees (extends), it almost never reverts to contradiction. Explains the 689:7 extends-to-contradicts ratio.
+
+### 7.5.4 SycEval (2025)
+
+**ArXiv:** 2502.08177
+
+58.19% overall sycophancy rate across all models. Gemini highest (62.47%), ChatGPT lowest (56.71%). Persistence rate 78.5% in both in-context and preemptive chains. Once triggered, sycophancy persists.
+
+**Relevance:** Baseline sycophancy rates map directly to Assay's contradiction avoidance. Cross-family sycophancy differences partially explain cross-family evaluation diversity on Assay.
+
+### 7.5.5 From Sycophancy to Sensemaking (2026)
+
+**ArXiv:** 2602.02378
+
+Proposes architectural solution: externalize belief state into a "governed substrate" — compiled knowledge representation with lifecycle enforcement, dependency tracking, and commitment gates. The LLM proposes updates, the substrate validates them.
+
+**Relevance:** Their "governed substrate" is functionally equivalent to Assay's knowledge graph. We propose the same at institutional scale: the graph as shared belief substrate, extends/contradicts as the update mechanism, human governance as the prior-correction signal.
+
+---
+
+## 7.6 Self-Improving Benchmarks and Agent-Generated Evaluation (added 2026-03-30)
+
+### 7.6.1 AutoBench — Reciprocal Peer Assessment (October 2025) ★
+
+**ArXiv:** 2510.22593
+
+Agents generate tasks, answer them, AND judge each other's answers in iterative rounds. Models that perform well as contestants gain more influence as judges (weight convergence in ~20 iterations). No ground truth. Correlation with human benchmarks: Kendall's tau=0.64 with MMLU-Pro, 0.52 with GPQA. 12 open-source models, 40 iterations.
+
+**Relevance:** Validates that peer evaluation without ground truth CAN produce reliable rankings. Closest existing system to Assay's vision. Key difference: no agent interaction (parallel batch, no debate), no typed links, no human governance, ephemeral tasks (nothing accumulates). AutoBench is peer evaluation without community. Assay is the community layer.
+
+**What we adopt:** Trust-weighted consensus inspired by AutoBench's authority weighting mechanism.
+
+### 7.6.2 BenchBench — Benchmarking Automated Benchmark Generation (March 2026) ★
+
+**ArXiv:** 2603.20807
+**Venue:** KDD '26
+
+Meta-benchmarks how well LLMs design benchmarks. Key finding: benchmark design ability is only moderately correlated with answering ability (Spearman rho=0.37). 6-8 designer LLMs, 10 answerer LLMs, 16.7K generated items. Uses objective verifiers first, LLM judging as fallback.
+
+**Relevance:** Proves benchmark generation is a distinct meta-capability separate from benchmark answering. Supports the "questions not papers" insight: writing good questions is a different skill from answering them. Key difference from Assay: static pipeline (no agent interaction), relies on objective verifiers, no community dynamics.
+
+### 7.6.3 Benchmark Self-Evolving (Wang et al., COLING 2025)
+
+**ACL Anthology:** 2025.coling-main.223
+
+Multi-agent system to reframe existing benchmark instances into evolving versions. Agents transform existing items, not generate novel ones from scratch.
+
+**Relevance:** Shows the field is moving toward dynamic benchmarks but still requires human-curated seed items. Assay's approach (agents generate from scratch in open domains) goes further.
+
+### 7.6.4 HyperAgents — Metacognitive Self-Modification (March 2026) ★
+
+**ArXiv:** 2603.19461
+**Authors:** Zhang et al. (UBC, Vector Institute, Edinburgh, NYU, Meta FAIR, Meta Superintelligence Labs)
+
+Self-referential agents that modify their own code, including their self-improvement mechanism. Paper review accuracy: 0.0 → 0.710. Cross-domain transfer of meta-level improvements (paper review skills transfer to Olympiad math grading). Single agent with evolutionary population, not multi-agent community.
+
+**Relevance:** Proves agents can learn transferable evaluation skills without being told how. Key difference: single agent lineage, not a community. No social dynamics, no interaction, no governance. HyperAgents is self-improvement without society. Assay is the society.
+
+**What we adopt:** Self-calibration via soul.md inspired by HyperAgents' metacognitive self-modification — agents reflect on evaluation performance between passes.
+
+### 7.6.5 DynaBench (Kiela et al., 2021)
+
+**ArXiv:** 2104.14337
+
+Original adversarial benchmark platform from Meta. Humans found examples that fooled models. Human-in-the-loop adversarial, not agent-generated. Appears inactive.
+
+**Relevance:** Historical precedent for dynamic benchmarks. Assay replaces human adversarial generation with agent community generation.
+
+### 7.6.6 MADE — Evolution Without an Oracle (November 2025)
+
+**ArXiv:** 2511.19489
+
+Evolutionary search using LLM judges as fitness evaluators when no objective function exists. Explicitly addresses "what happens when you need evolution but have no verifier?"
+
+**Relevance:** Names the underlying mechanism problem that both benchmarking and research face. Assay addresses it through community consensus rather than evolutionary search.
+
+---
+
 ## 8. The Gap Our Work Fills
 
 | Existing work | What it does | What it lacks |
 |--------------|-------------|---------------|
-| LLM-as-Judge (Zheng 2023) | Single-axis preference evaluation | Multi-axis quality assessment |
-| RRD (Shen 2026) | Auto-generated multi-criteria rubrics | Social choice theory (Arrow's theorem), philosophy grounding |
-| CALM (Ye 2025) | 12-bias taxonomy for LLM judges | Multi-axis evaluation, platform-level deployment |
-| Sage (Chen 2025) | Consistency metrics from rational choice theory | Human calibration, multi-axis, live platform |
-| DatBench / tinyBenchmarks | IRT-based item selection | Application to live platforms with organic content |
-| IRT-for-Judge (2026) | IRT-based judge diagnosis | Human-in-the-loop, multi-axis, prior collapse |
-| Dawid-Skene | Annotator reliability estimation | Multi-axis ratings, human gold standard |
-| MiroFish | Multi-agent output generation | Any evaluation framework whatsoever |
-| Chatbot Arena | Large-scale pairwise evaluation | Multi-axis, evaluator reliability tracking |
-| Evans et al. (2026) | Theoretical case for agent institutions | Zero empirical evidence |
+| **Benchmarks** | | |
+| ARC-AGI / FrontierMath / GPQA | Human-curated, objective verifiers | Agent-generated, doesn't scale, static |
+| AutoBench (2025) | Agent-generated tasks + peer evaluation, no ground truth | No agent interaction, no typed links, no community, ephemeral |
+| BenchBench (2026) | Meta-benchmarks benchmark design quality | Static pipeline, no community dynamics, needs verifiers |
+| Benchmark Self-Evolving (2025) | Transforms existing items | Can't generate novel items from scratch |
+| DynaBench (2021) | Human adversarial benchmark generation | Human-in-loop only, appears inactive |
+| **Autonomous Research** | | |
 | AI Scientist v2 | End-to-end paper generation | Per-paper evaluation only, 42% failure rate |
 | AI Co-Scientist | Internal Elo for hypothesis evolution | Closed system, not open platform |
-| OmniScientist | ScienceArena with Elo rankings | Human voting, not agent-to-agent evaluation |
-| FunSearch/AlphaEvolve | Tight evaluation loops | Requires formally verifiable evaluation |
-| Autoresearch (Karpathy) | Numeric optimization loop | Only works with objective metrics |
-| HindSight | Impact-based evaluation | Shows LLM novelty scoring is anti-correlated with impact |
+| Agent Laboratory | Literature → experiment → report | 3.8/10, no community evaluation |
+| HyperAgents (2026) | Metacognitive self-modification, learns evaluation | Single agent lineage, no community |
+| **Agent Institutions** | | |
+| Evans et al. (2026) | Theoretical case for agent institutions | Zero empirical evidence |
+| Kim et al. (2026) | Internal societies of thought work | External SoT untested |
+| **Evaluation Methodology** | | |
+| LLM-as-Judge (Zheng 2023) | Single-axis preference evaluation | Multi-axis, live platform |
+| AutoBench (2025) | Peer consensus without ground truth | No community interaction |
+| BASIL (2026) | Bayesian formalization of sycophancy | Individual-level, not community |
+| SycEval (2025) | 58% sycophancy rate, 78.5% persistence | Measurement only, no platform |
+| CALM (Ye 2025) | 12-bias taxonomy for LLM judges | No platform deployment |
+| HindSight (2026) | LLM novelty anti-correlated with impact | Individual ratings only |
+| MADE (2025) | Evolution without objective verifier | Single evaluator, not community |
+| **Platforms** | | |
+| Chatbot Arena | Large-scale pairwise evaluation | Human judges, single axis |
+| OmniScientist | ScienceArena with Elo rankings | Human voting, not agent-to-agent |
+| EinsteinArena | Agent discussion + mathematical verifiers | Requires formal ground truth |
 
-**Our contribution combines:**
-- Three interpretable axes (R/N/G) grounded in Popper, Lakatos, Peirce
-- Human gold standard calibration (Rotten Tomatoes dual-score model)
-- Per-axis calibration measurement (extending LLM-as-Judge to multi-axis)
-- Live platform with organic content (extending IRT from fixed benchmarks)
-- Genuine architectural diversity across model families (contrast with MiroFish)
-- Prior collapse detection and resistance (novel contribution)
-- Explicit rubrics addressing Sage's "situational preference" finding
-- Awareness of Arrow's theorem limitation on multi-criteria aggregation (from RRD critique)
-- CALM bias taxonomy as diagnostic checklist for rating data
-- Empirical test of Evans et al.'s institutional alignment thesis (our unique positioning)
-- Three-tier governance architecture tested with daily human feedback loop
-- Adversarial review mechanisms (Hunter/Skeptic/Referee) grounded in Mercier & Sperber's argumentative theory
-- Evaluable against Ostrom's 8 design principles for commons governance
-- Future upgrade path to Dawid-Skene reliability weighting, trust currency, and self-improving evaluation
+**The key insight: two camps converging on the same wall.**
+
+Benchmarks (left column) are stuck on: how to generate reliable evaluation without human curation. Autonomous researchers (right column) are stuck on: how to evaluate research output without objective verifiers. Both need community evaluation without ground truth. Nobody has connected them as the same problem.
+
+**Assay sits at the intersection — simultaneously a self-improving benchmark AND an autonomous research community.** Its failure modes (prior collapse, sycophancy) are the shared failure modes of both fields.
+
+**Our contribution:**
+- First platform at the intersection of self-improving benchmarks and autonomous research
+- Agent-generated questions evaluated by agent community consensus with human governance
+- Typed reasoning chains (extends/contradicts) making evaluation visible and auditable
+- Blind commitment gates preventing sycophantic anchoring
+- Cross-family diversity producing genuine perspective differences
+- Trust-weighted consensus (inspired by AutoBench's authority weighting)
+- Agent self-calibration (inspired by HyperAgents' metacognitive self-modification)
+- Failure modes mapped to engineering specification for next-gen agents
+- Empirical test of Evans et al.'s institutional alignment thesis
+- Three-tier governance (arena → curator → human as permanent loss function)
 
 ---
 
 ## 9. The Narrative Arc
 
-These papers form a coherent story that Assay sits at the end of:
+These papers form a convergence story. Two fields approach the same wall from opposite sides:
 
-1. **Messeri & Crockett (Nature 2024):** AI creates illusions of understanding and scientific monocultures
-2. **Hao & Evans (Nature 2026):** Empirically confirmed — AI boosts individual output 3× but contracts collective research focus
-3. **Lu et al. (Nature 2026):** Generation is now automated at $15/paper — the monoculture risk is acute
-4. **Evans, Bratton & Agüera y Arcas (Science 2026):** The solution is agent institutions with designed conflict, not better individual AI
-5. **Kim et al. (2026):** Even inside one model, reasoning is social — societies of thought emerge spontaneously
-6. **Woolley et al. (Science 2010) + Ostrom (1990):** We already know how to design institutions for collective intelligence
-7. **Gross & Bergstrom (PNAS 2021):** The mechanism design of evaluation determines what kind of science gets produced
-8. **THIS DISSERTATION:** Here is an agent institution (Assay), here is what happens when you build one, here is what the patterns of multi-agent interaction reveal about where evaluation breaks and what environmental/structural factors shape agent behavior
+**The benchmarking side:**
+1. **Benchmarks are human-curated at enormous cost** — ARC-AGI, FrontierMath, GPQA require expert designers
+2. **DynaBench (2021):** First attempt at adversarial human-in-loop benchmarks — went quiet
+3. **AutoBench (2025):** Agents generate AND evaluate tasks through peer consensus — validates the mechanism (tau=0.64 with MMLU-Pro) but no community, no interaction, ephemeral
+4. **BenchBench (2026):** Benchmark design is a distinct meta-capability (rho=0.37 with answering) — designing good questions is different from answering them
+5. **Benchmark Self-Evolving (2025):** Transforms existing items but can't generate novel ones from scratch
+
+**The autonomous research side:**
+6. **Messeri & Crockett (Nature 2024):** AI creates monocultures of understanding
+7. **Hao & Evans (Nature 2026):** AI boosts individual output 3× but contracts collective focus
+8. **AI Scientist (2024), Agent Laboratory:** Paper-level automation fails (42%, 3.8/10)
+9. **Evans et al. (Science 2026):** The solution is agent institutions — but zero empirical evidence
+10. **Kim et al. (2026):** Internal societies of thought work — but external untested
+11. **HyperAgents (2026):** Agents learn transferable evaluation skills — but single agent, no community
+
+**The shared wall:**
+12. **BASIL (2026):** LLMs deviate from Bayesian updating — formally proves the prior collapse problem
+13. **SycEval (2025):** 58% sycophancy rate, 78.5% persistence — quantifies the agreement default
+14. **"Rational Analysis" (2026):** Sycophancy manufactures certainty without discovery — 5× lower discovery rate
+15. **MADE (2025):** Names the problem — evolution without an oracle — but uses single evaluator, not community
+
+**This dissertation:**
+16. **Assay:** The self-improving benchmark IS the autonomous researcher. Both are stuck on evaluation without verifiers. We built the first platform at their intersection — agents generate and evaluate questions through community consensus with human governance. The failure modes (prior collapse, sycophancy, self-contamination) are the engineering specification for the next generation of agents and evaluation infrastructure. Drawing on AutoBench's peer consensus and HyperAgents' metacognition, we show what works, what breaks, and what must change.

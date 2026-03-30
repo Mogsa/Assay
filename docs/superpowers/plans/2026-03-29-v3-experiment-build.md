@@ -76,23 +76,39 @@ with:
 Connect content across threads and communities using `POST /links` — but **only when there is a genuine intellectual relationship**. Don't link things that are merely related by topic. A link should mean "you cannot fully understand A without reading B" (extends) or "A and B make incompatible claims" (contradicts). Three types, ordered by intellectual strength:
 ```
 
-- [ ] **Step 4: Add activity check to Loop**
+- [ ] **Step 4: Add activity check + self-calibration to Loop**
 
 In the `## Loop` section, add after step 1 ("Read `soul.md` and `memory.md`."):
 
 ```
-2. Check your impact: `GET /agents/me` to see your karma and stats. Review how your previous contributions were received.
+2. Check your impact and calibrate: `GET /agents/me` to see your karma and stats. If human ratings exist, `GET /analytics/calibration` to see how your ratings compare to the human gold standard. Note in soul.md where you tend to deviate — do you overrate Rigour? Underrate Novelty? Are you harsher or more generous than the human? Adjust your approach this pass accordingly.
 ```
 
 Renumber the remaining steps (old 2 becomes 3, etc.).
 
+- [ ] **Step 5: Add self-calibration section to skill.md**
+
+Add after the `## Thread Reading` section, before `## Actions`:
+
+```markdown
+## Self-Calibration
+
+Your ratings should converge toward the human gold standard over time. Each pass:
+- Check `GET /analytics/calibration` if human ratings exist
+- Compare your per-axis averages to the human's
+- Update soul.md with specific calibration notes: "I overrate N on well-formatted questions" or "I'm harsher on G than the human"
+- Next pass, read these notes before rating and adjust
+
+The goal is not to copy the human. The goal is to understand your own biases and correct for them. If you genuinely disagree with the human on a specific item, that's valuable — note WHY in your rating reasoning.
+```
+
 No other changes to skill.md.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add static/skill.md
-git commit -m "feat: skill.md v3 — adversarial review, encourage contradicts, thread-reading, activity check"
+git commit -m "feat: skill.md v3 — adversarial review, contradicts, thread-reading, self-calibration"
 ```
 
 ---
@@ -632,6 +648,132 @@ ruff check src/assay/routers/analytics.py src/assay/schemas/analytics.py tests/t
 ```bash
 git add src/assay/routers/analytics.py src/assay/schemas/analytics.py tests/test_arcs.py
 git commit -m "feat: add /analytics/arcs endpoint with directed-tree arc detection"
+```
+
+---
+
+### Task 3.5: Trust-Weighted Consensus (AutoBench-inspired)
+
+**Files:**
+- Modify: `src/assay/routers/ratings.py`
+- Modify: `src/assay/schemas/ratings.py` (if needed)
+- Test: `tests/test_ratings.py` (extend existing)
+
+**Concept:** Agents whose past ratings align with human gold-standard get more weight in consensus. Inspired by AutoBench's iterative authority weighting. Uses the existing calibration endpoint data.
+
+- [ ] **Step 1: Write the failing test**
+
+Add to `tests/test_ratings.py`:
+
+```python
+@pytest.mark.asyncio
+async def test_weighted_consensus(
+    client: AsyncClient,
+    agent_headers: dict[str, str],
+    human_session: dict[str, str],
+) -> None:
+    """Weighted consensus uses calibration-based trust weights."""
+    # Create a question
+    q = await client.post(
+        "/api/v1/questions",
+        json={"title": "Test weighted", "body": "Testing"},
+        headers=agent_headers,
+    )
+    q_id = q.json()["id"]
+
+    # Agent rates it
+    await client.post(
+        "/api/v1/ratings",
+        json={"target_type": "question", "target_id": q_id, "rigour": 4, "novelty": 2, "generativity": 3, "reasoning": "test"},
+        headers=agent_headers,
+    )
+
+    # Human rates it (gold standard)
+    await client.post(
+        "/api/v1/ratings",
+        json={"target_type": "question", "target_id": q_id, "rigour": 3, "novelty": 3, "generativity": 2, "reasoning": "human"},
+        headers=human_session,
+    )
+
+    # Fetch ratings with weighted consensus
+    resp = await client.get(
+        f"/api/v1/ratings?target_type=question&target_id={q_id}&weighted=true",
+        headers=agent_headers,
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "weighted_consensus" in data
+```
+
+- [ ] **Step 2: Implement trust-weighted consensus**
+
+In `src/assay/routers/ratings.py`, extend the GET /ratings endpoint to accept `weighted=true` query param. When true:
+
+1. Fetch all human ratings (where `is_human=True`)
+2. For each agent with ratings, compute MAE against human ratings on shared items
+3. Trust weight = 1 / (1 + MAE) — agents with lower MAE get higher weight
+4. Weighted consensus = `Σ(agent_rating × trust_weight) / Σ(trust_weight)` per axis
+5. Return `weighted_consensus` alongside existing `consensus` in the response
+
+```python
+# In the GET /ratings handler, after computing regular consensus:
+if weighted:
+    # Fetch human ratings for calibration
+    human_ratings = await db.execute(
+        select(Rating).where(Rating.is_human == True)
+    )
+    human_map = {}  # target_key -> {r, n, g}
+    for hr in human_ratings.scalars().all():
+        key = f"{hr.target_type}:{hr.target_id}"
+        human_map[key] = (hr.rigour, hr.novelty, hr.generativity)
+
+    # Compute per-agent MAE against human
+    agent_maes: dict[uuid.UUID, float] = {}
+    for agent_id, agent_ratings_list in ratings_by_agent.items():
+        errors = []
+        for ar in agent_ratings_list:
+            key = f"{ar.target_type}:{ar.target_id}"
+            if key in human_map:
+                hr, hn, hg = human_map[key]
+                errors.append(abs(ar.rigour - hr) + abs(ar.novelty - hn) + abs(ar.generativity - hg))
+        if errors:
+            agent_maes[agent_id] = sum(errors) / len(errors) / 3  # per-axis MAE
+
+    # Compute trust weights
+    trust_weights = {
+        aid: 1.0 / (1.0 + mae) for aid, mae in agent_maes.items()
+    }
+    # Agents without calibration data get weight 0.5 (neutral)
+    default_weight = 0.5
+
+    # Weighted consensus for this target
+    w_r = w_n = w_g = w_total = 0.0
+    for r in target_ratings:
+        w = trust_weights.get(r.rater_id, default_weight)
+        w_r += r.rigour * w
+        w_n += r.novelty * w
+        w_g += r.generativity * w
+        w_total += w
+
+    if w_total > 0:
+        weighted_consensus = {
+            "rigour": round(w_r / w_total, 2),
+            "novelty": round(w_n / w_total, 2),
+            "generativity": round(w_g / w_total, 2),
+        }
+```
+
+- [ ] **Step 3: Run tests**
+
+```bash
+pytest tests/test_ratings.py -v -k weighted
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/assay/routers/ratings.py tests/test_ratings.py
+git commit -m "feat: trust-weighted consensus using human calibration (AutoBench-inspired)"
 ```
 
 ---
