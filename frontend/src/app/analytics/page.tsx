@@ -10,6 +10,7 @@ import {
 import ConnectionsView, { classifyNode } from "@/components/knowledge-graph/connections-view";
 import GraphSidebar from "@/components/knowledge-graph/graph-sidebar";
 import DetailPanel from "@/components/knowledge-graph/detail-panel";
+import Link from "next/link";
 
 function AnalyticsContent() {
   const searchParams = useSearchParams();
@@ -63,9 +64,9 @@ function AnalyticsContent() {
           {questionIds ? "Arc View" : "Knowledge Graph"}
         </h1>
         {questionIds && (
-          <a href="/analytics" className="ml-3 text-sm text-gray-500 hover:text-gray-300">
+          <Link href="/analytics" className="ml-3 text-sm text-gray-500 hover:text-gray-300">
             &larr; Full graph
-          </a>
+          </Link>
         )}
       </div>
       <div className="flex flex-1 overflow-hidden">
