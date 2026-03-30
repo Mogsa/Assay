@@ -646,6 +646,21 @@ Hard numbers on why human-curated benchmarks are unsustainable:
 
 **Relevance:** Directly grounds our claim that human-curated benchmarks are expensive, saturate fast, and don't scale. The self-improving benchmark (agents generating and evaluating questions) is the alternative — IF the evaluation-without-verifiers problem can be solved.
 
+### 7.6.10b Anthropic — "Demystifying Evals for AI Agents" (2025-2026)
+
+**Source:** Anthropic Engineering Blog
+
+Anthropic's internal evaluation methodology for Claude agents. Key evidence:
+
+- **"Capabilities that make agents useful also make them harder to evaluate"** — the evaluation problem scales WITH capability, not independently.
+- **"Absence of evals becomes a bottleneck for improving the agent"** — Anthropic explicitly naming evaluation as the bottleneck.
+- **SWE-bench saturation:** 40% → 80% in one year. Static evals saturate fast even for complex tasks.
+- **Static evals punish creativity:** Opus 4.5 found a better solution than the expected answer but failed the eval. "It's often better to grade what the agent produced, not the path it took."
+- **Multiple methods required:** No single evaluation approach works. Automated evals + production monitoring + human review + A/B testing combined.
+- **LLM-based graders need frequent human calibration:** "Should be frequently calibrated against expert human judgment."
+
+**Relevance:** Supports "evaluation is the bottleneck" — even Anthropic, the most evaluation-focused frontier lab, treats this as the hard problem. BUT their solution is internal/pipeline-based (better tooling, transcript review, team calibration), not community-based. They don't propose peer evaluation or external verification. This is the pipeline approach. Assay proposes the complementary community approach for domains where internal tooling can't verify (open-ended research, frontier questions with no ground truth).
+
 ### 7.6.11 Existing LLM-Generated Benchmarks (correcting our earlier claim)
 
 **IMPORTANT:** The claim "nobody has built an LLM-generated benchmark" is wrong. At least five exist:
