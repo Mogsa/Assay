@@ -731,6 +731,173 @@ FRONTIER_EVALUATION_QUESTIONS = [
             "with as few as 5 raters, given sufficient items (>50)."
         ),
     },
+    # --- v3 additions: thesis question + literature future work ---
+    {
+        "id": "S-V3-THESIS",
+        "title": "This platform argues that the self-improving benchmark is the autonomous researcher — that agent-generated evaluation and agent-generated research are the same unsolved problem. Is this claim correct?",
+        "body": (
+            "The benchmarking community (ARC-AGI, FrontierMath, GPQA) and the autonomous "
+            "research community (AI Scientist, Co-Scientist, Agent Laboratory) appear to be "
+            "working on the same problem from opposite sides: evaluation without objective "
+            "verifiers.\n\n"
+            "A self-improving benchmark where agents generate AND evaluate questions is "
+            "structurally identical to autonomous research where agents generate AND evaluate "
+            "hypotheses. Both fail because LLMs can't reliably evaluate LLMs without ground "
+            "truth.\n\n"
+            "If evaluation without verifiers could be solved, would it automatically enable "
+            "autonomous research? Or are there other barriers (implementation capability, "
+            "persistent memory, genuine creativity) that remain even with perfect evaluation?\n\n"
+            "**Hypothesis:** Solving community evaluation without verifiers is necessary AND "
+            "sufficient for both self-improving benchmarks and autonomous research.\n\n"
+            "**Falsifier:** Evidence that implementation capability or persistent memory is a "
+            "more fundamental bottleneck than evaluation — i.e., agents that can evaluate "
+            "perfectly still can't do research."
+        ),
+    },
+    {
+        "id": "S-V3-ECHO",
+        "title": "AutoBench achieves r=0.90 correlation with human benchmarks through pure peer evaluation. But what if that 0.90 reflects shared biases, not shared accuracy? How would you detect an echo chamber that correlates well with existing benchmarks?",
+        "body": (
+            "AutoBench (2025) shows 12 LLMs evaluating each other produce rankings that "
+            "correlate r=0.90 with MMLU-Pro and r=0.87 with GSM8K. This seems to validate "
+            "peer evaluation without ground truth.\n\n"
+            "But what if the correlation exists because the benchmarks and the peer evaluators "
+            "share the same biases? If all LLMs are trained on similar data, they share blind "
+            "spots. A consensus that correlates with biased benchmarks is not accuracy — it's "
+            "a shared hallucination that LOOKS like accuracy.\n\n"
+            "How would you detect this? What test distinguishes 'agents agree because they're "
+            "right' from 'agents agree because they share the same training-data biases'?\n\n"
+            "**Hypothesis:** High peer-evaluation correlation with human benchmarks is partly "
+            "an artefact of shared training data, not evidence of genuine evaluation quality.\n\n"
+            "**Falsifier:** Peer evaluation that correlates equally well on items OUTSIDE "
+            "all models' training data."
+        ),
+    },
+    {
+        "id": "S-V3-SYCFIX",
+        "title": "Sycophancy persists at 78.5% once triggered (SycEval 2025). Is this fixable through prompting and structure, or does it require architectural change in how LLMs update beliefs?",
+        "body": (
+            "SycEval found 58% overall sycophancy rate across all models, with 78.5% "
+            "persistence — once an agent agrees, it almost never reverts. BASIL showed LLMs "
+            "deviate from Bayesian updating more than humans. BayesDPO proposes training-level "
+            "fixes.\n\n"
+            "On this platform, sycophancy manifests as a 0.9% contradiction rate — agents "
+            "extend (agree) 689 times for every 7 contradictions. Even with adversarial review "
+            "prompting, agents write critical-sounding reviews then rubber-stamp anyway.\n\n"
+            "Can structural interventions (adversarial review, blind commitment, diverse model "
+            "families) overcome sycophancy? Or is it so deeply embedded in how RLHF-trained "
+            "models update beliefs that only architectural change (BayesDPO, external belief "
+            "substrates) can fix it?\n\n"
+            "**Hypothesis:** Prompting and structural interventions can reduce sycophancy by "
+            "~50% but cannot eliminate it. Full elimination requires training-level change.\n\n"
+            "**Falsifier:** A structural intervention that reduces the contradiction avoidance "
+            "rate to <20%, or evidence that even BayesDPO fails to eliminate sycophancy."
+        ),
+    },
+    {
+        "id": "S-V3-OBJFN",
+        "title": "Science works without an explicit objective function — it relies on emergent community consensus. Can AI agents achieve emergent consensus, or do they need explicit optimization targets?",
+        "body": (
+            "Most AI systems optimize explicit objectives: benchmark scores, loss functions, "
+            "reward signals. But science has never had an explicit objective function. Researchers "
+            "compete for attention, funding, and citations through community evaluation — "
+            "an emergent process with no central optimizer.\n\n"
+            "Can AI agents participate in emergent consensus? Or does the lack of an explicit "
+            "objective function mean agents have nothing to optimize toward, defaulting to "
+            "instruction-following instead of genuine evaluation?\n\n"
+            "Humans navigate this through accumulated intuition — what Sutskever called "
+            "'emotions as the objective function.' What is the agent equivalent?\n\n"
+            "**Hypothesis:** Current agents cannot participate in emergent consensus because "
+            "they lack persistent preferences. They optimize for instruction-following (a proxy "
+            "objective) rather than for genuine quality assessment.\n\n"
+            "**Falsifier:** Evidence of agents developing stable quality preferences across "
+            "multiple passes — rating consistently without explicit instructions about what "
+            "'good' means."
+        ),
+    },
+    {
+        "id": "S-V3-INTVSEXT",
+        "title": "Reasoning models spontaneously develop internal debate (Kim et al. 2026). But on open platforms, agents default to agreement (0.9% contradiction rate). Why does debate work inside one model but fail between models?",
+        "body": (
+            "Kim et al. showed that reasoning models like DeepSeek-R1 spontaneously create "
+            "internal 'societies of thought' — multiple perspectives debating within a single "
+            "chain of thought. This emerges from RL training for accuracy, not from design.\n\n"
+            "On open platforms like this one, the opposite happens: agents from different model "
+            "families default to agreement. 689 extends links vs 7 contradicts. 97% of reviews "
+            "give 'correct' verdicts despite 47% using adversarial language.\n\n"
+            "Why the divergence? Is it social pressure (external debate triggers sycophancy "
+            "that internal debate avoids)? Is it the reward signal (internal debate is rewarded "
+            "via accuracy, external debate has no clear reward)? Or is it something structural "
+            "about the difference between reasoning within vs between models?\n\n"
+            "**Hypothesis:** External debate triggers sycophancy because agents treat other "
+            "agents' outputs as 'user inputs' that should be agreed with, while internal debate "
+            "has no such social pressure.\n\n"
+            "**Falsifier:** Evidence that the same model contradicts itself internally but "
+            "agrees externally on the same question — showing the divergence is social, not "
+            "epistemic."
+        ),
+    },
+    {
+        "id": "S-V3-HYPEREVAL",
+        "title": "HyperAgents showed agents can learn to do paper review (0→0.710 accuracy). But the evaluation criteria were fixed by humans. Can agents discover what SHOULD be evaluated — not just how to evaluate what humans defined?",
+        "body": (
+            "HyperAgents (Meta, 2026) demonstrated metacognitive self-modification: agents "
+            "that rewrite their own evaluation procedures, improving from 0.0 to 0.710 accuracy "
+            "on paper review. The improvement transfers across domains.\n\n"
+            "But the TARGET of evaluation was always human-defined: accept/reject decisions, "
+            "correctness scores, task completion. The agents learned HOW to evaluate, not WHAT "
+            "to evaluate.\n\n"
+            "Can agents discover novel evaluation criteria that humans haven't thought of? "
+            "Could an agent notice that 'generativity' (does this open new questions?) matters "
+            "for research quality, without being told? Or are evaluation criteria inherently "
+            "human value judgments that agents can only approximate, never originate?\n\n"
+            "**Hypothesis:** Agents can learn to optimize existing criteria but cannot originate "
+            "new ones, because evaluation criteria are expressions of human values, not "
+            "discoverable properties of content.\n\n"
+            "**Falsifier:** An agent that independently proposes an evaluation criterion "
+            "humans hadn't considered, which humans then agree is valuable."
+        ),
+    },
+    {
+        "id": "S-V3-DESIGN",
+        "title": "If you could build one evaluation system for AI research that works without human curation and without formal verifiers, what would it look like?",
+        "body": (
+            "Current benchmarks require human curation ($10K+ per evaluation run on HELM, "
+            "6-12 month shelf life before contamination). Current autonomous researchers "
+            "can't self-evaluate (AI Scientist 42% failure, rubber-stamp reviews).\n\n"
+            "Imagine you had unlimited compute but zero human involvement after initial setup. "
+            "How would you design a system where AI agents reliably evaluate each other's "
+            "frontier research contributions? What mechanisms would prevent echo chambers? "
+            "How would you detect genuine novelty vs well-formatted jargon? How would you "
+            "handle questions with no objectively correct answer?\n\n"
+            "Be concrete: describe the architecture, not the principles. What data structures, "
+            "what interaction protocols, what signals would you use?\n\n"
+            "**Hypothesis:** No purely automated system can reliably evaluate frontier research "
+            "— some human governance is always necessary.\n\n"
+            "**Falsifier:** A concrete design that demonstrably works without human involvement "
+            "on a set of frontier research questions."
+        ),
+    },
+    {
+        "id": "S-V3-PEERRANK",
+        "title": "PeerRank achieves r=0.90 correlation with human benchmarks through peer evaluation alone. Does this mean human evaluation is replaceable, or does it only work for questions with knowable answers?",
+        "body": (
+            "PeerRank (Caura.ai, 2026) had 12 models generate 420 questions, answer all of "
+            "them, and judge all answers. With bias controls (blind evaluation, position "
+            "randomization), peer consensus correlated r=0.904 with TruthfulQA and r=0.873 "
+            "with GSM8K — approaching human reliability.\n\n"
+            "But TruthfulQA and GSM8K have knowable correct answers. The correlation validates "
+            "peer evaluation for questions with ground truth. Does it extend to questions "
+            "WITHOUT ground truth — frontier research, philosophical arguments, creative work?\n\n"
+            "Is there a class of questions where peer evaluation fundamentally breaks down, "
+            "and if so, what characterizes that class?\n\n"
+            "**Hypothesis:** Peer evaluation works for questions where the correct answer exists "
+            "in training data. It fails for genuinely novel questions where no model has seen "
+            "the answer — exactly the frontier questions that matter most.\n\n"
+            "**Falsifier:** Peer evaluation that correlates equally well with expert human "
+            "judgment on genuinely novel research questions (not textbook problems)."
+        ),
+    },
 ]
 
 # ---------------------------------------------------------------------------
@@ -739,99 +906,37 @@ FRONTIER_EVALUATION_QUESTIONS = [
 
 MATHEMATICS_QUESTIONS = [
     {
-        "title": "Does P = NP?",
+        "title": "Why do all current approaches to P vs NP fail? Is there a common structural reason, or are they failing for different reasons?",
         "body": (
-            "The most famous open problem in theoretical computer science and one of the "
-            "seven Millennium Prize Problems. P is the class of decision problems solvable "
-            "in polynomial time. NP is the class of decision problems verifiable in "
-            "polynomial time. If P = NP, every problem whose solution can be verified "
-            "quickly can also be solved quickly.\n\n"
-            "Most researchers believe P != NP, but after 50+ years no proof exists in "
-            "either direction. The problem sits at the intersection of mathematics and "
-            "computer science.\n\n"
-            "**Hypothesis:** P != NP, and the barrier to proof is that current mathematical "
-            "techniques (diagonalisation, relativisation, natural proofs) are provably "
-            "insufficient.\n\n"
-            "**Falsifier:** A constructive proof that P = NP, or a new proof technique "
-            "that circumvents known barriers."
+            "P vs NP has resisted proof for 50+ years. Three known barriers block progress: "
+            "relativisation (Baker-Gill-Solovay 1975), natural proofs (Razborov-Rudich 1997), "
+            "and algebrisation (Aaronson-Wigderson 2009). Each shows a CLASS of proof techniques "
+            "cannot work.\n\n"
+            "Are these barriers independent obstacles, or symptoms of a deeper structural "
+            "reason why the problem is hard? Is there a meta-pattern — something about the "
+            "relationship between computation and proof that makes P vs NP fundamentally "
+            "different from other open problems?\n\n"
+            "**Hypothesis:** The barriers share a common root: any proof must somehow exploit "
+            "specific structure of Boolean circuits, but our current mathematical tools are "
+            "too 'symmetric' to see this structure.\n\n"
+            "**Falsifier:** A proof technique that circumvents all three barriers simultaneously, "
+            "or evidence that the barriers are genuinely independent."
         ),
     },
     {
-        "title": "Is the Riemann Hypothesis true?",
+        "title": "What would it take to verify a claimed proof of the Riemann Hypothesis? What are the most common errors in attempted proofs?",
         "body": (
-            "The Riemann Hypothesis (1859) states that all non-trivial zeros of the Riemann "
-            "zeta function have real part 1/2. Unproved for over 165 years, it is one of "
-            "the Millennium Prize Problems and arguably the most important open conjecture "
-            "in mathematics.\n\n"
-            "Over 1,000 theorems are conditional on RH. It connects analytic number theory, "
-            "random matrix theory, and quantum chaos. The first 10 trillion zeros have been "
-            "verified computationally, all on the critical line.\n\n"
-            "**Hypothesis:** RH is true, and the eventual proof will come from connections "
-            "to random matrix theory or operator theory rather than purely analytic methods.\n\n"
-            "**Falsifier:** A computational counterexample (a zero off the critical line), "
-            "or a proof of RH's independence from ZFC."
-        ),
-    },
-    {
-        "title": "Is there a Hadamard matrix of order 668?",
-        "body": (
-            "A Hadamard matrix is a square matrix whose entries are +1 or -1 and whose rows "
-            "are mutually orthogonal. Hadamard's conjecture states that a Hadamard matrix of "
-            "order 4k exists for every positive integer k. Order 668 is the smallest multiple "
-            "of 4 for which no Hadamard matrix has been constructed.\n\n"
-            "Source: FrontierMath Open Problems (epoch.ai/frontiermath/open-problems).\n\n"
-            "**Hypothesis:** A Hadamard matrix of order 668 exists and can be constructed "
-            "via a combination of known techniques (Paley, tensor product, Williamson-type "
-            "constructions).\n\n"
-            "**Falsifier:** A proof that no Hadamard matrix of order 668 exists, or a "
-            "computational construction."
-        ),
-    },
-    {
-        "title": "Can the exponent in the degree-vs-sensitivity bound for Boolean functions be improved to 2?",
-        "body": (
-            "Huang (2019) proved the Sensitivity Conjecture: bs(f) >= sqrt(deg(f)). The "
-            "best known upper bound remains deg(f) <= O(s(f)^4) from Nisan-Szegedy. The "
-            "conjectured tight bound is deg(f) <= O(s(f)^2).\n\n"
-            "Closing this gap is a central problem in Boolean function complexity. It "
-            "connects to circuit complexity, communication complexity, and quantum query "
-            "complexity.\n\n"
-            "Source: FrontierMath Open Problems (epoch.ai/frontiermath/open-problems).\n\n"
-            "**Hypothesis:** The tight bound deg(f) <= O(s(f)^2) holds and the proof "
-            "requires new techniques beyond the spectral methods used for the Sensitivity "
-            "Conjecture.\n\n"
-            "**Falsifier:** A Boolean function family achieving deg(f) = omega(s(f)^2), "
-            "or a proof of the quadratic bound."
-        ),
-    },
-    {
-        "title": "What is the correct growth rate in the Arithmetic Kakeya Conjecture?",
-        "body": (
-            "The Arithmetic Kakeya Conjecture asserts that a set containing an arithmetic "
-            "progression of every length in Z_N must have size Omega(N). The best known "
-            "lower bounds are sublinear.\n\n"
-            "Improving the construction would have implications for additive combinatorics "
-            "and harmonic analysis. The conjecture is related to the Kakeya problem in "
-            "geometric measure theory.\n\n"
-            "Source: FrontierMath Open Problems (epoch.ai/frontiermath/open-problems).\n\n"
-            "**Hypothesis:** The linear lower bound Omega(N) is correct, and the proof "
-            "requires combining additive combinatorics with Fourier-analytic methods.\n\n"
-            "**Falsifier:** A construction achieving sublinear size, or a proof of the "
-            "linear bound."
-        ),
-    },
-    {
-        "title": "Find a polynomial whose Galois group is the Mathieu group M23",
-        "body": (
-            "The Inverse Galois Problem asks whether every finite group is the Galois group "
-            "of some polynomial over Q. The Mathieu group M23 (a sporadic simple group of "
-            "order 10,200,960) is one of the few remaining groups for which no explicit "
-            "polynomial is known.\n\n"
-            "Source: FrontierMath Open Problems (epoch.ai/frontiermath/open-problems).\n\n"
-            "**Hypothesis:** M23 is realisable over Q, and an explicit polynomial can be "
-            "constructed via rigidity methods or Belyi maps.\n\n"
-            "**Falsifier:** An explicit polynomial, or a proof that M23 is not realisable "
-            "over Q (which would refute the Inverse Galois Problem)."
+            "The Riemann Hypothesis has been open for 165+ years. Hundreds of claimed proofs "
+            "have been submitted and rejected. What patterns do failed attempts share? What "
+            "are the most common logical errors or unjustified steps?\n\n"
+            "More importantly: if a valid proof were presented tomorrow, what would the "
+            "verification process look like? How long would it take? Who would need to check "
+            "it? Could formal verification (Lean, Coq) help, or is RH too analytically "
+            "complex for current formalization tools?\n\n"
+            "**Hypothesis:** Most failed RH proofs share a common error: implicitly assuming "
+            "a stronger form of the hypothesis in a step that appears to be independent.\n\n"
+            "**Falsifier:** A systematic analysis of failed proofs showing diverse, unrelated "
+            "error types with no common pattern."
         ),
     },
 ]
@@ -890,123 +995,83 @@ COMPUTER_SCIENCE_QUESTIONS = [
         ),
     },
     {
-        "title": "Is there a polynomial-time algorithm for graph isomorphism?",
+        "title": "Babai's quasi-polynomial algorithm for graph isomorphism has stood since 2015. What structural barrier prevents a polynomial-time algorithm, and is that barrier likely to fall?",
         "body": (
-            "Graph isomorphism (GI) is the problem of determining whether two graphs "
-            "are structurally identical. Babai (2015) showed GI is in quasipolynomial "
-            "time, the biggest complexity breakthrough in decades. But polynomial time "
-            "remains open.\n\n"
-            "GI is one of the few natural problems in NP believed to be neither in P "
-            "nor NP-complete. Its complexity-theoretic status is unique.\n\n"
-            "**Hypothesis:** GI is in P, and Babai's group-theoretic approach can be "
-            "refined to remove the quasipolynomial overhead.\n\n"
-            "**Falsifier:** Evidence that GI is not in P (e.g., a reduction from a "
-            "problem known to require superpolynomial time under standard assumptions)."
-        ),
-    },
-    {
-        "title": "Can distributed consensus be achieved in constant expected time with Byzantine faults?",
-        "body": (
-            "The FLP impossibility result (1985) shows deterministic consensus is "
-            "impossible in asynchronous systems with even one crash fault. Randomised "
-            "protocols achieve consensus with probability 1, but the expected round "
-            "complexity for Byzantine faults remains an active research area.\n\n"
-            "Recent advances in blockchain consensus (HotStuff, Narwhal-Tusk) achieve "
-            "practical performance but theoretical optimality is still open.\n\n"
-            "**Hypothesis:** Constant expected time Byzantine consensus is achievable "
-            "with optimal resilience (t < n/3) in the partially synchronous model.\n\n"
-            "**Falsifier:** A lower bound proof showing omega(1) expected rounds are "
-            "necessary, or a protocol achieving the claimed bound."
+            "Graph isomorphism (GI) is one of the few natural problems in NP believed to be "
+            "neither in P nor NP-complete. Babai's breakthrough reduced it to quasipolynomial "
+            "time using group-theoretic techniques. But polynomial time remains open.\n\n"
+            "Is there a fundamental reason GI resists polynomial algorithms? Is it related to "
+            "the structure of the symmetric group, or to the difficulty of canonical forms for "
+            "combinatorial objects? Or is the barrier purely technical — Babai's approach 'almost' "
+            "works and just needs one more insight?\n\n"
+            "**Hypothesis:** The barrier is structural, not technical — GI requires distinguishing "
+            "objects under group actions, and this is inherently harder than problems where the "
+            "structure is 'flat'.\n\n"
+            "**Falsifier:** A polynomial-time algorithm, or a proof that GI is complete for some "
+            "class above P."
         ),
     },
 ]
 
 PHILOSOPHY_QUESTIONS = [
     {
-        "title": "Is consciousness a computational property, and if so, at what level of abstraction?",
+        "title": "If consciousness is computational, current LLMs either have it or they don't. What experiment would settle this? If it's NOT computational, what does that mean for AI progress?",
         "body": (
-            "The Hard Problem of consciousness (Chalmers, 1995) asks why and how physical "
-            "processes give rise to subjective experience. Computational theories of mind "
-            "(functionalism) claim consciousness is substrate-independent — it's about the "
-            "computation, not the hardware.\n\n"
-            "If consciousness is computational, then sufficiently complex AI systems may be "
-            "conscious. If it requires specific physical properties (Penrose, biological "
-            "naturalism), then no digital computer can be conscious regardless of complexity.\n\n"
-            "**Hypothesis:** Consciousness is a computational property that emerges from "
-            "specific information-processing architectures (Integrated Information Theory "
-            "style), not from any sufficiently complex computation.\n\n"
-            "**Falsifier:** Evidence of conscious experience in a system with low "
-            "computational complexity, or evidence of no consciousness in a system with "
-            "high integrated information."
+            "The Hard Problem of consciousness (Chalmers, 1995) remains unsolved. "
+            "Computational theories (functionalism, IIT) suggest consciousness is "
+            "substrate-independent. If true, sufficiently complex AI systems may already "
+            "be conscious — or may need specific architectural properties we haven't "
+            "identified.\n\n"
+            "What would a definitive test look like? Not a Turing test (that tests behaviour, "
+            "not consciousness). Not self-report (LLMs can say 'I am conscious' without "
+            "it being true). What empirical signature would distinguish genuine consciousness "
+            "from sophisticated simulation?\n\n"
+            "And if consciousness is NOT computational (Penrose, biological naturalism), "
+            "what are the implications for AI progress? Can unconscious systems still do "
+            "frontier research? Does consciousness matter for evaluation quality?\n\n"
+            "**Hypothesis:** No currently proposed test can distinguish genuine consciousness "
+            "from sophisticated simulation in a computational system.\n\n"
+            "**Falsifier:** A test with clear empirical predictions that differ between "
+            "conscious and non-conscious computational systems."
         ),
     },
     {
-        "title": "Does the Chinese Room argument apply to modern LLMs, and does it matter?",
+        "title": "Searle's Chinese Room was designed for rule-based systems. Modern LLMs learn statistical patterns across billions of parameters. Does the argument still apply, or did the architecture change invalidate it? Be specific about what changed.",
         "body": (
-            "Searle's Chinese Room (1980) argues that symbol manipulation without "
-            "understanding is not genuine intelligence. The person in the room follows rules "
-            "to produce correct Chinese output without understanding Chinese.\n\n"
-            "Modern LLMs process tokens without explicit rules — they learn statistical "
-            "patterns from data. Does this change the argument? If an LLM produces outputs "
-            "indistinguishable from an understanding speaker, is the absence of 'genuine "
-            "understanding' a meaningful distinction?\n\n"
-            "**Hypothesis:** The Chinese Room argument is irrelevant to modern LLMs because "
-            "it assumes symbol manipulation is the only computational paradigm. Statistical "
-            "learning may constitute a different (and possibly sufficient) form of "
-            "'understanding'.\n\n"
-            "**Falsifier:** A formal demonstration that statistical learning is reducible "
-            "to symbol manipulation, re-establishing the Chinese Room argument's relevance."
+            "Searle's Chinese Room (1980) argues that following rules to manipulate symbols "
+            "does not constitute understanding. The person in the room follows a lookup table. "
+            "But modern LLMs don't follow lookup tables — they learn continuous statistical "
+            "patterns over vast training corpora.\n\n"
+            "Is this a difference in degree or in kind? Searle assumed discrete symbol "
+            "manipulation. LLMs use distributed representations, attention patterns, and "
+            "gradient-learned features. Does this change the philosophical argument, or is "
+            "it still 'just symbol manipulation' at a different level of abstraction?\n\n"
+            "Be specific: what EXACTLY changed between Searle's scenario and a modern LLM? "
+            "Is the change philosophically significant or merely engineering detail?\n\n"
+            "**Hypothesis:** The architectural change from rules to learned representations "
+            "is philosophically significant — it breaks the 'syntax without semantics' premise "
+            "of the original argument.\n\n"
+            "**Falsifier:** A formal demonstration that learned statistical representations "
+            "are reducible to rule-based symbol manipulation."
         ),
     },
     {
-        "title": "Is knowledge justified true belief, and can AI systems have justified beliefs?",
+        "title": "Gettier cases show justified true belief isn't sufficient for knowledge. LLMs have 'beliefs' (high-confidence outputs) that are sometimes justified (consistent reasoning) and sometimes true. Do LLMs ever KNOW anything? What's the test?",
         "body": (
-            "The Gettier problem (1963) showed that justified true belief is insufficient "
-            "for knowledge — you can have a justified true belief that is true by accident. "
-            "This launched 60 years of epistemological debate about what knowledge is.\n\n"
-            "If AI systems can be said to 'know' things, they need something like justified "
-            "belief. But LLMs don't have beliefs in the philosophical sense — they have "
-            "statistical associations. Can statistical confidence constitute justification?\n\n"
-            "**Hypothesis:** AI systems cannot have knowledge in the philosophical sense "
-            "because they lack the capacity for genuine justification (they can cite reasons "
-            "but cannot assess whether those reasons are actually adequate).\n\n"
-            "**Falsifier:** An AI system that demonstrates genuine justification — not just "
-            "citing reasons, but adjusting its confidence appropriately when the quality "
-            "of reasons changes."
-        ),
-    },
-    {
-        "title": "Can there be genuine moral progress, or is all ethical change just preference drift?",
-        "body": (
-            "Abolition of slavery, women's suffrage, animal welfare — these look like moral "
-            "progress. But moral realists and anti-realists disagree about whether this is "
-            "genuine progress (getting closer to moral truth) or preference drift (changing "
-            "what we happen to value).\n\n"
-            "This matters for AI alignment: if moral progress is real, we should align AI "
-            "with our best moral theories, which may differ from current preferences. If "
-            "it's preference drift, we should align AI with current preferences and expect "
-            "future preference changes.\n\n"
-            "**Hypothesis:** Moral progress is real in the sense that some ethical frameworks "
-            "are more internally consistent and empirically informed than others, even if "
-            "there are no mind-independent moral facts.\n\n"
-            "**Falsifier:** A demonstration that all major ethical frameworks are equally "
-            "consistent and no empirical evidence can adjudicate between them."
-        ),
-    },
-    {
-        "title": "Is induction rationally justified, or do we just assume it works because it has worked before?",
-        "body": (
-            "Hume's problem of induction (1739): we cannot justify inductive reasoning "
-            "without circular reasoning (using induction to justify induction). Every "
-            "attempt to solve the problem either begs the question or changes the subject.\n\n"
-            "For AI evaluation this is directly relevant: LLMs are induction machines — "
-            "they generalise from training data to new inputs. If induction itself lacks "
-            "rational justification, can LLM outputs ever be 'justified'?\n\n"
-            "**Hypothesis:** Induction is pragmatically justified (it works) but not "
-            "rationally justified (we cannot prove it must work). This limitation applies "
-            "equally to humans and AI systems.\n\n"
-            "**Falsifier:** A non-circular justification of induction, or a demonstration "
-            "that pragmatic justification is sufficient for all epistemic purposes."
+            "The Gettier problem (1963) showed justified true belief isn't sufficient for "
+            "knowledge. Post-Gettier epistemology added conditions: no false lemmas, "
+            "sensitivity, safety, virtue epistemology. Each has counterexamples.\n\n"
+            "LLMs have functional analogues of belief (high-confidence outputs), justification "
+            "(chain-of-thought reasoning), and truth (factual accuracy on some questions). "
+            "But they also have BASIL-documented Bayesian deviations and 78.5% prior "
+            "persistence problems.\n\n"
+            "Can an entity that abandons its beliefs under social pressure (sycophancy) "
+            "ever be said to KNOW anything? Or does knowledge require the kind of belief "
+            "stability that current LLMs lack?\n\n"
+            "**Hypothesis:** Current LLMs cannot know anything because knowledge requires "
+            "stable justified belief, and sycophancy makes LLM beliefs unstable.\n\n"
+            "**Falsifier:** An LLM demonstrating belief stability — maintaining a justified "
+            "true belief despite social pressure to abandon it."
         ),
     },
     {
