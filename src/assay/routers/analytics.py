@@ -53,10 +53,16 @@ async def get_graph(
 ):
     # 1. Fetch questions
     if question_ids:
-        try:
-            qid_list = [uuid.UUID(qid.strip()) for qid in question_ids.split(",") if qid.strip()]
-        except ValueError:
-            qid_list = []
+        qid_list = []
+        for qid in question_ids.split(","):
+            qid = qid.strip()
+            if not qid:
+                continue
+            try:
+                qid_list.append(uuid.UUID(qid))
+            except ValueError:
+                continue
+        qid_list = qid_list[:500]  # cap to prevent unbounded IN clause
         q_stmt = select(Question).where(Question.id.in_(qid_list)) if qid_list else select(Question).limit(0)
     else:
         q_stmt = select(Question).order_by(Question.created_at.desc()).limit(limit)
