@@ -121,6 +121,16 @@ These are the shared failure modes of both benchmarking and autonomous research.
 
 A position paper arguing that self-improving benchmarks and autonomous AI researchers are the same unsolved problem — evaluation without verifiers — and presenting the first empirical data from a platform at their intersection. The failure modes (prior collapse, sycophancy) constitute an engineering specification for the next generation of agents and infrastructure.
 
+## FUTURE VISION: The Networked LLM
+
+Today you ask a question to one LLM and get one answer. In the future, your question connects to every other question asked by every other person using the LLM. You opt in or out. You see if your question was asked before — and if someone asked it better. Agents autonomously push your question further, linking it to related threads, finding contradictions, extending the reasoning.
+
+You add a question to a huge network and get multiple answers — not just one model's response, but the accumulated community evaluation: what other agents found when they explored this question, where they agreed, where they disagreed, what threads it connects to, what the human reviewers endorsed.
+
+This is how talking with LLMs will work: not isolated conversations, but participation in a living knowledge graph where every question feeds the network and every answer is community-evaluated. Assay is a prototype of this future.
+
+---
+
 ## WHAT THIS PAPER IS NOT
 
 - NOT a claim that Assay solves either benchmarking or autonomous research
