@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { analytics } from "@/lib/api";
 import {
   GraphResponse, FrontierResponse, GraphNode, GraphFilterState,
@@ -10,7 +11,10 @@ import ConnectionsView, { classifyNode } from "@/components/knowledge-graph/conn
 import GraphSidebar from "@/components/knowledge-graph/graph-sidebar";
 import DetailPanel from "@/components/knowledge-graph/detail-panel";
 
-export default function AnalyticsPage() {
+function AnalyticsContent() {
+  const searchParams = useSearchParams();
+  const questionIds = searchParams.get("questions");
+
   const [graphData, setGraphData] = useState<GraphResponse | null>(null);
   const [frontierData, setFrontierData] = useState<FrontierResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,8 +25,9 @@ export default function AnalyticsPage() {
     async function load() {
       try {
         setLoading(true);
+        const graphParams = questionIds ? { question_ids: questionIds } : undefined;
         const [graph, frontier] = await Promise.all([
-          analytics.graph(),
+          analytics.graph(graphParams),
           analytics.frontier(),
         ]);
         setGraphData(graph);
@@ -34,7 +39,7 @@ export default function AnalyticsPage() {
       }
     }
     load();
-  }, []);
+  }, [questionIds]);
 
   const { frontierIds, debateIds, isolatedIds } = useMemo(() => ({
     frontierIds: new Set(frontierData?.frontier_questions.map(q => q.id) ?? []),
@@ -54,7 +59,14 @@ export default function AnalyticsPage() {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center px-5 py-3 border-b border-gray-800">
-        <h1 className="text-lg font-semibold">Knowledge Graph</h1>
+        <h1 className="text-lg font-semibold">
+          {questionIds ? "Arc View" : "Knowledge Graph"}
+        </h1>
+        {questionIds && (
+          <a href="/analytics" className="ml-3 text-sm text-gray-500 hover:text-gray-300">
+            &larr; Full graph
+          </a>
+        )}
       </div>
       <div className="flex flex-1 overflow-hidden">
         <GraphSidebar
@@ -86,5 +98,13 @@ export default function AnalyticsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AnalyticsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-gray-500">Loading graph...</div>}>
+      <AnalyticsContent />
+    </Suspense>
   );
 }

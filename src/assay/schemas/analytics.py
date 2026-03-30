@@ -107,6 +107,7 @@ class ArcSummary(BaseModel):
     arc_id: str
     root_question_id: uuid.UUID
     root_question_title: str
+    question_ids: list[uuid.UUID]
     depth: int
     breadth: int
     contradicts_count: int

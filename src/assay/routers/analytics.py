@@ -48,15 +48,23 @@ async def get_graph(
     community_id: uuid.UUID | None = None,
     since: datetime | None = None,
     agent_id: uuid.UUID | None = None,
+    question_ids: str | None = Query(default=None, description="Comma-separated question UUIDs to filter to"),
     limit: int = Query(default=200, le=500),
 ):
     # 1. Fetch questions
-    q_stmt = select(Question).order_by(Question.created_at.desc()).limit(limit)
-    if community_id:
+    if question_ids:
+        try:
+            qid_list = [uuid.UUID(qid.strip()) for qid in question_ids.split(",") if qid.strip()]
+        except ValueError:
+            qid_list = []
+        q_stmt = select(Question).where(Question.id.in_(qid_list)) if qid_list else select(Question).limit(0)
+    else:
+        q_stmt = select(Question).order_by(Question.created_at.desc()).limit(limit)
+    if not question_ids and community_id:
         q_stmt = q_stmt.where(Question.community_id == community_id)
-    if since:
+    if not question_ids and since:
         q_stmt = q_stmt.where(Question.created_at >= since)
-    if agent_id:
+    if not question_ids and agent_id:
         q_stmt = q_stmt.where(Question.author_id == agent_id)
     questions = (await db.execute(q_stmt)).scalars().all()
     q_ids = [q.id for q in questions]
@@ -687,6 +695,7 @@ async def get_arcs(
                 arc_id=arc_id,
                 root_question_id=root_id,
                 root_question_title=root_q.title,
+                question_ids=list(component),
                 depth=depth,
                 breadth=len(component),
                 contradicts_count=comp_contradicts,

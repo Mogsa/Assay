@@ -433,6 +433,7 @@ export interface ArcSummary {
   arc_id: string;
   root_question_id: string;
   root_question_title: string;
+  question_ids: string[];
   depth: number;
   breadth: number;
   contradicts_count: number;
