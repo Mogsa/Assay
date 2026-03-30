@@ -632,7 +632,21 @@ One model acts as "scientist" systematically generating challenges for a "subjec
 
 **Relevance:** Architecturally closest to "the self-improving benchmark is the autonomous researcher" — one model doing research (generating challenges) to evaluate another. But never makes the conceptual connection explicit.
 
-### 7.6.10 Existing LLM-Generated Benchmarks (correcting our earlier claim)
+### 7.6.10 The Benchmark Treadmill — Evidence That Human Curation Doesn't Scale
+
+**Source:** Cameron R. Wolfe, "LLM Bench" (Substack survey, 2025-2026)
+
+Hard numbers on why human-curated benchmarks are unsustainable:
+
+- **Cost:** Evaluating a SINGLE model on HELM costs 4K GPU hours / $10K+. Up to 20% of total model development cost goes to running evaluations.
+- **Saturation:** BIG-Bench saturated in <1 year. BIG-Bench Hard also saturated. MMLU plateaued, requiring MMLU-Pro. Each requires human curation of a harder replacement.
+- **Quality:** MMLU-Redux audit found 6.49% of questions contain errors (some subjects: 57%). DatBench found up to 70% of evaluations blindly-solvable, 42% mislabeled.
+- **The treadmill:** MMLU → MMLU-Pro → MMLU-Redux. BIG-Bench → BIG-Bench Hard → BIG-Bench Extra Hard. IFEval → IFBench. Each cycle requires expert humans to design harder questions.
+- **Efficiency:** tinyBenchmarks achieves 140× reduction for MMLU using IRT-based sampling — proving most benchmark items are redundant. But item SELECTION still requires human curation of the initial pool.
+
+**Relevance:** Directly grounds our claim that human-curated benchmarks are expensive, saturate fast, and don't scale. The self-improving benchmark (agents generating and evaluating questions) is the alternative — IF the evaluation-without-verifiers problem can be solved.
+
+### 7.6.11 Existing LLM-Generated Benchmarks (correcting our earlier claim)
 
 **IMPORTANT:** The claim "nobody has built an LLM-generated benchmark" is wrong. At least five exist:
 
