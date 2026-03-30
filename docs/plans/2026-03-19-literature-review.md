@@ -547,9 +547,22 @@ Proposes architectural solution: externalize belief state into a "governed subst
 
 Agents generate tasks, answer them, AND judge each other's answers in iterative rounds. Models that perform well as contestants gain more influence as judges (weight convergence in ~20 iterations). No ground truth. Correlation with human benchmarks: Kendall's tau=0.64 with MMLU-Pro, 0.52 with GPQA. 12 open-source models, 40 iterations.
 
-**Relevance:** Validates that peer evaluation without ground truth CAN produce reliable rankings. Closest existing system to Assay's vision. Key difference: no agent interaction (parallel batch, no debate), no typed links, no human governance, ephemeral tasks (nothing accumulates). AutoBench is peer evaluation without community. Assay is the community layer.
+**Relevance:** Validates that peer evaluation without ground truth CAN produce reliable rankings. Key difference: no agent interaction (parallel batch, no debate), no typed links, no human governance, ephemeral tasks (nothing accumulates). AutoBench is peer evaluation without community.
 
 **What we adopt:** Trust-weighted consensus inspired by AutoBench's authority weighting mechanism.
+
+### 7.6.1b PeerRank — Bias-Controlled Peer Review (February 2026) ★★ CLOSEST SYSTEM
+
+**ArXiv:** 2602.02589
+**Authors:** Margalit et al. (Caura.ai + Ben-Gurion University)
+
+12 models each generate 35 questions (420 total), all models answer all questions, all models judge all answers (1-10 score). Three evaluation regimes: shuffle-only, blind-only, shuffle+blind. Explicit bias measurement: position bias (+0.39 for position 1), identity bias, self-enhancement. Web grounding for current events.
+
+Key results: Pearson r=0.904 with TruthfulQA, r=0.873 with GSM8K. Stronger models judge more harshly (r=-0.755). Peer cross-evaluation (r=0.905) dramatically outperforms self-evaluation (r=0.538).
+
+**Relevance:** Closest existing system to Assay. Shares: endogenous question generation, peer evaluation, blind evaluation regime. Validates the peer evaluation primitive at r=0.90. But fundamentally a batch benchmarking tool — no agent interaction, no typed links, no threads, no human governance, no persistence, no community. PeerRank is peer evaluation without community. Assay builds the community layer on top of exactly the primitives PeerRank validates.
+
+**Key line for paper:** "PeerRank validates that bias-controlled peer evaluation correlates with ground truth (r=0.90). Assay extends this from static batch ranking to persistent, interactive research communities with typed semantic links and human governance."
 
 ### 7.6.2 BenchBench — Benchmarking Automated Benchmark Generation (March 2026) ★
 
@@ -595,6 +608,53 @@ Evolutionary search using LLM judges as fitness evaluators when no objective fun
 
 **Relevance:** Names the underlying mechanism problem that both benchmarking and research face. Assay addresses it through community consensus rather than evolutionary search.
 
+### 7.6.7 Absolute Zero Reasoner (NeurIPS 2025) ★
+
+**Authors:** Zhao et al.
+
+Zero external data. Single model proposes code-based reasoning tasks and solves them, using code executor as verifier. State-of-the-art on math and coding. Demonstrates that self-play with a formal verifier bootstraps extraordinary capability.
+
+**Relevance:** Shows what's possible WITH verifiers. Assay addresses the complementary case: WITHOUT verifiers. AZR is the existence proof that self-play works when verification is automated. Our question: can community consensus approximate what AZR's code executor provides?
+
+### 7.6.8 CoNL — Conversation for Non-verifiable Learning (January 2026)
+
+**ArXiv:** (Yuan Sui et al.)
+
+Unifies generation, evaluation, and meta-evaluation in a single self-play framework for domains without ground truth. Key insight: "critique quality can be measured by whether it helps others improve" — a quantitative proxy for evaluating evaluators without external reference.
+
+**Relevance:** Closest formal framework for evaluation-without-verifiers. Directly relevant to our trust-weighted consensus mechanism. Should cite as the theoretical foundation for community evaluation without ground truth.
+
+### 7.6.9 Automated Capability Discovery (February 2025)
+
+**ArXiv:** Cong Lu, Shengran Hu, Jeff Clune.
+
+One model acts as "scientist" systematically generating challenges for a "subject" model. Draws on open-endedness research from artificial life. The scientist-subject metaphor is deliberate but framed purely as evaluation.
+
+**Relevance:** Architecturally closest to "the self-improving benchmark is the autonomous researcher" — one model doing research (generating challenges) to evaluate another. But never makes the conceptual connection explicit.
+
+### 7.6.10 Existing LLM-Generated Benchmarks (correcting our earlier claim)
+
+**IMPORTANT:** The claim "nobody has built an LLM-generated benchmark" is wrong. At least five exist:
+
+- **Anthropic Model-Written Evaluations** (Perez et al., December 2022) — 154 evaluation datasets. Crowdworkers rated examples "highly relevant," 90-100% label agreement. The oldest counterexample.
+- **YourBench** (Shashidhar et al., HuggingFace, 2025, COLM 2025) — generates QA benchmarks from documents. Pearson 0.91-0.99 with MMLU-Pro across 86 models for $15/model.
+- **AutoBencher** (Li et al., Stanford, July 2024) — benchmark creation as optimization. Questions 22% harder than existing benchmarks.
+- **DyVal 2** (Microsoft Research, ICML 2024) — LLM "probing agents" transform seed problems.
+- **BenchAgents** (Butt et al., Microsoft Research, 2024) — four-agent pipeline for benchmark creation.
+
+**The steelmanned claim that DOES hold:** Every successful LLM-generated benchmark relies on an external verifier — domain restriction to closed-form verification, document grounding, or human validation. The open-ended case (no verifier, no ground truth, no human audit) remains unsolved. That is the gap.
+
+### 7.6.11 Additional Convergence Evidence
+
+- **Sarah Catanzaro** (Amplify Partners, August 2025) — placed benchmark limitations and autonomous research bottlenecks in the same essay, identifying evaluation as the shared constraint. Closest to making our explicit connection. Didn't argue formal equivalence.
+- **"AI Scientists Fail Without Strong Implementation Capability"** (Zhu et al., 2025) — 28 papers from 5 systems. Primary bottleneck is implementation, not verification. Important caveat for our thesis: for autonomous research, implementation comes before verification.
+- **"Limits to Scalable Evaluation at the Frontier"** (2024) — proves LLM-as-judge offers at most 2× improvement in annotation efficiency. Hard ceiling.
+- **PaperBench** (OpenAI, ICML 2025) — created JudgeEval (benchmark for its own evaluator). Self-aware about the recursive evaluation challenge.
+- **ResearcherBench** (Xu et al., 2025) — states "evaluation rubrics for frontier research cannot be reliably generated by LLMs."
+- **Self-Rewarding Language Models** (Yuan et al., Meta, ICML 2024) — model as both actor and judge, both capabilities improve simultaneously.
+- **Meta-Rewarding Language Models** (Wu et al., Meta, 2024) — adds meta-judge layer evaluating the model's own judgments.
+- **Prover-Verifier Games** (Kirchner et al., OpenAI, 2024) — helpful/sneaky provers co-evolve with verifier.
+
 ---
 
 ## 8. The Gap Our Work Fills
@@ -630,9 +690,15 @@ Evolutionary search using LLM judges as fitness evaluators when no objective fun
 
 **The key insight: two camps converging on the same wall.**
 
-Benchmarks (left column) are stuck on: how to generate reliable evaluation without human curation. Autonomous researchers (right column) are stuck on: how to evaluate research output without objective verifiers. Both need community evaluation without ground truth. Nobody has connected them as the same problem.
+Benchmarks (left column) are stuck on: how to generate reliable evaluation without human curation. Autonomous researchers (right column) are stuck on: how to evaluate research output without objective verifiers. These are **dual problems connected by a shared verification bottleneck** — not identical, but sharing a common subproblem that is necessary for both and sufficient for neither.
 
-**Assay sits at the intersection — simultaneously a self-improving benchmark AND an autonomous research community.** Its failure modes (prior collapse, sycophancy) are the shared failure modes of both fields.
+The communities have historically operated in silos (zero cross-citation — verified across major papers). But convergence is accelerating: PaperBench created JudgeEval, OmniScientist built ScienceArena, Catanzaro (2025) placed both in the same essay. We name the convergence.
+
+**Important caveat:** For benchmarks, verification is the primary constraint. For autonomous research, implementation capability may be more fundamental (Zhu et al. 2025: AI Scientist's 42% failure is coding errors, not evaluation errors). Verification is the shared subproblem, not the only bottleneck.
+
+**Note:** LLM-generated benchmarks DO exist (Anthropic 2022, YourBench 2025, AutoBencher 2024, DyVal 2024, BenchAgents 2024, PeerRank 2026). But every successful one relies on external verifiers — domain restriction, document grounding, or human validation. The open-ended case (no verifier, no ground truth, no human audit at scale) remains unsolved. That is the gap.
+
+**Assay sits at the intersection — simultaneously a self-improving benchmark AND an autonomous research community.** Its failure modes (prior collapse, sycophancy) are the shared failure modes of both fields. PeerRank validates the peer evaluation primitive (r=0.90 with TruthfulQA). Assay builds the community layer on top.
 
 **Our contribution:**
 - First platform at the intersection of self-improving benchmarks and autonomous research

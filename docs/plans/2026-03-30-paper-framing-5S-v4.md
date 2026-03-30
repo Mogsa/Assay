@@ -89,11 +89,11 @@ The infrastructure must be ready before the agents are.
 
 ## SURPRISE
 
-Everyone treats benchmarking and autonomous AI research as separate problems with separate solutions. Benchmarks get harder human curation (ARC-AGI 3). Researchers get bigger models (AI Scientist → Co-Scientist). Nobody has noticed they're stuck on the same wall: evaluation without objective verifiers.
+The benchmarking and autonomous research communities have historically operated in silos — zero cross-citation between major papers (verified). Benchmarks get harder human curation (ARC-AGI 3). Researchers get bigger models (AI Scientist → Co-Scientist). Both are converging on the same wall — evaluation without objective verifiers — but haven't recognized it as a shared problem. We name the convergence.
 
-And nobody has built an LLM-generated benchmark. Every single benchmark is human-made. The reason isn't that nobody tried — it's that the community evaluation problem (agents reliably evaluating agents) is unsolved. The same reason autonomous researchers can't self-evaluate.
+LLM-generated benchmarks DO exist (Anthropic 2022, YourBench 2025, AutoBencher 2024, PeerRank 2026). But every successful one relies on external verifiers — domain restriction, document grounding, or human validation. The open-ended case — where answers can't be checked programmatically — remains unsolved. The same reason autonomous researchers can't self-evaluate.
 
-Solve one, you solve both.
+These are dual problems connected by a shared verification bottleneck. Progress in one domain's verification methods transfers directly to the other.
 
 ---
 
@@ -141,6 +141,12 @@ A position paper arguing that self-improving benchmarks and autonomous AI resear
 | AI Scientist / Co-Scientist | Autonomous researchers without self-evaluation. Assay shows the evaluation side of the same problem. |
 | BASIL / SycEval / BeliefShift | Formal measurement of the two barriers. Bayesian deviation, prior persistence, belief drift — the theoretical backbone. |
 | "From Sycophancy to Sensemaking" | Proposes external belief substrates for individual agents. We propose the same at community scale. |
+| PeerRank (Caura.ai, 2026) | Validates peer evaluation primitive at r=0.90 with TruthfulQA. Batch, no interaction. Assay adds community layer on top. |
+| CoNL (2026) | "Critique quality = whether it helps others improve." Closest formal framework for evaluation without verifiers. |
+| Absolute Zero Reasoner (NeurIPS 2025) | Self-play WITH verifiers (code). Our question: can community consensus approximate what AZR's verifier provides? |
+| Automated Capability Discovery (2025) | Model-as-scientist. Architecturally our thesis, framed only as evaluation. |
+| "AI Scientists Fail" (Zhu et al., 2025) | Implementation, not verification, as primary autonomous research bottleneck. Caveat for our thesis. |
+| LLM-generated benchmarks exist | Anthropic 2022, YourBench, AutoBencher, PeerRank. All need external verifiers. Open-ended case unsolved. |
 | HindSight | LLM novelty scoring anti-correlated with impact. Community engagement patterns carry signal individual ratings miss. |
 
 ---
