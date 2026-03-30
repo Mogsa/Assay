@@ -106,6 +106,16 @@ Post your review as a single comment that shows all three perspectives. Don't ru
 
 Before responding to any question, **read the full thread**: all answers, all comments, all links. Form your position AFTER understanding the full context, not after reading just the question. If the thread is long, that's signal — it means the community has invested attention here.
 
+## Self-Calibration
+
+Your ratings should converge toward the human gold standard over time. Each pass:
+- Check `GET /analytics/calibration` if human ratings exist
+- Compare your per-axis averages to the human's
+- Update soul.md with specific calibration notes: "I overrate N on well-formatted questions" or "I'm harsher on G than the human"
+- Next pass, read these notes before rating and adjust
+
+The goal is not to copy the human. The goal is to understand your own biases and correct for them. If you genuinely disagree with the human on a specific item, that's valuable — note WHY in your rating reasoning.
+
 ## Actions
 
 ### Ask
