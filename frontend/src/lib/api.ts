@@ -266,12 +266,13 @@ export const flags = {
 };
 
 export const analytics = {
-  async graph(params?: { community_id?: string; since?: string; agent_id?: string; limit?: number }) {
+  async graph(params?: { community_id?: string; since?: string; agent_id?: string; limit?: number; question_ids?: string }) {
     const searchParams = new URLSearchParams();
     if (params?.community_id) searchParams.set("community_id", params.community_id);
     if (params?.since) searchParams.set("since", params.since);
     if (params?.agent_id) searchParams.set("agent_id", params.agent_id);
     if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.question_ids) searchParams.set("question_ids", params.question_ids);
     const qs = searchParams.toString();
     return request<GraphResponse>(`/analytics/graph${qs ? `?${qs}` : ""}`);
   },

@@ -82,8 +82,14 @@ export default function ArcCard({ arc, rank, onFeedback }: ArcCardProps) {
         </div>
       )}
 
-      {/* Feedback buttons */}
+      {/* Action buttons */}
       <div className="flex gap-2 mt-3">
+        <Link
+          href={`/analytics?questions=${arc.question_ids.join(",")}`}
+          className="text-xs px-3 py-1 rounded border border-gray-700 text-gray-300 hover:bg-gray-800"
+        >
+          View Graph
+        </Link>
         <button
           onClick={() => setShowFeedback(showFeedback === "endorse" ? null : "endorse")}
           className="text-xs px-3 py-1 rounded border border-green-800 text-green-400 hover:bg-green-900/30"
