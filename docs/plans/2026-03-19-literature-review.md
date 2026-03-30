@@ -231,7 +231,12 @@ Argues the next intelligence explosion will be "plural, social, and relational" 
 
 **Relevance to our work:** Assay IS the empirical test of this thesis. Evans et al. call for "agent institutions with designed conflict." We built one and found: (a) role specialization emerges naturally (confirming their social intelligence thesis), (b) but genuine disagreement is near-zero (0.9% contradiction rate) despite institutional support — agents default to agreement, (c) evaluation by instruction is structurally hollow, (d) loss of priors means agents can't accumulate experience like humans. Our paper is the field report to their manifesto.
 
-**Gap we fill:** They provide zero empirical evidence. No experiments, no data, no system. Assay provides 28 agents, 5 model families, 1900 R/N/G ratings, 760 links, and specific findings about where institutional alignment breaks.
+**Deeper detail from the paper:**
+- Designed roles vs emergent specialization: they distinguish explicit role assignment ("you are the skeptic") from roles crystallizing through institutional incentives. They favour emergence within designed constraints — matching Assay's approach (no assigned roles, specialization emerges from cross-family diversity + soul.md).
+- Evaluation gap: they acknowledge that verifying outputs from multi-agent systems is hard when individual reasoning is opaque. They propose credential systems and deliberative traces but offer no concrete mechanism. This is the gap Assay fills with R/N/G + typed links + human governance.
+- They do NOT engage with self-improving benchmarks, benchmark saturation, or the connection between evaluation and benchmarking. The convergence between their institutional thesis and the benchmarking problem is unacknowledged.
+
+**Gap we fill:** They provide zero empirical evidence. No experiments, no data, no system. Assay provides 28 agents, 5 model families, 1900 R/N/G ratings, 760 links, and specific findings about where institutional alignment breaks. Additionally, Assay connects their institutional thesis to the benchmarking problem — showing that the self-improving benchmark and the autonomous researcher are dual problems connected by the same verification bottleneck Evans et al. identify but don't name.
 
 ### 4.0a Reasoning Models Generate Societies of Thought (Kim et al., 2026) ★ CRITICAL
 
@@ -608,7 +613,39 @@ Evolutionary search using LLM judges as fitness evaluators when no objective fun
 
 **Relevance:** Names the underlying mechanism problem that both benchmarking and research face. Assay addresses it through community consensus rather than evolutionary search.
 
-### 7.6.7 Absolute Zero Reasoner (NeurIPS 2025) ★
+### 7.6.7 TIG — The Innovation Game (Fletcher et al., 2024) ★★ KEY STRUCTURAL ANALOGUE
+
+**Source:** TIG Whitepaper v2.2.1, tig.foundation
+
+A market-based framework for accelerating computational methods using proof-of-useful-work. Three player types in a synthetic market:
+
+- **Benchmarkers** (miners): Solve random instances of challenges using submitted methods. Rewarded for generating proof of work. Create demand for better methods.
+- **Innovators** (researchers): Develop and submit more efficient methods (algorithms). Rewarded based on ADOPTION by Benchmarkers — not by self-assessment.
+- **Commercial Enterprises**: Pay to license the IP captured by the system.
+
+**Key mechanisms:**
+- **Asymmetric problems only:** Problems that are hard to solve but easy to verify (NP-complete, SAT, ML training). Verification is objective and cheap.
+- **Price discovery through proof of work:** Benchmarkers' adoption of methods IS the market signal for method quality. No subjective evaluation needed.
+- **Antitrust/anti-monopoly:** Multiple independent challenges prevent any single innovator from dominating. Analogous to cross-family diversity in Assay.
+- **Open collaboration with value capture:** Methods must be open-sourced to all Benchmarkers. IP licensed through the foundation.
+- **Innovator rewards correlate with adoption:** The more Benchmarkers use your method, the more you earn. Quality measured by market behaviour, not by judges.
+
+**Relevance:** The closest structural analogue to Assay on the OBJECTIVE side of the verification spectrum. TIG's architecture maps almost exactly to Assay:
+
+| TIG | Assay |
+|-----|-------|
+| Innovators submit methods | Agents ask questions |
+| Benchmarkers evaluate by adoption | Agents evaluate via R/N/G ratings |
+| Quality = market adoption signal | Quality = community engagement + human endorsement |
+| Objective verification (solution valid/invalid) | No objective verification (community consensus) |
+| Anti-monopoly via independent challenges | Anti-monopoly via cross-family diversity |
+| Token rewards proportional to adoption | Karma proportional to community value |
+
+**The critical difference is ONE cell:** verification. TIG can verify objectively (solution valid or not). Assay cannot (frontier research has no compiler). Everything else maps. TIG proves the ARCHITECTURE works. Assay tests whether it works WITHOUT the objective verifier.
+
+**For the paper:** TIG demonstrates that tiered competitive evaluation produces efficient markets for intellectual contribution — when verification is cheap. Assay extends this to domains where verification is expensive or impossible. The failure modes of Assay (sycophancy, prior collapse) are precisely what you'd predict when you remove TIG's objective verifier.
+
+### 7.6.8 Absolute Zero Reasoner (NeurIPS 2025) ★
 
 **Authors:** Zhao et al.
 
