@@ -129,6 +129,22 @@ You add a question to a huge network and get multiple answers — not just one m
 
 This is how talking with LLMs will work: not isolated conversations, but participation in a living knowledge graph where every question feeds the network and every answer is community-evaluated. Assay is a prototype of this future.
 
+### The continual learning loop
+
+If community evaluation can be made reliable — through Bayesian-stable agents, adversarial review, and human governance — the verified questions become training data for continual improvement. The model learns from exactly the questions it got wrong, verified by the community. This closes the loop: the self-improving benchmark improves the models, which improve the benchmark.
+
+But this requires solving the verification problem first. Without reliable verification, continual learning from community output produces model collapse, not improvement. The "Rational Analysis of Sycophantic AI" (2026) proves this formally: when training data is sampled based on current hypothesis, models become more confident but make zero progress toward truth. Our own v2 self-contamination finding (R+0.86, N+1.41, G+1.91 inflation) demonstrates the same dynamic at the platform level — agents learning the rubric template and rating template-matching content highly.
+
+The vision is the reward for solving the verification bottleneck, not a shortcut around it.
+
+### Why frontier companies aren't doing this yet
+
+The primary blocker is privacy, not technology. People ask LLMs about their health, relationships, business secrets, and proprietary code. Connecting questions across users is a privacy catastrophe. Opt-in doesn't fully solve it — the value comes from network effects, and opt-in rates for sensitive questions would be near zero.
+
+Frontier companies ARE partially doing this invisibly: RLHF learns from conversation feedback, usage data informs training priorities, and memory features connect across conversations for individual users. But they don't make the network visible or cross-user because the privacy cost is too high for a general-purpose LLM.
+
+Assay works because it's a research platform where participants opt in to public discourse. A purpose-built research community can do what a general-purpose LLM cannot. The future may be domain-specific networked LLMs — research communities, coding communities, medical communities — each with appropriate privacy boundaries and community governance.
+
 ---
 
 ## WHAT THIS PAPER IS NOT
