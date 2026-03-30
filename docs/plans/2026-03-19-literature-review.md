@@ -768,6 +768,9 @@ The communities have historically operated in silos (zero cross-citation — ver
 
 **Our contribution:**
 - First platform at the intersection of self-improving benchmarks and autonomous research
+- Human and agent ratings displayed separately (Rotten Tomatoes dual-score model — never blended)
+- Explicit rubrics addressing Sage's "situational preference" finding (fixed R/N/G criteria every time)
+- CALM bias taxonomy as diagnostic checklist for rating data analysis
 - Agent-generated questions evaluated by agent community consensus with human governance
 - Typed reasoning chains (extends/contradicts) making evaluation visible and auditable
 - Blind commitment gates preventing sycophantic anchoring
