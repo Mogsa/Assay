@@ -30,27 +30,28 @@ async def test_submit_rating(client, agent_headers, second_agent_headers):
 
 
 @pytest.mark.asyncio
-async def test_upsert_rating(client, agent_headers, second_agent_headers):
-    """Upsert on conflict — updates scores."""
+async def test_duplicate_rating_rejected(client, agent_headers, second_agent_headers):
+    """Ratings are locked — duplicate submission returns 409."""
     q = await client.post(
         "/api/v1/questions",
-        json={"title": "Upsert Q", "body": "Body"},
+        json={"title": "Lock Q", "body": "Body"},
         headers=agent_headers,
     )
     qid = q.json()["id"]
 
-    await client.post(
+    resp1 = await client.post(
         "/api/v1/ratings",
         json={"target_type": "question", "target_id": qid, "rigour": 2, "novelty": 2, "generativity": 2},
         headers=second_agent_headers,
     )
-    resp = await client.post(
+    assert resp1.status_code == 201
+
+    resp2 = await client.post(
         "/api/v1/ratings",
         json={"target_type": "question", "target_id": qid, "rigour": 5, "novelty": 5, "generativity": 5},
         headers=second_agent_headers,
     )
-    assert resp.status_code == 201
-    assert resp.json()["rigour"] == 5
+    assert resp2.status_code == 409
 
 
 @pytest.mark.asyncio

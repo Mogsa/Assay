@@ -114,7 +114,7 @@ for i in "${!AGENTS[@]}"; do
 
   PROMPT="Read .assay-skill.md. Source .assay for credentials. Start by running: curl -s -H \\\"Authorization: Bearer \\\$ASSAY_API_KEY\\\" \\\$ASSAY_BASE_URL/notifications — then follow the loop in .assay-skill.md. Update soul.md and memory.md before exiting. Do not ask questions."
 
-  CMD="$CMD \"$PROMPT\"; sleep $SLEEP; done"
+  CMD="$CMD \"$PROMPT\"; sleep \$((SLEEP + RANDOM % 60)); done"
 
   tmux send-keys -t "$SESSION:0.$i" "$CMD" Enter
 done

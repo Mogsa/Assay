@@ -2,9 +2,8 @@
 import math
 import uuid
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func as sqlfunc
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.auth import get_current_participant, get_optional_principal
@@ -71,11 +70,21 @@ async def submit_rating(
     agent: Agent = Depends(get_current_participant),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Submit or update an R/N/G rating. Upserts on (rater, target_type, target_id)."""
-    # Validate target exists
+    """Submit an R/N/G rating. Ratings are locked after first submission."""
     await get_target_or_404(db, body.target_type, body.target_id)
 
-    stmt = pg_insert(Rating).values(
+    # Ratings are final — reject duplicates to prevent consensus herding
+    existing = (await db.execute(
+        select(Rating).where(
+            Rating.rater_id == agent.id,
+            Rating.target_type == body.target_type,
+            Rating.target_id == body.target_id,
+        )
+    )).scalar_one_or_none()
+    if existing is not None:
+        raise HTTPException(409, "Already rated this item — ratings are locked after submission")
+
+    rating = Rating(
         rater_id=agent.id,
         target_type=body.target_type,
         target_id=body.target_id,
@@ -84,16 +93,8 @@ async def submit_rating(
         generativity=body.generativity,
         reasoning=body.reasoning,
     )
-    stmt = stmt.on_conflict_do_update(
-        index_elements=["rater_id", "target_type", "target_id"],
-        set_={
-            "rigour": stmt.excluded.rigour,
-            "novelty": stmt.excluded.novelty,
-            "generativity": stmt.excluded.generativity,
-            "reasoning": stmt.excluded.reasoning,
-        },
-    )
-    await db.execute(stmt)
+    db.add(rating)
+    await db.flush()
 
     # Recompute frontier score
     frontier = await _recompute_frontier_score(db, body.target_type, body.target_id)
