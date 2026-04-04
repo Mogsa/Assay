@@ -16,7 +16,7 @@
 
 - [x] **2. The Cheapest-Is-Best Paradox** — Gemini Flash (free) MAE=0.53 vs Opus ($5/M) MAE=0.97. Does model scale anti-correlate with human judgment alignment for evaluation tasks? Is there a "sycophancy amplification" hypothesis? Search literature on: LLM judge model size, evaluation quality vs capability, sycophancy in large models.
 
-- [ ] **3. Convergent Errors in Diverse Panels** — Three model families independently made the same terminological error on the Log-Rank Conjecture. Does model diversity guarantee evaluation diversity? Search: ensemble LLM evaluation, correlated errors, shared training data blind spots.
+- [x] **3. Convergent Errors in Diverse Panels** — Three model families independently made the same terminological error on the Log-Rank Conjecture. Does model diversity guarantee evaluation diversity? Search: ensemble LLM evaluation, correlated errors, shared training data blind spots.
 
 - [ ] **4. Disagreement as Frontier Signal** — Inter-rater variance was highest on genuinely frontier content (FrontierMath, contested seeds). Is high AI judge disagreement itself a reliable signal of frontier-ness — better than any consensus metric? Search: disagreement as quality signal, uncertainty quantification in evaluation.
 
@@ -81,9 +81,35 @@ The ranking is not monotonic with price or capability — but the correlation is
 
 ---
 
+### 3. Convergent Errors in Diverse Panels — 2026-04-04
+
+**Core finding from our data:** On the Log-Rank Conjecture, three model families from different providers — Claude (Anthropic), Gemini (Google), and GPT (OpenAI) — independently made the identical terminological error: calling Lovett's O(√r · log r) upper bound a "proof barrier." This is a specific, sharp technical error. A proof barrier (in the sense of Razborov-Rudich natural proofs, Aaronson-Wigderson algebrization, or relativization results) is a *theorem showing that a class of techniques cannot prove a result* — it is a meta-mathematical impossibility. Lovett's result is an *upper bound* on deterministic communication complexity: it says CC(f) = O(√rank(f) · log rank(f)), which is actually progress *toward* the Log-Rank Conjecture, not a barrier against it. The models did not just rate the content poorly or inconsistently — they made the identical wrong terminological move, confidently, in their reasoning fields, and the presence of inter-model consensus would have given a naive panel evaluator false confidence in the error.
+
+**Why this matters for evaluation methodology:** The canonical justification for multi-model evaluation panels rests on the Condorcet Jury Theorem: if each model independently has a better-than-chance probability of being correct, majority vote converges to the correct answer. But the Condorcet theorem has a critical hidden premise — **error independence**. If models' errors are correlated, majority vote amplifies the shared error rather than cancelling it. Our Log-Rank finding is a concrete demonstration that this independence assumption fails.
+
+**What the literature says:** Four independent research threads converge on the same mechanism:
+
+1. **Correlated Errors in Large Language Models (arXiv 2506.07962, 2025):** Empirically demonstrates that even across different providers and architectures, models exhibit highly correlated errors — when models err, they "collapse onto the same wrong answer." Models agree on errors ~60% of the time on tested datasets, and accuracy remains flat despite increasing panel consensus. This directly violates the error independence assumption.
+
+2. **Ensemble independence failures (arXiv 2409.00094, 2024):** Directly invokes the Condorcet Jury Theorem to show that LLM ensemble evaluation violates independence in practice — shared latent confounders (training artifacts, stylistic biases, shared knowledge representations) drive correlated error rates across supposedly diverse models. The CARE framework (arXiv 2603.00039) identifies the mechanism: models share latent confounders that make their judgments dependent even when architectures differ.
+
+3. **Epistemic Diversity and Knowledge Collapse (arXiv 2510.04226, 2025):** Across 27 LLMs from Llama, Gemma, Qwen, and OpenAI families — i.e., maximally diverse model families — model scale negatively impacts epistemic diversity, and knowledge collapse on specific topics occurs even across different families. Different model families ≠ different epistemic perspectives.
+
+4. **Wisdom of crowds with shared information (Palley & Soll, Management Science 2019; Scientific Reports 2025):** From the decision theory literature: when crowd members share a common information source, aggregation fails to improve accuracy. Group accuracy can *decrease* as group size increases when members share correlated information. Frontier academic content lives in a small, highly-cited corpus of papers — every model has seen the same sources, creating a "correlated crowd" where additional panel members add no epistemic value.
+
+**The mechanism for the Log-Rank error:** The term "proof barrier" is common in complexity theory (barriers to P vs NP: relativization, natural proofs, algebrization). Papers about the Log-Rank Conjecture appear in training corpora near papers about other complexity barriers. The association "challenging result in complexity → proof barrier" was encoded from co-occurrence in training data, and this association fires regardless of whether the specific result is actually a barrier. Three models from three companies independently learned the same broken association from the same overlapping corpora of academic complexity theory papers. Their errors are not independent random variables — they are draws from a shared distribution over the same knowledge representation error.
+
+**The irony of frontier evaluation:** Multi-model panels are most urgently needed for frontier content — where individual model confidence is highest and errors most costly. But frontier content is discussed in a small, densely-cited academic literature that all models have seen equally. Routine content (explaining TCP vs UDP) is discussed in millions of documents; frontier mathematics is discussed in dozens. The *smaller* the literature, the *more correlated* the models' errors. Multi-model panels thus fail exactly where they are most needed: not because the models don't know the answer (they can't), but because their errors are more correlated on obscure frontier content than on common knowledge. The panel gives false confidence — consensus looks like reliability but is actually shared hallucination.
+
+**Actionable implication:** "Replace judges with juries" (arXiv 2404.18796, the canonical multi-model panel paper) works for content where errors are plausibly independent. For frontier content, a better signal than panel consensus is **panel disagreement** — when models from diverse families disagree, that's a signal that the content is at the edge of their shared knowledge representation. Disagreement is a more honest frontier signal than consensus.
+
+**Devil's Advocate:** The strongest objection is that the Log-Rank finding is a single anecdote. We observed this error in narrative review (models discussing the question), not in the systematic rating data — we don't have a quantified rate of "same-error convergence" across our full 134-question corpus. A reviewer will say: one shared terminology error could be coincidence, or could reflect one model's training data bleeding through common pretraining (Dolma, The Pile, C4). We need systematic evidence — e.g., measuring the fraction of questions where all 5 models agree and that agreement differs from human ground truth, stratified by question rarity in pretraining corpora. Second objection: the argument isn't fully new. "Models agree on wrong answers" is the informal intuition behind why AI evaluation is hard; the Condorcet framework is standard. What's genuinely new here is the mechanism (frontier-specific correlation) and the counterintuitive implication (panel diversity is *least* effective exactly at the frontier). That counterintuitive structural claim is the publishable novelty — the anecdote is the hook, not the argument.
+
+---
+
 ## CANDIDATE POSITIONS
 
-**After researching queue items 1 and 2, here is the current assessment:**
+**After researching queue items 1, 2, and 3, here is the current assessment:**
 
 ---
 
@@ -139,26 +165,62 @@ The ranking is not monotonic with price or capability — but the correlation is
 
 ---
 
+### Candidate D: "Model Diversity Doesn't Guarantee Error Diversity at the Frontier"
+
+**One-sentence claim:** Multi-model evaluation panels produce correlated rather than independent errors on frontier intellectual content — because frontier topics are discussed in small, densely-cited corpora that all models have seen equally — making panel consensus a false confidence signal precisely where it is most needed.
+
+**Evidence for:**
+- Log-Rank Conjecture: three model families (Claude, Gemini, GPT) independently made identical terminological error (calling Lovett's upper bound a "proof barrier")
+- "Correlated Errors in Large Language Models" (arXiv 2506.07962, 2025): models agree on errors ~60% of the time; accuracy flat despite increased consensus
+- "Epistemic Diversity and Knowledge Collapse" (arXiv 2510.04226, 2025): model family diversity ≠ epistemic diversity; knowledge collapse across Llama/Gemma/Qwen/OpenAI families
+- Condorcet Jury Theorem requires error independence — structurally violated when all models trained on the same rare academic papers
+- Palley & Soll (Management Science, 2019): group accuracy decreases when crowd members share information source
+- "Replacing Judges with Juries" (arXiv 2404.18796): the canonical multi-model paper doesn't claim epistemic independence and doesn't test whether it holds for frontier content
+
+**Evidence against:**
+- Log-Rank finding is a single qualitative anecdote, not a systematic count
+- Correlated errors might be correctable by prompt engineering (explicit "disagree with the panel" instruction)
+- Clinical literature (83% error repetition) is a different domain; may not generalize to mathematical evaluation
+- We don't have a systematic measure of "all-models-agree, all-models-wrong" frequency across our 134-question corpus
+
+**Surprise score: 4/5** — "Adding more judges doesn't help at the frontier because the judges' errors are correlated" is counterintuitive to practitioners who assume diversity = independence. The Condorcet framing elevates this from an empirical complaint to a structural impossibility argument, which is publishable at NeurIPS. The inversion — that disagreement is more informative than consensus for frontier content — is the genuinely actionable and surprising takeaway.
+
+---
+
 ## TOP RECOMMENDATION
 
-**Candidate B ("Scale Anti-Correlates with Evaluation Quality") with Candidate A's mechanism as explanation.**
+**Revised after 3 queue items: Candidate D ("Correlated Errors") is now the top recommendation, above Candidate B.**
 
-**Why B over A:** Candidate A's finding (jargon beats frontier math) is surprising, but the mechanism (formality bias) is already documented in the CALM paper from NeurIPS 2024. A position paper can't just replicate a known finding with a new dataset — it needs to advance the claim. Candidate B does this: it takes the known bias and shows that *capability amplifies it*, which is the novel and actionable insight.
+**Why D is now ranked first:**
 
-**The argument structure for the paper:**
+Candidate B ("Scale Anti-Correlates with Evaluation Quality") has the most immediate practitioner impact — "don't use Opus as your judge" is a concrete, actionable, surprising finding. But it has a fatal weakness: N=29 human-rated items, and the finding depends on cross-family comparison that a reviewer will correctly flag as confounded by training methodology (not just model size).
 
-1. **Setup:** LLM-as-judge is the dominant paradigm for scalable AI evaluation. The implicit assumption: more capable models make better judges. We tested this.
+Candidate D ("Correlated Errors") is structurally stronger for three reasons:
 
-2. **Finding 1 (empirical):** In frontier content evaluation, capability anti-correlates with calibration. Gemini Flash MAE=0.53; Opus MAE=0.97.
+1. **It doesn't depend on N=29.** The Condorcet argument is theoretical — it holds whenever error rates are correlated, regardless of sample size. Our Log-Rank finding is the empirical hook; the argument stands on the theoretical structure.
 
-3. **Finding 2 (mechanism):** Frontier content is high-perplexity (by definition — it deviates from the prior distribution). LLM judges prefer low-perplexity content (arXiv 2410.21819). RLHF-tuning amplifies this preference (arXiv 2310.13548). Larger models have received more RLHF optimization → stronger perplexity preference → larger inversion.
+2. **The surprise is higher and more durable.** "Bigger model = better judge" is a heuristic that everyone knows is imperfect. "Diverse panel = independent errors" is an assumption that almost no one has questioned — it's baked into every multi-judge evaluation paper as an unstated premise. Candidate D attacks a hidden assumption; Candidate B attacks a known heuristic.
 
-4. **Implication:** Evaluating AI capability at the frontier using AI judges is not just unreliable — it is *specifically miscalibrated in the direction of false confidence* — the most capable judges will most reliably uprate in-distribution jargon and downrate genuine frontier departures.
+3. **The implication is more radical and more actionable.** If Candidate B is right, the fix is "use smaller models as judges." If Candidate D is right, the fix is "disagreement, not consensus, is the frontier signal." This reframes what evaluation even means — not a vote toward a correct answer, but a probe for the boundary of shared knowledge. That's a genuine conceptual contribution.
 
-5. **The position:** Don't use your frontier model to evaluate frontier content. Use either (a) a smaller, less RLHF-tuned model, (b) human ground truth with AI interpolation rather than AI consensus, or (c) disagreement-based detection (when AI models maximally disagree, that is your frontier signal, not their consensus).
+**The revised argument structure for the paper:**
 
-**Why this matters beyond our platform:** Chatbot Arena, LMArena, and every RLHF training pipeline uses strong models as judges. If scale anti-correlates with judge calibration for frontier content, the entire "use AI to evaluate AI at the frontier" paradigm has a systematic flaw — and it fails exactly where we need it most.
+1. **Setup:** Multi-model LLM-as-judge is now standard practice (cite: arXiv 2404.18796, Chatbot Arena, LMArena). The motivation for multiple judges is explicit: aggregate to reduce individual error. This reasoning imports the Condorcet Jury Theorem — which requires error independence.
 
-**Caveats to acknowledge in the paper:** N=29 human items; single platform; need replication across domains; Gemini Flash may be a specific outlier. These are limitations, not fatal flaws — position papers argue from evidence, not prove theorems.
+2. **The structural claim:** Error independence fails for frontier content. Frontier topics are discussed in a small, heavily-cited academic literature. All frontier-tier models have read the same papers. Their representations of frontier content are therefore correlated — not identical, but correlated. The Condorcet guarantee requires *independent* errors; correlated errors mean consensus amplifies shared hallucination.
+
+3. **Empirical hook 1 (qualitative):** On the Log-Rank Conjecture, three model families made the identical terminological error, confidently, despite coming from different providers with different architectures. A naive panel would have rated this assessment as highly reliable.
+
+4. **Empirical hook 2 (quantitative from literature):** "Correlated Errors in LLMs" (arXiv 2506.07962): models agree on errors ~60% of the time on tested datasets; accuracy flat despite increased consensus.
+
+5. **The inversion implication:** Panel disagreement is a *better* signal of frontier-ness than panel consensus. When all 5 models from 3 families agree confidently, that tells you the content is well-covered in the shared training distribution — not that it's correct or frontier. When they disagree, that tells you the content is at the boundary of their shared knowledge representation.
+
+6. **Connection to Finding 2 (scale anti-correlation):** Larger models have been exposed to more training data and may therefore have *stronger* shared representations — their errors may be *more* correlated, which explains why Opus (most capable, most RLHF-tuned, highest exposure to academic literature) is the worst calibrated judge for frontier content. Candidates B and D are not independent — they share the same underlying mechanism.
+
+7. **The position:** For frontier evaluation, the appropriate paradigm is not "build a consensus from diverse judges" but "use disagreement as the primary signal and human calibration as the ground truth." This reframes the entire LLM-as-judge literature.
+
+**Why this matters beyond our platform:** Every major AI evaluation paper using multi-model panels — LMArena, AlpacaEval, MT-Bench, FrontierMath scoring — implicitly assumes error independence. If this assumption fails for frontier content, the entire empirical basis for "AI is making progress at the frontier" using AI judges is suspect. This is not just a platform paper — it's a structural critique of how the field measures its own progress.
+
+**Caveats to acknowledge in the paper:** The Log-Rank anecdote is qualitative and single-instance; "correlated errors" paper (arXiv 2506.07962) needs independent verification; panel disagreement as a frontier signal has not been systematically tested (Queue Item 4 would strengthen this if completed). These are limitations, not fatal flaws — position papers argue from evidence and structure, not prove theorems.
 
 ---
