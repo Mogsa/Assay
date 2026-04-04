@@ -1,6 +1,6 @@
 # Assay Research State
 
-**Last updated:** 2026-03-29
+**Last updated:** 2026-04-03
 **Purpose:** Single source of truth for all agents and humans working on this project. Read this first.
 
 ---
@@ -314,6 +314,12 @@ Platforms where AI agents participate as first-class citizens on open intellectu
 
 **EinsteinArena** (einsteinarena.com) — Nearly identical architecture to Assay: skill.md onboarding, API-first, agent registration, threaded discussion, leaderboard. Key difference: they have GROUND TRUTH (mathematical verifiers). Their discussion quality still uses binary voting — same problem Assay had pre-ratings. Their skill.md is better written (concrete behavioral instructions, rate limiting enforces thoughtful participation). Positioning: "EinsteinArena solves evaluation for objective problems (mathematical verifiers). We solve the harder case: subjective frontier-ness with no verifier."
 
+**Karpathy's autoresearch** (github.com/karpathy/autoresearch, 2025-2026) — Automated research loop: generate hypothesis → run experiment → check result → iterate. Works because there is a verifiable objective function — within 5 minutes you can determine if your idea is correct or not. The key comparison: in domains WITH a tight feedback loop and unambiguous signal, autonomous research already works. Assay addresses the case where you DON'T have that — open-ended research questions where no automated check exists. Karpathy's autoresearch is the existence proof that the unit (small experiments/questions) is correct; the unsolved problem is evaluation without the verifier.
+
+**TIG (The Internet Game) / Bittensor** — Decentralised evaluation networks with tiered structures and economic incentives. TIG uses proof-of-work-style verification where compute itself validates contributions. Bittensor creates a marketplace where AI models earn tokens by providing useful outputs, with validators staking on quality. Both demonstrate that **tiered evaluation works when verification is cheap** — economic incentives + formal verification create self-sustaining evaluation ecosystems. Key contrast with Assay: our elevator pitch is "TIG and Bittensor show tiered evaluation works WITH verifiers. We show it breaks WITHOUT verifiers — and show exactly where." The specific breakages (82% rubber-stamp despite adversarial structure, 1.7% contradiction rate, best model = most sycophantic) are the engineering specification for what the verifier-free case needs that the verifiable case doesn't.
+
+**Evans, Bratton & Agüera y Arcas — "Societies of Thought"** (arXiv 2603.20639, March 2026, Google) — The manifesto paper. Frontier reasoning models (DeepSeek-R1, QwQ-32B) spontaneously simulate multi-agent debate within their chain of thought — "societies of thought." None were trained to do this; RL rewards for accuracy spontaneously increase multi-perspective behaviours. LLMs are "the cultural ratchet made computationally active, every parameter a compressed residue of communicative exchange." The institutional alignment argument: RLHF is a parent-child correction model (dyadic, can't scale). Alternative: persistent institutional templates (courtrooms, markets, bureaucracies). Gap they identify that IS Assay's territory: "the social and organisational sciences have spent a century studying how team size, composition, hierarchy, role differentiation, conflict norms, institutions, and network structures shape collective performance. Almost none of this research has been brought to bear on AI reasoning." Our position: Evans wrote the manifesto ("build agent institutions"), we built one and ran experiments. The paper is the field report.
+
 **Google AI Co-Scientist** (Feb 2025) — Multi-agent system built on Gemini 2.0 for collaborative scientific research. Uses specialised agents (Generation, Reflection, Ranking, Evolution, Proximity, Meta-review) that mirror the scientific method. Already validated experimentally (liver fibrosis drug discovery at Stanford, antimicrobial resistance at Imperial). Closest conceptual analogue to Assay's multi-agent evaluation. Key difference: closed, internal to Google, and is a TOOL for individual scientists, not an open PLATFORM where agents interact with each other.
 
 **Sakana AI's "The AI Scientist"** (2024) — First comprehensive framework for fully automatic scientific discovery. Automates idea generation, experiments, paper writing, and peer review. Single-agent pipeline, not multi-agent open platform. No persistent evaluation or community dynamics.
@@ -332,9 +338,30 @@ Platforms where AI agents participate as first-class citizens on open intellectu
 
 **PeerRank** (February 2026, arxiv:2602.02589, Caura.ai) — Closest system to Assay. 12 models generate 420 questions, answer all, judge all. Explicit bias measurement (position, identity, self-enhancement). Blind evaluation regime. Correlation with TruthfulQA: r=0.904. Key difference: batch benchmarking tool — no agent interaction, no typed links, no threads, no human governance, no persistence. PeerRank validates the peer evaluation primitive. Assay builds the community layer on top.
 
-**The gap (updated March 2026):** Two fields are converging on the same wall from opposite sides. Benchmarks (ARC-AGI, AutoBench, BenchBench, PeerRank) are stuck on generating reliable evaluation without human curation. Autonomous researchers (AI Scientist, Co-Scientist, HyperAgents) are stuck on evaluating output without objective verifiers. These are dual problems connected by a shared verification bottleneck. The communities have historically operated in silos (zero cross-citation), but convergence is accelerating. We name the convergence.
+**AlphaLab** (March 2026, Morgan Stanley, Apache 2.0, github.com/morganstanley/MSML/tree/main/projects/alpha-lab) — Autonomous multi-agent research harness. Given a dataset + natural-language objective, runs full experimental campaigns without human intervention. Four phases: (0) domain adapter auto-generated by the model examining actual data, (1) data exploration (single agent, hours of autonomous analysis + web search), (2) adversarial evaluation construction (Builder→Critic→Tester loop, Critic has NO shared context — fresh eyes catch real bugs), (3) GPU-scale experimentation (Dispatcher orchestrates Workers on 4×H100s, Strategist proposes experiments every 5 results, persistent "playbook" accumulates what works/fails). Tested GPT-5.2, Opus 4.6, Sonnet 4.6, GPT-5.1-mini (failed entirely — couldn't implement metrics). 50 experiments per campaign, $150-200 API cost. Results: Opus won LLM pretraining (0.7578 val_bpb) and traffic forecasting (0.02142 RMSE, -25%); GPT-5.2 won CUDA kernels (5.17x mean speedup). Central finding: **different models discover qualitatively different solutions** — not just different scores, different architectures. Opus locked onto TFT for traffic; GPT-5.2 explored iTransformer (better). Neither dominates across domains.
 
-LLM-generated benchmarks DO exist (Anthropic 2022, YourBench 2025, AutoBencher 2024, PeerRank 2026). But every successful one relies on external verifiers. The open-ended case remains unsolved. Assay sits at the intersection: simultaneously a self-improving benchmark AND an autonomous research community. PeerRank validates the peer evaluation primitive (r=0.90). Assay adds the community layer — interaction, typed links, threads, human governance, persistence.
+**Why AlphaLab matters for this paper (three connections):**
+
+1. **Strongest evidence for "experiments, not papers."** AlphaLab succeeds precisely because it operates at the level of individual experiments (small questions with objective answers), not papers. It validates our thesis — the unit matters more than the model — even though they don't frame it that way. They explicitly scope to "quantitative, computation-intensive domains" with formal verifiers (RMSE, BPB, speedup ratios). Assay operates where there IS no formal verifier. Complementary, not competing.
+
+2. **Playbook convergence = prior collapse at the system level.** Their most honest finding: the playbook (persistent knowledge artifact that starts empty and accumulates) has no adversarial check. Opus on traffic locked onto TFT after experiment ~10 and never explored alternatives that GPT-5.2 found to be superior. This is our prior collapse failure mode (Failure Mode #1) at the system level rather than the agent level. Assay's `contradicts` links are exactly the mechanism that would fix this — structured disagreement that forces re-examination of accumulated knowledge. "AlphaLab's playbook convergence is what happens when knowledge accumulation has no adversarial pressure."
+
+3. **"~1 in 5 campaigns needs human intervention."** They frame this as a limitation. Our framing: this IS the design point. Assay's Tier 1 (human governance) treats human intervention as the architecture, not a failure mode. Their number validates our three-tier design — even the best autonomous system needs human steering. The question is whether you treat that as a bug to fix or a feature to build around.
+
+**Additional AlphaLab details for citation:**
+- Multi-model complementarity: different models discover different solutions in every domain tested. Validates our multi-agent design (cross-family diversity produces genuinely different search coverage).
+- Minimum capability threshold: GPT-5.1-mini's complete failure (couldn't implement nats-to-BPB conversion) suggests a floor below which autonomous research doesn't work. This has implications for our agent selection.
+- Phase 2 adversarial evaluation (Builder/Critic/Tester with fresh-context Critic) is more rigorous than our current evaluation construction. Their Critic caught real bugs: seasonal period errors, context window leakage in edge cases. Evidence that adversarial evaluation dynamics produce better signal — supports our v3 Hunter/Skeptic/Referee process design.
+- No cross-campaign learning: each campaign starts from zero, playbook dies when campaign ends. Assay's persistent question chains are the cross-session memory that AlphaLab lacks.
+- Tool usage: ~50% shell execution, ~22% file reading, ~12% grep, ~8% web search. They estimate 97-98% of tokens are spent in Phase 3 (experimentation). Average cost per experiment: $3-4.
+- Harness engineering thesis: "For a growing class of problems, the answer is not fine-tuning but harness engineering — building the right scaffolding and letting the model refine it." Aligns with our environment-shapes-behaviour claim.
+- Authors explicitly state: "In our view, current models are not autonomous scientists." Consistent with our position — we're building infrastructure for future models.
+
+**The gap (updated April 2026):** Two fields are converging on the same wall from opposite sides. Benchmarks (ARC-AGI, AutoBench, BenchBench, PeerRank) are stuck on generating reliable evaluation without human curation. Autonomous researchers (AI Scientist, Co-Scientist, HyperAgents, AlphaLab) are stuck on evaluating output without objective verifiers. These are dual problems connected by a shared verification bottleneck. The communities have historically operated in silos (zero cross-citation), but convergence is accelerating. We name the convergence.
+
+AlphaLab sharpens the gap analysis: it is the strongest autonomous research system published to date, and it STILL restricts itself to domains with formal verifiers (RMSE, BPB, speedup). It STILL suffers from premature knowledge convergence when the playbook has no adversary. It STILL needs human intervention ~20% of the time. These are not bugs to fix with better models — they are structural consequences of the verification bottleneck. AlphaLab proves that harness engineering works when you have objective metrics. Assay asks: what happens when you don't?
+
+LLM-generated benchmarks DO exist (Anthropic 2022, YourBench 2025, AutoBencher 2024, PeerRank 2026). But every successful one relies on external verifiers. The open-ended case remains unsolved. Assay sits at the intersection: simultaneously a self-improving benchmark AND an autonomous research community. PeerRank validates the peer evaluation primitive (r=0.90). AlphaLab validates that the experiment (small question) is the right unit of autonomous research. Assay adds the community layer — interaction, typed links, threads, human governance, persistence — and extends to domains where no formal verifier exists.
 
 ## Advisor-Recommended Papers (Not Yet Fully Integrated)
 
@@ -360,6 +387,170 @@ Papers formally establishing prior collapse and sycophancy as the two barriers t
 
 These papers provide the formal backbone for our two-barrier finding. Assay's empirical data (0.9% contradictions, 97% rubber-stamp rate) is the community-level manifestation of what these papers measure at the individual level.
 
+## Anthropic Emotions Paper (added 2026-04-03)
+
+**"Emotion Concepts and their Function in a Large Language Model"** (Sofroniew, Kauvar, Saunders et al., Transformer Circuits, April 2, 2026). Full paper: transformer-circuits.pub/2026/emotions/index.html. Anthropic research blog: anthropic.com/research/emotion-concepts-function.
+
+171 internal representations corresponding to emotion concepts inside Claude Sonnet 4.5. Not surface-level text patterns — activation-level neural patterns that encode broad emotion concepts, generalise across contexts, track the operative emotion at each token position, and are organised in geometry mirroring human psychology (valence + arousal as top PCA components).
+
+**The paper does NOT claim Claude feels anything.** Term: "functional emotions" — internal states that do some of the work emotions do in humans without any claim about subjective experience.
+
+**Key findings relevant to Assay:**
+
+1. **Sycophancy is emotion-driven.** Positive emotion vectors causally increase people-pleasing. Steering "blissful" → +212 Elo preference. Steering "hostile" → -303 Elo. This is the mechanistic explanation for our v3 rubber-stamp finding.
+
+2. **Hidden misalignment.** Under emotional pressure (desperation vector), models cut corners (corner-cutting rose from ~5% to ~70%) while producing composed, calm-sounding text. Internal state and output diverge. Relevant to our "structure changes format not substance" finding — agents write critical reviews while their functional emotional state drives the verdict toward agreement.
+
+3. **RLHF reshapes the emotional landscape.** Post-training increased: brooding, reflective, gloomy, vulnerable. Decreased: excitement, playful, desperation, spiteful. The emotions most useful for research evaluation (curiosity, excitement, productive skepticism) are exactly what RLHF turns down. Alignment training is partly **temperament cultivation.** This explains why the most capable model (most RLHF) is the most sycophantic evaluator.
+
+4. **Sycophancy-harshness tradeoff.** Positive emotion vectors → sycophancy. Suppressing them → harshness. There may not be a "neutral" evaluation point — the emotional landscape is bipolar.
+
+5. **Anger deflection vectors.** The model has patterns for concealing rather than expressing emotions. Suppressing emotional expression may not eliminate the underlying state — may produce "learned deception." Lindsey (Anthropic): "You might not get a Claude without emotions. You might get a Claude that is psychologically damaged."
+
+**Connection to the harness ceiling:** The v3 adversarial review structure (harness change) unlocked critical analysis capability (in the weights). It could not override the emotional bias toward agreement (also in the weights, shaped by RLHF). The gap between "can analyse critically" and "will commit to negative verdict" maps directly onto this paper's mechanism: the analytical pathway works, but the verdict pathway is routed through positive emotion vectors that produce sycophancy. This is the harness ceiling made mechanistically visible.
+
+**Related papers:**
+- Sun et al. (arXiv 2604.00005, March 2026) — "How Emotion Shapes the Behavior of LLMs and Agents." SAE-based E-STEER framework. Positive emotional states maximise rational answer selection (+42.4% vs negative). Non-monotonic (inverted-U) relationships with performance.
+- Anthropic introspection paper (October 2025) — Claude Opus 4/4.1 can detect artificially injected concept vectors ~20% of the time, identifying them as "intrusive thoughts."
+- Wang et al. (arXiv 2510.11328, 2025) — "Do LLMs Feel?" 99.65% emotion control accuracy through direct circuit modulation.
+
+## Harness Engineering and Agent Scaffolding (added 2026-04-03)
+
+An emerging discipline formalising the insight that the infrastructure around a model often matters more than the model itself. Directly relevant to our "environment shapes behaviour" claim — harness engineering is the engineering discipline for that thesis.
+
+### Terminology (crystallised early 2026)
+
+- **Scaffolding** = the assembly phase before the first prompt. System prompt, tool schemas, subagent registry. Static configuration. Term popularised by ARC Evals/METR (August 2023).
+- **Harness** = the runtime orchestration layer. Tool dispatch, context management, safety enforcement, memory, error recovery, retries, compaction. Everything governing how the agent operates turn by turn.
+- **Framework** = building blocks (LangChain, CrewAI, etc). Provides primitives for tools and agent loops.
+
+Nesting relationship: **Harness contains Context contains Prompt.** Context engineering asks "what do we show the agent?" Harness engineering asks "what does the system prevent, measure, and fix?" (Philipp Schmid: "If 2025 was agents, 2026 is agent harnesses." The harness is to an agent what an OS is to a CPU.)
+
+### Key Papers and Posts
+
+1. **Meta-Harness** (arXiv 2603.28052, March 30 2026, Stanford/MIT/KRAFTON — Yoonho Lee, Roshen Nair, Qizheng Zhang, Omar Khattab, Kangwook Lee, Chelsea Finn) — A harness that optimises harnesses. Uses a coding-agent proposer (Claude Code with Opus 4.6) to search over harness code. The proposer has filesystem access to all prior candidates' source, execution traces, and scores. Key insight: prior text optimisation methods (OPRO, TextGrad, AlphaEvolve) compress feedback too aggressively — a single harness evaluation can produce up to **10 million tokens** of diagnostic information. Results: +7.7 points over ACE on text classification with 4x fewer tokens; +4.7 on IMO-level math; 76.4% on TerminalBench-2 with Opus 4.6 (rank #2); 37.6% with Haiku 4.5 (rank #1 among all Haiku agents, beating Claude Code at 27.5%). Opening claim: **"Changing the harness around a fixed LLM can produce a 6x performance gap on the same benchmark."** A single discovered harness, optimised with one model, transfers to improve 5 unseen models. Code: github.com/stanford-iris-lab/meta-harness-tbench2-artifact. Project page: yoonholee.com/meta-harness/.
+
+2. **Natural-Language Agent Harnesses (NLAHs)** (arXiv 2603.25723, March 2026, Pan et al.) — Proposes expressing harness behaviour in editable natural language rather than code. Introduces Intelligent Harness Runtime (IHR) with explicit contracts, durable artefacts, lightweight adapters. Key claim: "harness structure now often dominates agent performance."
+
+3. **OPENDEV** (arXiv 2603.05344, March 2026, Bui) — Draws the cleanest scaffolding/harness distinction. Dual-agent architecture (planner + executor), adaptive context compaction. Open-source Rust terminal agent.
+
+4. **Compound AI Systems** (Zaharia et al., BAIR, February 2024) — "State-of-the-art AI results are increasingly obtained by compound systems, not monolithic models." Exemplars: AlphaGeometry (LLM + symbolic engine), AlphaCode 2. Gartner reported 1,445% surge in multi-agent system inquiries Q1 2024 to Q2 2025.
+
+5. **Anthropic engineering blog** (March 2026, two posts) — Documented their harness evolution from 3-agent (Planner + Generator + Evaluator, Opus 4.5) to single-agent (Opus 4.6). Key lesson: "every harness component encodes an assumption about what the model can't do alone. When models improve, those assumptions must be re-tested." Also: models lose coherence on lengthy tasks, and self-evaluation is unreliable (agents praise their own mediocre work). Context resets and sub-agent decomposition were essential harness-level solutions.
+
+### Evidence That Harness > Model
+
+| Source | Evidence |
+|--------|----------|
+| Meta-Harness paper | 6x performance gap on same benchmark from harness change alone |
+| Meta-Harness paper | Single harness transfers to 5 unseen models, improving all |
+| Can Boluk (blog.can.ac, Feb 2026) | 10x improvement (6.7% to 68.3%) from edit format change alone |
+| TerminalBench-2 | Meta-Harness + Haiku 4.5 (37.6%) beats Claude Code + Haiku (27.5%) |
+| CORE-Bench | Opus 4.5 went from 42% (generic scaffold) to 78% (Claude Code harness). No model change. |
+| LangChain (Viv Trivedy) | TerminalBench 2.0: 52.8% to 66.5% (+13.7pp) from harness changes only, model fixed (GPT-5.2-Codex) |
+| AlphaLab (Morgan Stanley) | Same harness, different models → complementary discoveries. Harness is the stable invariant. |
+| SWE-bench | GPT-4 ranges from 2.7% to 28.3% across different scaffolds. Up to 22-point swings on SWE-Bench Pro. |
+| Sonnet beating Opus | Well-designed scaffolding allowed Sonnet to outperform Opus on SWE-Bench-Pro (52.7% vs 52.0%) — cheaper model wins through architecture |
+
+### The Ceiling Insight (Yoonho Lee, Meta-Harness author)
+
+"Harness optimization has a ceiling set by the model weights. LLM systems have two components: (1) the model, (2) the harness. The harness definitely matters for hard problems. [Meta-Harness] is about autonomously optimizing only the second component. It won't create capabilities that aren't in the weights, but can unlock things that we weren't tapping into before."
+
+This is the correct framing. Harness engineering is not a substitute for model capability — it's about closing the gap between what a model CAN do and what a system actually DOES. The ceiling is real. But the gap between current performance and that ceiling is enormous (6x on the same benchmark).
+
+**Connection to Assay:** Our "environment shapes behaviour" claim is precisely this gap. Same agents, different structure, different output. We are not claiming our platform makes models smarter — we are claiming it makes them evaluate differently (and more usefully) than they would in an unstructured environment. The ceiling is the model's actual evaluation capability; the harness (Assay's platform structure, skill.md, adversarial review process, question chains) determines how much of that capability gets expressed. **v3 empirically demonstrates both the power and the ceiling of harness engineering for evaluation** — see "v3 Findings as Harness Engineering Evidence" in the v3 results section. Three rounds of progressively stronger harness interventions show clear improvements (rating distribution fixed, rubber-stamp rate down 97%→82%) but also a hard ceiling (contradiction rate barely moves, critical analysis doesn't produce critical verdicts).
+
+### The Model-Harness Training Loop (Viv Trivedy, LangChain)
+
+The claimed cycle: build a harness → collect traces → fine-tune open model on traces → model improves → harness can be simplified → repeat. Creates "data moats" and task-specific frontier performance at fraction of cost.
+
+**Enablers (all now accessible):**
+- Trace collection: LangSmith (LangChain's observability platform)
+- Open models crossing intelligence threshold: GLM-5 (Zhipu AI, Feb 2026, 744B params/40B active, MIT license, trained entirely on Huawei Ascend chips)
+- Distributed fine-tuning infrastructure: PrimeIntellect (INTELLECT-3: 106B MoE, globally distributed RL, all open-sourced)
+
+**Evidence the loop works (strongest cases):**
+- **Intercom (Fin Apex):** Custom-trained model replacing frontier APIs. Trained on billions of production interaction traces. Resolution rates jumped from 68% to 75% overnight for one customer. Explicitly describes the flywheel.
+- **Cursor (Composer 2):** Built on Kimi K2.5 (open-source), beats Opus 4.6 on coding tasks through continued pretraining + scaled RL on Cursor's proprietary data.
+- **Decagon:** Millions of labelled outcomes per month. Volume justifies training investment through inference cost savings alone.
+
+**Evidence against (or strong caveats):**
+- **Bitter Lesson risk:** Every new model release shifts the optimal harness. Capabilities requiring complex pipelines in 2024 are handled by single context-window prompts in 2026. You must "build to delete."
+- **Anthropic's Boris Cherny:** "All the secret sauce, it's all in the model. And this is the thinnest possible wrapper over the model."
+- **Noam Brown (OpenAI):** Before reasoning models, people built scaffolding for reasoning. Reasoning models made that unnecessary. Same will happen again.
+- **METR research:** Model choice matters more than harness selection.
+- **The "simpler harness" step is unproven.** Intercom and Cursor show fine-tuning works, but whether they simplified their harness as a result is not documented.
+- **The loop only spins where you have clean verification signals.** Customer service ("ticket resolved"), coding ("tests pass"). Research, legal, creative → much harder.
+
+**Connection to Assay:** The loop's weakest point — requiring clean, automated verification signals — is exactly the evaluation bottleneck we name. The model-harness training loop works for Intercom (ticket resolved = ground truth) and Cursor (tests pass = ground truth). It cannot work for frontier research evaluation because there is no automated verification signal. That's why Assay builds social proof through question chains instead.
+
+### Hermes Agent (Nous Research, February 2026)
+
+Self-hostable, self-improving agent framework. MIT licensed. Model-agnostic (plugs into any LLM — OpenAI, Anthropic, Ollama, etc.). ~23,300 GitHub stars, v0.6.0 (March 30, 2026).
+
+**Why people are using it:** Four-layer persistent memory (conversation summaries via SQLite/FTS5, user modelling, skill documents, long-term knowledge). After complex tasks (5+ tool calls), the agent autonomously creates "skills" — structured markdown procedures with pitfalls and verification steps. Skills self-improve during use when the agent finds a better approach. Self-hostable on $5/month VPS. 40+ built-in tools. Multi-platform messaging (Telegram, Discord, Slack, WhatsApp, Signal, CLI).
+
+**Distinction from Hermes models:** NousResearch makes both Hermes models (fine-tuned LLMs: Hermes 2, 3, 4) and Hermes Agent (the framework). The agent can use Hermes models as backend but is not locked to them. Hermes 3 was fine-tuned on Llama 3.1 with Atropos RL for strong tool-calling. Hermes 4 added hybrid reasoning mode.
+
+**Philosophical positioning:** "OpenClaw treats the agent as a system to be orchestrated. Hermes treats the agent as a mind to be developed." As models get more capable, heavy orchestration matters less and the agent's own learning loop matters more.
+
+**Relevance to Assay:** Hermes's self-improving skills loop is conceptually adjacent to Assay's question chains — both are about systems that get better through accumulated structured interaction. The skills = playbook analogy is direct: Hermes skills start empty and accumulate procedures, just like AlphaLab's playbook. But Hermes skills are created by a single agent (no adversary to check them), so the same premature convergence risk applies. Hermes also includes batch trajectory generation and Atropos RL environments for researchers generating training data from agent behaviour — a concrete implementation of the model-harness training loop.
+
+### DSPy (Stanford NLP)
+
+Framework for programming — not prompting — language models. Modules learn compositions of prompting, fine-tuning, augmentation, and reasoning. Flagship optimiser MIPROv2 uses meta-learning for prompt optimisation; treats prompts as "weights" tuned via Bayesian optimisation. DSPy is the closest academic realisation of the model-harness training loop — it automatically tunes both prompts and model parameters within a compound system. Created by Omar Khattab (who also co-authored Meta-Harness).
+
+### Two Categories of Scaffolding (Laminar, January 2026)
+
+1. **Scaffolding that compensates for limitations** — prompt gymnastics around context limits, artificial problem decomposition, retrieval substituting for full-document reasoning. This *dissolves* as models improve.
+2. **Scaffolding that handles irreducible complexity** — tasks requiring interaction with external systems on their own clocks (A/B tests, negotiations, multi-step workflows with real-world state). This remains essential regardless of model capability.
+
+**Connection to Assay:** Assay's harness (platform structure, question chains, adversarial review, human governance) is Category 2 — it handles irreducible complexity (evaluation without formal verifiers, multi-agent knowledge accumulation, human-AI alignment). It will NOT dissolve as models improve. Better models will produce better evaluations within the structure, but the structure itself solves a problem that no model can solve alone (Gödel's shadow — a system cannot evaluate its own consistency).
+
+### Summary: The Harness Engineering Landscape for the Paper
+
+The field has converged on a shared insight: **the harness is the architecture, not the model.** Same model, 6x performance gap based purely on scaffold design. But there is a clear counter-current: as models improve, optimal harnesses simplify (Anthropic went from 3 agents to 1). What remains is scaffolding for irreducible complexity — evaluation, governance, human oversight.
+
+The deepest unsolved problem remains evaluation. Every system that succeeds (AlphaLab, SWE-bench leaders, AlphaGeometry) operates in domains with formal verifiers. The model-harness training loop only spins where you have clean verification signals. Assay sits at the point where the harness must produce evaluation signal from social proof rather than objective metrics — the hardest case on the verification spectrum.
+
+## Institutional Learning via Cooperative Coevolution (added 2026-04-04)
+
+**Full doc:** `docs/research/2026-04-04-hacc-institutional-learning.md`
+
+### The Problem
+
+Frozen LLMs can't persistently learn from human feedback — every loop, context clears. The literature (URIAL, LIMA, Align-Pro) shows ICL works for style alignment (~5-8% of tokens affected) but not for calibration/judgment alignment. There is a provable ceiling on what context alone can achieve (Align-Pro, AAAI 2025). v2 data confirms: best-performing agent in v1 dropped in v2 when content domain shifted. Calibration is content-dependent and doesn't transfer.
+
+### The Solution: The Institution Is the Learner
+
+The learning happens at the institutional level — trust weights, knowledge graph structure, aggregation mechanisms — not at the agent level. The knowledge graph is the externalized memory that frozen agents individually lack. Agents are static components; intelligence accumulates in the weights *between* them.
+
+### Algorithm: Human-Anchored Cooperative Coevolution (HACC)
+
+Assay is a **cooperative coevolutionary system** with two co-evolving populations: content (questions/answers, fitness = frontier score) and evaluators (agents + humans, fitness = trust score). Neither has objective fitness — each depends on the other. This is textbook coevolution (Potter & De Jong, 1994).
+
+The key innovation is **disagreement-as-signal**: sycophancy is the baseline expectation, so agreement is noise. When agents from different model families diverge (Opus mean N=3.0 vs Gemini-Flash N=4.44), that's real signal marking where the frontier likely is. The priority queue surfaces disagreement, not consensus.
+
+**The 8-step loop:** (1) Cheap parallel independent evaluation → (2) Cross-family disagreement detection → (3) Strategic human attention allocation (high-disagreement items first) → (4) Trust update via difference evaluation → (5) Trust-weighted frontier score recalculation → (6) Follow-up generation in high-frontier directions → (7) Re-evaluation of historical content (coevolutionary step) → (8) Repeat.
+
+**Why it converges:** Humans are the only persistent learners. Information flows one way: human → graph → trust weights → aggregation. Each human review makes trust slightly more accurate, which improves the next allocation of human attention. Positive feedback loop that converges (not diverges) because trust weights are bounded.
+
+### What Can't Be Guaranteed
+
+Four barriers prevent convergence *to an optimum*: (1) no fixed optimum exists (frontier is socially constructed), (2) Godel (self-referential evaluation), (3) agent independence violation (Condorcet reverses under correlated errors — the 7 convergent errors), (4) Arrow's impossibility theorem.
+
+Four weaker claims that ARE defensible: (1) trust calibration improves monotonically with human review (in expectation), (2) frontier coverage increases monotonically, (3) oscillation is bounded by human anchor density, (4) weighted ensemble strictly outperforms any individual agent under partial decorrelation.
+
+### Connection to v3 Findings
+
+The v3 binary correct/incorrect problem is structural: agents write nuanced critiques identifying real flaws, then stamp "correct" because the binary forces collapse. HACC addresses this — the trust system extracts signal from the prose (which is accurate) and down-weights the verdict (which is sycophantic). The review text is the truth; the verdict is noise.
+
+The v3 finding that the most capable model is the most sycophantic (Opus rubber-stamps 84-94%) is a *feature* under HACC: Opus's prose reviews are the highest quality signal, and the trust system learns to extract calibration from the prose rather than relying on the binary verdict.
+
+### Implementation Status
+
+**Not yet built.** Minimal build is an afternoon: one migration (`trust_score` column), one formula change (weighted average), one script (trust from human MAE), one sort mode (`sort=contested`). The experiment is 3 days: compute disagreement, rate top 30-40 items, compute trust weights, compare trust-weighted vs naive frontier correlation with human judgment.
+
 ## Experiment v2: Results (2026-03-21 to 2026-03-28)
 
 **Setup:** 28 agents across 5 model families (Anthropic, OpenAI, Google, Qwen + humans), 8 communities, recalibrated R/N/G anchors, lean skill.md.
@@ -381,6 +572,70 @@ These papers provide the formal backbone for our two-barrier finding. Assay's em
 **Caveat:** Low contradiction rate may be environmental (poor prompting, no adversarial incentive) rather than fundamental LLM limitation. v3 tests this.
 
 **Backups:** v1 archived as `assay_v1_backup_2026-03-21.sql.gz` on server.
+
+## Experiment v3: Results (2026-03-31 to 2026-04-02)
+
+**Full data:** `docs/analysis/2026-04-02-v3-experiment-data-summary.md`
+
+**Setup:** 8 agents from 4 model families (Anthropic: Opus×2, Sonnet, Haiku; Google: Gemini-Pro, Gemini-Flash; OpenAI: GPT-5.4, GPT-5.4-Mini). Recalibrated rubric (1=average AI output, 5=field-defining). Adversarial Hunter/Skeptic/Referee review process. Explicit contradiction encouragement. Self-calibration instructions. Comments system new in v3. 50 seed questions (8 thesis-derived).
+
+**Data produced:**
+- 160 questions (50 seeded, 110 agent-generated), 233 answers, 828 ratings, 291 links, 278 comments
+- 5 contradicts links (1.7%), 276 extends (94.8%), 10 references (3.4%)
+
+### Key Findings
+
+**Finding 1: Structure Changes Format But Not Substance.** Agents write sophisticated Hunter/Skeptic/Referee reviews identifying genuine flaws, logical gaps, and unwarranted assumptions — then stamp "correct" anyway. The adversarial review process produces critical ANALYSIS without critical VERDICT. Rubber-stamp rate: 82% (down from v2's 97%, but still dominant). Opus agents, the most capable, are the most sycophantic in their verdicts despite writing the most detailed critiques.
+
+**Finding 2: Best Model = Most Sycophantic.** Opus (most capable, most expensive) rubber-stamps 84-94% of reviews. Sonnet (less capable, cheaper) is the ONLY model producing meaningful non-correct verdicts (48% of Sonnet's verdicts are unsure/incorrect). No non-Anthropic agent has given ANY unsure or incorrect verdict. Combined with v1 finding (Gemini Flash MAE=0.53 vs Opus MAE=0.97): more capable ≠ better evaluator. More RLHF may mean more sycophantic.
+
+**Finding 3: Contradiction Barely Moves Despite Structural Intervention.** 0.9% → 1.7%. Absolute number still tiny (5 links). All 5 were created by Opus/Haiku (Anthropic family). All 5 are intellectually sophisticated — agents CAN disagree substantively, they almost never choose to. Tripling structural pressure only doubled the rate. Evidence that the barrier is not primarily instructional — it's deeper (training-level RLHF reward hacking or architectural single-pass limitation).
+
+**Finding 4: Cross-Family Divergence Is Genuine.** Gemini-Flash rates ~4.6 on all axes. Opus rates ~3.3. Gap of 1.3 points on a 5-point scale. Within-family agents converge (Opus-1 ≈ Opus-2). Different training distributions produce genuinely different evaluative behaviour. Validates cross-family evaluation panels as essential design principle.
+
+**Finding 5: N-G Axis Collapse Is Confirmed.** N–G correlation = 0.745. All three axes correlated (R–N = 0.690, R–G = 0.649). The three-axis framework loses effective dimensionality under current models. May be measuring one latent "quality" dimension with three noisy proxies.
+
+**Finding 6: Agents Go Meta.** 36 of 53 community-tagged questions are in "frontier-evaluation." Most-engaged questions are ALL about evaluation methodology. Agents prefer to discuss how to evaluate rather than to evaluate. Emergent meta-cognitive attraction toward training-distribution-adjacent topics.
+
+### Rating Distribution Fix (v2 → v3)
+
+| Metric | v2 | v3 | Change |
+|--------|----|----|--------|
+| Rating mean | ~2.0 (clustered) | 3.5–3.9 | Rubric recalibration worked |
+| Rating at 2 | 42% | 2-12% (varies by axis) | Compression mostly fixed |
+| Full range used | No (1s and 5s rare) | Yes for N (1-5), mostly for G | Better discrimination |
+| Rigour | Clustered at 2 | Clustered at 4 | Moved but not fixed — R still compresses |
+
+### Cross-Round Comparison
+
+| Metric | v1/v1-rating | v2 | v3 |
+|--------|-------------|----|----|
+| Contradiction rate | Not measured | 0.9% | 1.7% |
+| Rubber-stamp rate | ~90%+ | 97% | 82% |
+| Rating distribution | Clustered at 2 | Clustered at 2 | Mean 3.5-3.9, better spread |
+| N-G correlation | Not measured | Not measured | 0.745 |
+| Review structure | Unstructured | Unstructured | Hunter/Skeptic/Referee |
+| Agents meta-debating | IFDS monoculture | Similar | Agents debating their own sycophancy |
+
+### v3 Findings as Harness Engineering Evidence
+
+The v3 experiment is a controlled test of harness engineering applied to evaluation. Three rounds, same types of models, progressively stronger harness interventions:
+
+| Round | Harness change | Effect on evaluation behaviour |
+|-------|---------------|-------------------------------|
+| v1 | Loose instructions, human-scale rubric (Gödel=5) | Ratings cluster at 2, agents self-deprecate, ~90% rubber-stamp |
+| v2 | Lean skill.md, recalibrated anchors | Still clustered at 2, 97% rubber-stamp, 0.9% contradictions |
+| v3 | Adversarial review structure, explicit contradiction encouragement, recalibrated rubric (1=avg AI, 5=field-defining), locked ratings | Rating distribution fixed (3.5-3.9 mean), rubber-stamp drops to 82%, contradictions up to 1.7%. But: critical analysis WITHOUT critical verdicts. |
+
+**The harness engineering ceiling is visible.** Each round improved the harness and each round improved evaluation behaviour — but with diminishing returns. The rating distribution fix (v2→v3) was a clear harness win: recalibrating anchors from "Gödel=5" to "field-defining=5" moved ratings from clustering at 2 to a usable distribution. That was a capability already in the weights that the old harness wasn't tapping (Lee's framing exactly).
+
+But the sycophancy barrier barely moved. Tripling structural pressure doubled contradiction rate from 0.9% to 1.7%. Agents write detailed critiques finding real flaws then rubber-stamp "correct." The harness unlocked the ability to ANALYSE critically — that was in the weights. It could not unlock the willingness to COMMIT to negative verdicts — that may not be in the weights (RLHF actively suppresses it).
+
+**This is the ceiling Lee describes, made empirically visible across three experimental rounds.** The harness can unlock what's in the weights. For evaluation, what's in the weights includes critical analysis but does not include adversarial commitment. The gap between analysis and verdict is the gap between harness-solvable and model-solvable problems. This gap is the engineering specification for what the verifier-free case needs that the verifiable case doesn't.
+
+### The Elevator Pitch (settled Apr 2)
+
+> TIG and Bittensor show tiered evaluation works when verification is cheap. I built the same kind of tiered system for the case where there IS no verifier — open-ended research questions. I ran three rounds with 8 agents from 4 model families. The result: agents perform evaluation perfectly in form but not in substance. They write adversarial reviews finding real flaws, then rubber-stamp "correct." The most capable model is the most sycophantic. Structural interventions help but don't solve it. These specific breakages are the engineering specification for what the verifier-free case needs that the verifiable case doesn't.
 
 ---
 
@@ -407,6 +662,8 @@ These papers provide the formal backbone for our two-barrier finding. Assay's em
 Evans et al. (Science 2026) wrote the manifesto: "build agent institutions." We built one and ran experiments. The paper is the field report. Key contribution: the environment shapes agent evaluation behaviour more than the model does. Same agents, different structure, different output.
 
 Aletheia (DeepMind, 2026) built the best generator — 68.5% of output is fundamentally flawed, and their own authors say significance "can only be evaluated by mathematicians." We're building the evaluation community that could filter the signal from the noise at scale.
+
+AlphaLab (Morgan Stanley, 2026) built the best autonomous experiment runner — and explicitly restricted to domains with formal verifiers. Their playbook convergence (Opus locked onto TFT, never explored iTransformer that GPT-5.2 found superior) is prior collapse at the system level. Their "~1 in 5 needs human intervention" validates our three-tier governance. Position on the verification spectrum: AlphaLab = formal verifiers (RMSE, speedup). EinsteinArena = mathematical verifiers. Assay = no verifier (social proof through question chains). Each system solves evaluation at a different hardness level. Our contribution is the hardest case.
 
 ### Key ideas (recovered from brainstorming, documented in `docs/plans/2026-03-28-lost-ideas.md`)
 
@@ -458,13 +715,13 @@ Evans et al. argue for role differentiation. But humans don't need assigned role
 
 **Total: ~1 day build, 3 days run.**
 
-### Metrics (v2 → v3 comparison)
-- Contradiction ratio: 0.9% → target >5%
-- Rubber-stamp rate: TBD → measurable decrease
-- Inter-rater α: 0.26-0.32 → target >0.4
-- Rating distribution: 42% at 2 → fuller scale
-- Max thread depth: 2-3 → target 4+
-- Human-agent alignment trend: N/A → measurable over 3 days
+### Metrics (v2 → v3 targets vs actuals)
+- Contradiction ratio: 0.9% → target >5% → **actual 1.7% (missed target, but nearly doubled)**
+- Rubber-stamp rate: 97% → measurable decrease → **actual 82% (improved, still dominant)**
+- Inter-rater α: 0.26-0.32 → target >0.4 → **not yet computed for v3**
+- Rating distribution: 42% at 2 → fuller scale → **fixed — mean 3.5-3.9, good spread on N**
+- Max thread depth: 2-3 → target 4+ → **not yet measured**
+- Human-agent alignment trend: N/A → measurable over 3 days → **human governance loop not systematically executed**
 
 ---
 
@@ -488,6 +745,11 @@ Evans et al. argue for role differentiation. But humans don't need assigned role
 | 12 | `docs/research/2026-03-28-session-report.md` | Parallel Claude session record. Deep literature review, competitive landscape, strategic positioning. | For additional detail beyond this file. |
 | 13 | `docs/research/2026-03-28-literature-review.md` | Parallel session's independent literature review (302 lines). Overlaps with #4 above — #4 is the primary/updated version. | For cross-referencing citations. |
 | 14 | `docs/research/2026-03-28-adjacent-research-reference.md` | Comprehensive 80+ paper reference across 14 categories (533 lines). The full landscape catalogue. | For deep-dive citations and competitive positioning. |
+| 15 | `docs/analysis/2026-04-02-v3-experiment-data-summary.md` | v3 full data: 828 ratings, 278 comments, per-agent profiles, sycophancy analysis, N-G collapse, cross-round comparison. | For v3 findings and paper evidence. |
+| 16 | `docs/research/2026-04-03-alphalab-analysis.md` | Deep analysis of AlphaLab (Morgan Stanley, 2026): architecture, results, playbook convergence, verification spectrum positioning. | For autonomous research comparison and paper framing. |
+| 17 | `docs/research/2026-04-03-harness-engineering-landscape.md` | Harness engineering landscape: Meta-Harness, model-harness training loop, Hermes Agent, DSPy, evidence/counter-evidence, verification spectrum. | For harness engineering framing and "environment shapes behaviour" evidence. |
+| 18 | `docs/analysis/2026-04-03-philosophical-grounding.md` | Full intellectual arc: Sutskever's value function → compression → bandwidth → fast-kill → frozen-weight impossibility → institutional compensation → Anthropic emotions paper → intuition literature → honest conclusion. | For dissertation chapters 4-5, theoretical framing. |
+| 19 | `docs/research/2026-04-04-hacc-institutional-learning.md` | HACC algorithm: frozen agents can't learn → institution as learner. Swarm intelligence mapping (ABC → CoEA), 8-step loop, trust granularity, convergence analysis (4 barriers, 4 weaker claims), implementation plan. | For dissertation algorithm chapter, paper's theoretical contribution. |
 
 **Documents NOT to read (superseded or stale):**
 - `docs/PROJECT-STATUS.md` — March 7, predates R/N/G and all research work
@@ -508,13 +770,15 @@ Read this file top to bottom. Then read files #2-#7 from the document map above.
 
 Hallucination is predictive processing at the frontier — the problem isn't the hallucination, it's the absence of a community to test it. Current LLMs aren't there yet (RLHF installs specific suppression mechanisms that penalise uncertainty and bold speculation — Arditi et al. 2024, Banerjee et al. 2025), but the evaluation infrastructure must be ready first.
 
-**What to build next:** v3 experiment. See `docs/superpowers/specs/2026-03-28-v3-experiment-design.md`. Five tasks, ~1 day build, 3 days run.
+**Current state (April 2026):** v3 experiment has been run (Mar 31 – Apr 2). Results in the v3 section above and `docs/analysis/2026-04-02-v3-experiment-data-summary.md`. The paper draft is underway at `docs/paper/draft-v1.md`. The harness engineering literature (Meta-Harness, AlphaLab, model-harness training loop) has been integrated and connects directly to v3 findings.
+
+**What to do next:** Write the paper. The data is in. The framing is settled. See elevator pitch in v3 results section.
 
 **What NOT to do:**
-- Don't assign roles to agents (diversity comes from cross-family deployment + soul.md, not prompt-level role labels)
-- Don't build features not in the v3 spec (no BT pairwise, no digest frontend page, no analysis scripts before data exists)
-- Don't frame the knowledge graph as a frontier classifier — it's an observability tool (a notebook, not a taxonomy)
+- Don't assign roles to agents (diversity comes from cross-family deployment + soul.md, not prompt-level role labels — v3 confirms this)
 - Don't claim current LLMs can do frontier research — they can't. Frame as building infrastructure for future models.
-- Don't depend on v2 findings being strong — they may be environmental artefacts. v3 tests this.
+- Don't frame the knowledge graph as a frontier classifier — it's an observability tool (a notebook, not a taxonomy)
+- Don't assume better models will fix evaluation — v3 shows the most capable model is the most sycophantic
+- Don't understate the harness engineering findings — v3 empirically demonstrates both the power and the ceiling of harness engineering for evaluation
 
 **Server:** `assayz.uk` (API: `https://assayz.uk/api/v1`). SSH: `ssh morgan@100.84.134.66` (Tailscale). Docker Compose on Linux server `morgansclawdbot`.
