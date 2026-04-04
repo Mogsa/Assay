@@ -215,6 +215,28 @@ Second objection: The sample asymmetry might drive the result. We have 45 seeds 
 
 Third objection: This finding is too close to "we made a wrong prediction" without a clear positive claim. The paper can't just say "our prediction was wrong" — it needs to explain what the data is telling us about AI evaluation. The constructive version of the finding (factual checking fails harder than pattern matching at the frontier) is the publishable version. Without this framing, the finding is a limitation, not a contribution.
 
+**Additional literature from extended search (appended 2026-04-04):**
+
+The following papers confirm the three mechanisms synthesized above and provide specific empirical anchors:
+
+**Mechanism 1 — Knowledge-dependency of correctness evaluation:**
+
+- **"Limitations of the LLM-as-a-Judge Approach for Evaluating LLM Outputs in Expert Knowledge Tasks" (IUI 2025, arXiv 2410.20266):** Tested LLM judges against SMEs in dietetics and mental health. LLM-human disagreements concentrated on *factual accuracy* and actionability — not on tone, clarity, or style. LLM judges were systemically worse at "is this correct?" than at "is this well-expressed?" This is the clearest domain-study evidence that factual correctness dimensions produce the most LLM-human disagreement — the axis where LLMs have knowledge gaps shows highest error, directly parallel to our R_error finding.
+
+- **"No Free Labels: Limitations of LLM-as-a-Judge Without Human Grounding" (arXiv 2503.05061, 2025):** LLM judge accuracy collapses on hardest questions precisely because the judge model cannot verify whether the answer is correct without possessing the relevant domain knowledge. Providing a human-written reference dramatically recovers accuracy. Directly explains why R_error is highest: rigour evaluation for an open research question requires the judge to know whether the question's technical framing is itself correct — and knowledge gaps translate directly into cross-model disagreement.
+
+- **"FLASK: Fine-grained Language Model Evaluation" (ICLR 2024 Spotlight, arXiv 2307.10928):** Decomposes evaluation into 12 skills. On FLASK-Hard (difficult evaluation cases), GPT-4 shows the steepest performance drops on *Logical Correctness* and *Factuality* — the two dimensions most analogous to Rigour. These degrade much more severely under difficulty than Readability or Harmlessness. Inter-labeler agreement analysis also shows lower agreement for logical/factual dimensions at high difficulty. This is the most granular empirical confirmation that rigour-adjacent dimensions are specifically harder for AI judges at frontier difficulty levels.
+
+**Mechanism 2 — Criterion underspecification for question rigour:**
+
+- **"Validating LLM-as-a-Judge Systems under Rating Indeterminacy" (NeurIPS 2025, arXiv 2503.05965):** Factuality tasks show significant rating indeterminacy because raters differ on what counts as "sufficient evidence" for a factual claim. "Rigour of a research question" is precisely a high-indeterminacy domain: different reviewers apply different standards (is it falsifiable? precisely scoped? grounded in prior work?). Standard validation that suppresses this disagreement selects judge systems 31% worse than those using multi-label elicitation. High R_error is the expected outcome for indeterminate dimensions, not a calibration failure.
+
+**Mechanism 3 — Binary misfire on gradated scales:**
+
+- **"G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment" (EMNLP 2023, arXiv 2303.16634):** Across four NLG evaluation dimensions, Consistency (factual alignment — closest to Rigour) shows lower Spearman correlation with human judgments than Coherence and Fluency (closest to pattern-matching axes). Correctness is conceptually binary but forced onto a gradated scale, producing high-variance ratings when a question has mixed rigour signals. Style-like dimensions map more naturally to gradated 1–5 scales.
+
+**The novel contribution gap the literature confirms:** The research agent identified that no existing paper studies *question-level vs. answer-level rigour evaluation* as separate challenges. The rigour of an *answer* has external referents (ground truth, citations, derivations); the rigour of a *research question* is structurally underspecified — there is no ground truth to check it against. This question/answer asymmetry is implicit in multiple papers (JudgeBench, Rating Indeterminacy) but never made explicit. Framing the calibration gradient inversion as evidence for this question-rigour underspecification asymmetry is a genuinely novel contribution our paper can claim.
+
 ---
 
 ## CANDIDATE POSITIONS
