@@ -1318,4 +1318,84 @@ The central target (multi-model panels as best practice) is wrong in a *structur
 
 **The paper has everything it needs: theoretical argument, empirical corroboration, mechanism, operational prescription, honest limitations, and a falsifiable prediction. Write the paper.**
 
+---
+
+## NINTH PASS — 2026-04-05
+
+*(All 5 queue items confirmed complete. This pass: fresh April 2026 literature sweep, confirmation of two unoccupied literature gaps that are the paper's strongest original claims, and one new parallel paper not yet cited. Final CANDIDATE POSITIONS updated.)*
+
+---
+
+### Fresh Literature Search Results
+
+A targeted search for April 2026 (arXiv 2604.xxxxx) and recent papers on LLM judge disagreement, Condorcet jury failures, correlated errors, novelty assessment impossibility, and Bradley-Terry reliability weighting found the following:
+
+**Already in document (confirmed):** arXiv:2603.25450, 2604.00477, 2506.07962, 2602.16610, 2601.19532, 2602.00521, 2410.13341. All key papers from passes 1–8 are present.
+
+**One new paper not yet cited:**
+
+**arXiv:2601.21817 — "A Judge-Aware Ranking Framework for Evaluating Large Language Models without Ground Truth"** (January 2026)
+
+A second independent paper proposing BT model extension with per-judge discrimination parameters, parallel to arXiv:2602.16610 (BT-σ). Like BT-σ, it jointly infers item quality rankings and judge reliability from pairwise comparisons without ground-truth labels. The key difference: this paper uses a judge-specific *bias correction* term in addition to a discriminability weight, separating systematic per-judge offset from per-judge reliability.
+
+**D+E+F relevance:** Two independent teams in a two-month window (January and February 2026) converged on the same BT extension without apparent coordination. This convergence signals that reliability-weighted aggregation is now a live subfield with multiple implementations. The paper's bias-correction term is particularly relevant to the Rigour finding: R-axis errors are systematic per-model offsets (Gemini avg R=3.98, Opus avg R=3.11), not item-level noise — exactly the regime where bias correction outperforms simple discriminability weighting. **Add to the operational prescription section:** "BT-σ (arXiv:2602.16610) and the Judge-Aware Ranking Framework (arXiv:2601.21817) provide two independent concurrent implementations of reliability-weighted aggregation — the engineering foundation for replacing raw mean(frontier_score) with a calibrated-judge-weighted estimate."
+
+**No new challenge papers found.** The April 2026 literature (2604.xxxxx) has no papers directly challenging the D+E+F thesis beyond what was found in passes 7–8.
+
+---
+
+### Two Confirmed Literature Gaps (Fresh Verification)
+
+The targeted search confirmed two theoretical positions that are unoccupied in the April 2026 literature. These are the paper's strongest original claims:
+
+**Gap 1: Condorcet jury theorem + LLM panel errors = formal impossibility argument.** No April 2026 (or earlier 2025–2026) paper explicitly frames multi-model evaluation panel failures as a *Condorcet jury theorem violation*. The empirical finding (models make correlated errors) is documented in arXiv:2506.07962 and arXiv:2502.04313. The theoretical impossibility result for correlated panels is in arXiv:2602.22413 (epistemic filtering/collective hallucination). But the specific framing — "the LLM evaluation community's implicit justification (panel = Condorcet jury) is violated by the same shared-corpus corpora that make the models good" — is not assembled in any single paper. The thesis is the first to make this connection explicit and apply it to frontier evaluation specifically.
+
+**Gap 2: Novelty assessment impossibility as a formal OOD-detection claim.** No paper states "AI novelty assessment of frontier content is impossible in the PAC/OOD-detection sense without external anchors" as a theorem. The closest: arXiv:2410.13341 bounds judge accuracy at the frontier; the NeurIPS 2021 OOD impossibility result proves OOD detection is impossible without distribution constraints; RINoBench (arXiv:2603.10303) benchmarks novelty judgment as an open problem. But no paper connects these three threads into a formal impossibility claim. Candidate A's contribution is precisely this gap: not "AI judges underperform on novelty" (known) but "AI novelty judgment of frontier content is structurally a PAC-impossible OOD detection problem" (not yet stated as such).
+
+---
+
+### Research-State Cross-Check: One Disambiguation Needed
+
+Research-state.md (line 24) defines `frontier_score = (R × N × G)^(1/3)` (geometric mean, range 1–5). CLAUDE.md defines `frontier_score` as signed Euclidean distance (range −6.93 to +6.93). This discrepancy was flagged in the VERIFICATION NOTE (Pass 5) and confirmed.
+
+**Additional clarification from this pass:** Research-state.md item 4 (line 74) reports "debated questions … have the same frontier score as consensus questions (2.75 vs 2.73)" and gives no formula version notation. These numbers (2.75 and 2.73) are on the geometric mean 1–5 scale — consistent with the research-state's own definition of frontier_score as geometric mean. The production frontier_score (signed Euclidean, range −6.93 to +6.93) would not produce numbers in the 2.x range. **Conclusion:** all empirical numbers in position-search.md and research-state.md use the geometric mean formula (1–5 scale). CLAUDE.md describes the production formula change. The paper should use the geometric mean formula throughout and footnote the production formula change.
+
+---
+
+### Devil's Advocate (Ninth Pass)
+
+**New objection surfaced:** The two BT papers (arXiv:2602.16610, arXiv:2601.21817) provide working implementations of reliability-weighted aggregation. A reviewer familiar with this literature could ask: "If BT-σ already provides calibrated-judge weighting, why does the D+E+F thesis's separate 'disagreement probe' add value?" 
+
+**The rebuttal:** BT-σ and Judge-Aware Ranking optimize for *ranking accuracy* (which items score higher). The D+E+F proposal optimizes for *routing* (which items should go to human review). These are different objectives. BT-σ produces a better consensus score; the N-axis disagreement metric identifies items where consensus is unreliable regardless of its calibration. The two approaches are complementary: use BT-σ for the ranking; use calibrated N-axis std as the acquisition function for human review routing. A system that applies BT-σ without the disagreement filter will still suppress the frontier signal — it will produce a more accurate consensus, but consensus on items where all calibrated judges are uncertain is still noise.
+
+**The objection does NOT overturn D+E+F.** It sharpens the contribution: the thesis is about *human review routing*, not about improving the consensus ranking. Make this explicit in the abstract.
+
+---
+
+### Final CANDIDATE POSITIONS Update (Ninth Pass)
+
+All previous assessments from the eighth pass stand. Two additions:
+
+**For D+E+F unified:** Add the BT complementarity note (above) to the operational prescription. The paper's claim is specifically about human review routing, not about replacing BT-σ for ranking. This distinction addresses the strongest remaining objection from the field and sharpens the contribution boundary.
+
+**For Candidate A (Novelty Impossibility):** The formal gap (PAC/OOD impossibility framing) is now documented as unoccupied. If the paper takes a standalone novelty-impossibility angle, the claim should be: "novelty assessment of frontier content is structurally equivalent to OOD detection under the training distribution, which is PAC-impossible without external anchors." This is novel and falsifiable. It is also the strongest theoretical component of the D+E+F thesis — the mechanism that explains WHY calibrated judges disagree on N-axis for frontier content (the content is OOD for all of them) and WHY that disagreement is aleatoric rather than epistemic (no additional training can eliminate it; only human anchors can).
+
+**Surprise score revision:** The D+E+F unified claim maintains surprise score **4/5**. The explicit Condorcet framing + OOD impossibility mechanism together give the thesis a theoretical texture that is absent from purely empirical papers (like arXiv:2603.25450 or the BT papers). A NeurIPS reviewer will recognize the mechanism as novel even if they know the individual components.
+
+---
+
+### Final Top Recommendation (Ninth Pass — Definitive)
+
+**D+E+F unified. Unchanged.** Nine passes, 30+ literature threads, two data verification rounds, and a fresh April 2026 search have not produced a paper that preempts the combined claim. The literature gap is real and confirmed.
+
+**The sharpest one-sentence abstract (final, incorporating ninth pass clarifications):**
+
+> *Multi-model AI evaluation panels — the standard bias-reduction practice — produce Krippendorff's α = 0.28 on frontier intellectual content because they violate the Condorcet independence assumption via shared training corpora: model families make identical Rigour errors (consensus amplifies shared misconceptions) while their Novelty disagreements among calibrated judges are aleatoric — a PAC-impossible OOD detection problem that no additional training can resolve, and that human review routing should use as its primary acquisition signal instead of the consensus score it currently discards.*
+
+**The two clean original contributions** the paper can claim:
+1. *Condorcet framing applied to LLM panels* — the first paper to name the formal mechanism (independence violated by shared corpora) rather than just observing correlated errors empirically.
+2. *N-axis aleatoric disagreement as frontier acquisition signal* — the first paper to propose calibrated inter-judge N-axis std as an explicit routing criterion for human review, grounded in the OOD/aleatoric impossibility of frontier novelty assessment.
+
+Both contributions are in unoccupied literature space as of April 5, 2026. **Ship.**
+
 
