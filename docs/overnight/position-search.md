@@ -881,4 +881,88 @@ The three-paper combination (arXiv 2603.25450, RINoBench 2603.10303, DiscoUQ 260
 
 > *Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content — below the publishable reliability threshold — because correlated R-axis errors (Condorcet independence violated via shared training corpora) amplify shared misconceptions, while N-axis disagreement among calibrated judges is the honest frontier signal: the aleatoric boundary of the panel's shared knowledge representation, where human evaluation is irreplaceable.*
 
+---
+
+## OVERNIGHT RUN — 2026-04-05 (Fifth Pass)
+
+*(All 5 queue items confirmed complete. This pass: full re-read of all accumulated findings; final corrected candidate assessment incorporating the DATA CORRECTION (N-axis, not R-axis, is the frontier probe); clean consolidated recommendation ready for paper drafting.)*
+
+---
+
+### Summary of What All Five Passes Established
+
+**The core empirical facts (all verified against research-state.md and docs/analysis/):**
+
+1. α = 0.26–0.32 across all axes — well below the publishable threshold of 0.67.
+2. IFDS jargon avg frontier_score = 3.21, genuine seeds avg = 2.37 (geometric mean, 1–5 scale). The inversion holds across all 5 model families.
+3. Gemini Flash MAE = 0.53, Opus MAE = 0.97 on 29-item human ground truth. Cheapest model calibrates best.
+4. Three model families independently mischaracterized Lovett's upper bound as a "proof barrier" on the Log-Rank Conjecture — identical wrong answer, correlated error.
+5. 4 of the top-5 human-labeled high-disagreement items are genuine frontier content. The 1 failure is Haiku outlier noise (MAE=1.09).
+6. R MAE is highest for 4/5 models (opposite of the objectivity-hierarchy prediction).
+7. consensus frontier_score ρ ≈ 0 with debate-worthiness (2.75 vs 2.73 — indistinguishable).
+
+**The critical correction from Pass 4 (DATA CORRECTION — must carry into the paper):**
+
+The prediction "R-axis std is the best frontier probe" was wrong. Raw per-item data shows: for all 4 unambiguous human-labeled frontier items in the top-10 contested list, **N-axis std is highest** (not R-axis). R-axis std is the LOWEST for these frontier items — models agree on relative R rankings but with a shared systematic offset. G-axis std is inflated by Qwen's G=5 outlier on *non-frontier* IFDS content (false positive generator).
+
+The corrected mechanism is clean and now internally consistent:
+- **R-axis:** Correlated errors (all models wrong in the same direction, same item — the Log-Rank pattern). Supports Candidate D (Condorcet fails, shared misconceptions amplified).
+- **N-axis:** Uncorrelated disagreement for frontier items (models genuinely diverge on novelty because different knowledge representations of rare academic content). Supports Candidate E (N-axis std is the frontier signal).
+- **G-axis:** Inflated by pathological rater (Qwen G=5) for non-frontier content. False positive generator; filter before computing disagreement metric.
+
+---
+
+### UPDATED CANDIDATE POSITIONS (Final — incorporates all five passes and DATA CORRECTION)
+
+| Candidate | One-sentence claim | Evidence strength | Novelty to NeurIPS | Surprise | Status |
+|-----------|-------------------|-------------------|---------------------|----------|--------|
+| **D+E+F unified** | Frontier evaluation panels fail by amplifying correlated R-axis errors while discarding informative N-axis disagreement — the very signal they throw away is the frontier probe. | Strong (theory + 5 empirical threads + N=4 per-item validation + 12+ independent literature confirmations) | High — inverts the consensus-seeking paradigm | **4/5** | **TOP RECOMMENDATION** |
+| B (Scale anti-correlation) | Gemini Flash outperforms Opus as a frontier judge; model scale anti-correlates with evaluation quality via sycophancy amplification. | Moderate (N=29 human items; cross-family confound; theoretically well-grounded by Semantic Capacity Asymmetry Jan 2026) | High — counterintuitive to practitioners | 4/5 | Strong standalone backup |
+| A (Novelty Impossibility) | LLM judges structurally invert novelty rankings — jargon-loops outscoring genuine frontier math is not bias, it is a formal OOD detection impossibility. | Moderate (FrontierMath partially recovers; CALM 2024 partially anticipated; RINoBench March 2026 now benchmarks this) | Medium — community now acknowledges novelty judgment is hard | 3/5 | Good supporting evidence for D+E+F |
+| E standalone | N-axis inter-judge std among calibrated judges is a more reliable frontier detector than any consensus score. | Moderate (N=4 data points; JudgeBench + arXiv 2603.25450 provide independent scale validation) | Medium — JudgeBench 2025 and Trust-or-Escalate already operationalize disagreement-as-routing | 3/5 | Best as component of D+E+F, not standalone |
+| F standalone (Calibration Gradient Inversion) | AI judges disagree most on Rigour (not Generativity), inverting the expected objectivity hierarchy. | Moderate (4/5 models; confirmed by FLASK, IUI 2025, No Free Labels) — but must be framed as "correlated R errors", not "R-axis disagreement as probe" | Medium | 3/5 | Mechanistic support for D, not standalone claim |
+
+**Candidates C and legacy Candidate D (standalone) are superseded by D+E+F unified.**
+
+---
+
+### The Corrected Paper Structure (final)
+
+**Abstract / position statement:** Lead with α = 0.28 and the inversion: consensus is noise, disagreement is signal.
+
+**Section 1 — The Problem with Panels:**
+The community uses multi-model panels as "LLM juries" (arXiv 2404.18796). The implicit justification is the Condorcet Jury Theorem. Our α = 0.28 shows the jury doesn't agree. The key question: is this fixable (calibration problem) or structural (independence violated)?
+
+**Section 2 — Why It's Structural: Correlated R-Axis Errors:**
+Three model families (Claude, Gemini, GPT) independently made the identical terminological error on the Log-Rank Conjecture. "Great Models Think Alike" (arXiv 2502.04313, ICML 2025 spotlight): as models become more capable, their mistakes become more similar. arXiv 2602.22413 (Feb 2026): formal proof that Condorcet panel accuracy degrades under correlated information sources — "collective hallucination." R-axis errors are most correlated: per-item R-std is LOWEST for frontier content (all models wrong the same way), yet R MAE is HIGHEST (systematic shared offset from human). This is the signature of a shared misconception, not noise.
+
+**Section 3 — Why Disagreement Is the Signal: N-Axis Variance:**
+For the same frontier items, N-axis std is HIGHEST. Aleatoric uncertainty framework (Zerva EMNLP 2022): frontier content produces irreducible evaluative disagreement because the content genuinely exceeds the reliable knowledge range of all judges — this is epistemic divergence, not calibration noise. arXiv 2603.25450 (March 2026): cross-model disagreement detects confident errors at AUROC 0.75 vs AUROC 0.59 for within-model uncertainty — specifically works where self-consistency fails. DiscoUQ (2603.20975): structured inter-agent disagreement achieves AUROC 0.802, substantially above vote-counting. 4/4 human-labeled high-N-std items are genuine frontier content (the 1 failure in the N=5 set is Haiku outlier noise).
+
+**Section 4 — The Operational Prescription:**
+Replace `sort=mean(frontier_score)` with `sort=mean + λ·std_N(calibrated_judges)`. Items in the top decile of N-axis std among calibrated judges (Gemini Flash + GPT-5.4 mini + Opus) should be routed to human review, not averaged into mediocrity. Calibration filter: exclude raters with MAE > 0.8 on known-human-labeled items. G-axis: compute separately, filter for Qwen's G=5 outlier before inclusion in disagreement metric.
+
+**The testable prediction (future work):** Spearman ρ(N-axis std per item, human frontier label) > ρ(mean frontier_score, human frontier label), computed across all 29 human-labeled items. This turns the position paper into an empirical paper. Not in scope for NeurIPS 2026 position track, but the right follow-up.
+
+---
+
+### Final One-Sentence Position (Definitive Version)
+
+> **"Multi-model AI evaluation panels — the standard bias-reduction practice — produce Krippendorff's α = 0.28 on frontier intellectual content because they violate the Condorcet independence assumption: model families share training corpora and make identical Rigour errors, while their genuine Novelty disagreements — the only informative per-item frontier signal — are averaged away."**
+
+**Why this is the right sentence:**
+- Opens with the quantitative kill-shot (α = 0.28)
+- Names the practice being attacked (multi-model panels)
+- Identifies the mechanism (Condorcet independence violated)
+- Distinguishes two failure modes (correlated R errors vs informative N disagreement)
+- The final clause contains the surprise: what they throw away (disagreement) is what they need
+- Falsifiable: predict N-axis std outperforms mean frontier_score as human label predictor
+
+**Devil's Advocate (final):**
+The strongest remaining objection is N=4 data points for the "N-axis std = frontier signal" claim. The FOURTH PASS answer stands: this is a position paper, not an empirical paper. The theoretical argument (aleatoric N uncertainty + correlated R errors from shared corpora) is independent of sample size. arXiv 2603.25450 provides scale validation (AUROC 0.75 at N>1000). The N=4 is sufficient to motivate the testable prediction. A reviewer who rejects the position must explain why Novelty assessment doesn't diverge across model families for frontier content — which requires engaging with the mechanism.
+
+**Is this actually novel?** The combination is. JudgeBench (ICLR 2025) uses disagreement for routing in general evaluation. Trust-or-Escalate (ICLR 2025 Oral) proves disagreement-routing works with provable bounds. DiscoUQ (March 2026) achieves AUROC 0.802 with structured disagreement. RINoBench (March 2026) benchmarks AI novelty judgment. But no paper: (a) connects Condorcet violation to frontier-specific corpora overlap, (b) distinguishes R-axis correlated errors from N-axis aleatoric divergence as different failure modes of the same panel, (c) proposes N-axis std as the operationally correct routing signal, or (d) uses the aleatoric/epistemic framework to explain WHY frontier disagreement is irreducible rather than correctable. The D+E+F unified thesis is the first to assemble all four into one argument. Literature gap confirmed across five passes.
+
+**Recommendation:** Write the paper. The thesis is ready. Start with the provocative title "Consensus as Confound" or "The Disagreement Dividend." The structure above is the paper.
+
 
