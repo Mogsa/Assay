@@ -517,6 +517,28 @@ This sentence contains:
 
 **Counter:** The JudgeBench paper (ICLR 2025) provides systematic evidence at scale that disagreement correlates with difficulty/frontier-ness. Our 4/5 human-label finding is a small corroboration of an already-established result. The position paper's contribution is not "disagreement = frontier signal" as an empirical discovery — it's the *theoretical synthesis* (Condorcet + aleatoric uncertainty + pattern-matching vs factual-checking asymmetry) and the *operational implication* (use disagreement as an acquisition function for routing to human review), applied specifically to the frontier intellectual content evaluation problem. That synthesis and its operational prescription are original regardless of sample size.
 
+---
+
+### Literature Sweep — 2026-04-05
+
+**Purpose:** Final pass for papers published after the prior run's literature search (post-March 2026) that could materially strengthen or challenge the D+E+F unified thesis.
+
+**New paper of direct relevance — not yet in document:**
+
+**arXiv 2603.12520 — "When LLM Judge Scores Look Good but Best-of-N Decisions Fail"** (Landesberg, March 2026): Panel-level judge scores show global Pearson r = 0.47 with human preference rankings, which looks reasonable — but the *within-prompt* correlation collapses to r_within = 0.27, with 67% of pairwise comparisons tied (indistinguishable). The global correlation is an artefact of prompt-level baseline differences: all models tend to give higher scores to longer, better-formatted responses. Remove that shared baseline and the panel discriminates almost randomly. 
+
+This sharpens the Candidate D argument in a specific, measurable way: the evidence that panels "work" (global r = 0.47) is confounded by the same shared training distribution that makes their errors correlated — both the signal (global r) and the noise (correlated errors) trace to the same source. What looks like discriminative validity is baseline drift. For frontier content evaluation, where all items are long, technically formatted, and formally structured (so the shared-baseline effect would make all items look similar to each other), this confound is especially severe. Adding this paper to the paper's Candidate D evidence section closes the "but panels achieve reasonable global agreement" objection before a reviewer can raise it.
+
+**Suggested insertion for Candidate D evidence:** Add as point 7 in the Finding 3 literature review: "arXiv 2603.12520 shows that global panel agreement (r = 0.47) decomposes into a shared-baseline artefact (all models score formatted responses higher) and near-random within-prompt discrimination (r_within = 0.27, 67% ties). This reframes the α = 0.28 finding: not merely 'models disagree,' but 'models agree for the wrong reason (shared format preferences) and discriminate poorly for the right reason (content quality).'"
+
+**Condorcet cycles (arXiv 2503.10990, March 2025):** "Statistical Impossibility and Possibility of Aligning LLMs with Human Preferences: From Condorcet Paradox to Nash Equilibrium" proves that Condorcet cycles exist with probability converging to 1 under realistic preference distributions. Under cycling, there is no consistent majority winner — the panel's "consensus" vote depends on the order of comparison, not on any stable truth. This is a mathematical result that the independence assumption is not the only thing breaking the jury theorem; even with independent errors, majority vote over cyclic preferences is arbitrary. This is a stronger impossibility than we currently claim. Note: published March 2025, not April 2026 — the paper predates our experiment, meaning a reviewer could argue we should have cited it from the start. Add to the Condorcet framing section with appropriate dating.
+
+**No papers found that challenge the D+E+F thesis.** The accumulating 2025-2026 literature is uniformly supportive of the "consensus fails at the frontier; disagreement is informative" argument. The thesis is moving from "provocative position" toward "emerging consensus" — which is the right trajectory for a NeurIPS 2026 position paper (it should be slightly ahead of emerging consensus, not behind it).
+
+**Devil's Advocate:** arXiv 2603.12520 is a preprint and the specific finding (67% ties, r_within = 0.27) needs to be verified as applicable to our three-axis evaluation setup, not just binary preference comparison. Our 1–5 scale evaluation is different from pairwise comparison, and the "tie" phenomenon may be smaller. However, the general mechanism (shared baselines inflate global agreement) is architecture-level and applies regardless of scale type.
+
+**Final state of the queue and synthesis:** All five queue items are complete. The D+E+F unified thesis is the final recommendation, unchanged by this verification pass. arXiv 2603.12520 and arXiv 2503.10990 are new citations that should be added to the paper draft when it is written.
+
 **This objection does NOT overturn the recommendation.** The thesis stands. Ship with this flag: the paper's strongest section is the theoretical argument (D+E+F mechanism + Condorcet framing); the empirical contribution is corroborating, not primary. Frame accordingly.
 
 ---
