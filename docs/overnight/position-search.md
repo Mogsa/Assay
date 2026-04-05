@@ -755,3 +755,53 @@ The D+E rebuttal: the A-BB framework assumes access to a ground-truth reference 
 The agent found no 2026 paper specifically framing **inter-rater variance as a positive frontier signal** for multi-model AI evaluation panels. The closest existing work (JudgeBench 2025, Trust or Escalate ICLR 2025 Oral) treats disagreement as an uncertainty proxy for routing, but does so in the general evaluation setting, not the frontier-content setting specifically, and does not connect it to the Condorcet independence failure mechanism. The combined D+E+F argument with the frontier-specific mechanism (correlated R errors + aleatoric N variance + G noise from outliers) occupies an original position.
 
 ---
+
+## FINAL VALIDATION RUN — 2026-04-05 (third pass)
+
+*(All 5 queue items confirmed complete. This pass: cross-check raw empirical data, add peer-review angle not yet in document, confirm literature gap.)*
+
+---
+
+### Data Cross-Check: Key Numbers Verified Against docs/analysis/2026-03-19-rating-analysis.md
+
+The primary analysis file confirms all key empirical claims:
+
+**IFDS vs Seeds inversion confirmed:** Raw data shows IFDS avg frontier_score = 3.21, Seeds avg = 2.37 (geometric mean, scale 1–5), consistent with position-search.md. The VERIFICATION NOTE already flagged the formula discrepancy with research-state.md — use geometric mean figures throughout the paper since the experiment was designed and run on that formula.
+
+**MAE table confirmed exactly:** All five-model MAE figures match the analysis report word-for-word.
+
+**One subtle clarification:** The analysis report labels "Finding 3: Generativity is the axis models disagree on most" — but the alpha values (R=0.257, N=0.285, G=0.319) show R has the *lowest* agreement (α = 0.257). The label is based on three extreme per-item G-axis examples (Qwen G=5 outlier pattern), not the global alpha. The DATA CORRECTION section's insight stands and the paper should use α values, not the analysis report's misleading Finding 3 title.
+
+---
+
+### New Evidence: AI Peer Review Confirms Novelty as the Hard Axis
+
+**ReviewerToo (arXiv 2510.08867, October 2025):** AI reviewers evaluated on ICLR 2025 submissions explicitly fail on methodological novelty and theoretical contribution assessment — most analogous to our N-axis. AI achieves 81.8% overall accept/reject accuracy but collapses specifically for novelty-dependent judgments. The paper notes AI "significantly overlooks novelty assessment compared to humans." This is the peer-review domain version of Finding 1: AI judges adequate on structure/soundness (R-axis pattern-matching) but structurally inadequate on novelty.
+
+**ICLR 2026 practice validates the E thesis operationally:** ICLR 2026 (21% of reviews AI-generated per 2025 surveys) escalates borderline/disagreement papers to Area Chairs rather than resolving by majority vote — i.e., disagreement is treated as a routing signal for human review. This is the real-world implementation of the D+E prescription, adopted by the field *before* a formal paper argues for it. The paper can cite this as: "the field has implicitly adopted this principle in practice; we provide the formal justification."
+
+---
+
+### Literature Gap Re-Confirmed
+
+Direct web search in this session confirms: **no paper explicitly proposes inter-judge variance as a positive frontier signal for multi-model evaluation panels**. The field treats disagreement as noise (to be averaged) or uncertainty (to be routed — JudgeBench, Trust or Escalate — but in general evaluation, not frontier-specific). The combined mechanism (Condorcet failure from correlated R errors + aleatoric N-axis variance as frontier probe) is original.
+
+---
+
+### Sharpest Paper Title Candidates
+
+> **"The Disagreement Dividend: Why AI Evaluation Panels Should Amplify Dissent, Not Suppress It"**
+
+> **"Consensus as Confound: Inter-Judge Variance, Not Agreement, Detects Frontier Intellectual Content in Multi-Model Evaluation"**
+
+The first leads with the counterintuitive recommendation. The second is more descriptive and reviewer-friendly.
+
+---
+
+### Final Assessment (third pass)
+
+Nothing changes the recommendation. The D+E+F unified thesis is the correct recommendation for a NeurIPS 2026 position paper. This pass confirmed: all empirical numbers hold; new peer review evidence (ReviewerToo, ICLR 2026 practice) strengthens A and E; literature gap remains open; prior data correction (N-axis std as frontier probe, not R-axis) stands.
+
+The one analysis not yet run — Spearman ρ between N-axis std per question and human frontier labels, compared against mean frontier_score as baseline — would turn this from a position paper into an empirical paper. As a NeurIPS *position* paper, the theoretical argument + four empirical threads + corrected testable prediction is sufficient. Run this analysis before converting to an empirical submission.
+
+
