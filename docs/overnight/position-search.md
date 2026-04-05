@@ -239,9 +239,39 @@ The following papers confirm the three mechanisms synthesized above and provide 
 
 ---
 
+### Meta-Synthesis: Fresh Assessment of All Five Findings — 2026-04-05
+
+**Purpose of this entry:** All five queue items were completed on 2026-04-04. This entry re-examines the full body of findings for coherence, adds data points not yet surfaced from the primary sources, and stress-tests the D+E+F unified recommendation.
+
+**Three things the existing findings don't yet say loudly enough:**
+
+**1. Krippendorff's α = 0.26–0.32 — the formal quantification that validates D+E.**
+
+The research-state.md contains the direct measurement: across all three axes, Krippendorff's inter-rater reliability between the 5 AI models is α = 0.26–0.32. The published threshold for "acceptable agreement" in evaluation tasks is α ≥ 0.67. Our models are at roughly one-third of the bar required for consensus to be trustworthy. This number belongs in the paper's opening empirical claim, not buried in a supplementary file. It directly quantifies what Finding 3/D argues theoretically: the models do not agree enough for consensus to mean anything. And it directly quantifies what Finding 4/E relies on: there IS meaningful disagreement to mine as a signal.
+
+**2. Arrow's Impossibility as a second formal impossibility argument — more general than Condorcet.**
+
+The Condorcet framing in Finding 3/D argues that consensus fails *because errors are correlated*. But even if errors were independent, a second impossibility applies: Arrow's Impossibility Theorem proves that no aggregation function on three or more dimensions can simultaneously satisfy unanimity, independence of irrelevant alternatives, and non-dictatorship. The design rationale in the codebase (research-state.md, Design Decision 10) explicitly invokes Arrow to justify showing R/N/G axes separately rather than aggregating. For the paper, Arrow is a *stronger* formal argument than Condorcet — it says consensus aggregation is fundamentally flawed regardless of error correlation. The paper should cite both: Condorcet explains why correlated errors make things worse; Arrow explains why aggregation is problematic in principle.
+
+**3. The aleatoric framing is empirically fragile — hedge it.**
+
+Finding 4/E frames inter-judge disagreement as marking the "aleatoric" boundary of the panel's shared knowledge. But arXiv 2511.03166 (Nov 2025) shows that aleatoric and epistemic uncertainty estimates in LLMs are empirically rank-correlated at 0.80–0.999 — the dichotomy nearly collapses in practice. A NeurIPS reviewer will cite this and say the "aleatoric boundary" framing is a distinction without an empirical difference. The safer framing, validated by independent MIT work (March 2026): inter-judge disagreement is an *epistemic uncertainty proxy* — it marks where the panel's knowledge is most uncertain, which for frontier content is irreducible not because the answer is inherently ambiguous, but because no available judge has the domain knowledge to resolve it. This reframe preserves the thesis while surviving the uncertainty-type literature.
+
+**Additional empirical support not yet cited in findings:**
+
+From research-state.md: *"Frontier score predicts linking/spawning (Spearman ρ=0.62, ρ=0.55) but NOT debate."* Debate-worthy questions (mixed correct/incorrect verdicts) have the same mean frontier_score as consensus questions (2.75 vs 2.73). This is the fifth empirical pillar for D+E: the current consensus-based frontier score fails to distinguish "this is settled" from "this is genuinely contested." A disagreement-augmented score would likely recover the debate signal. The mismatch between ρ=0.62 with links (which consensus captures) and ρ≈0 with debate (which consensus misses) maps precisely onto the pattern-matching vs. factual-checking distinction in Finding 5/F.
+
+**Devil's Advocate on the whole synthesis:**
+
+The strongest systemic objection is that Findings 3–5 (the D/E/F core) all derive from the same 134-question dataset, and the human ground truth covers only 29 items. Three model families agreeing on a Log-Rank error is a single qualitative anecdote. The MAE/alpha numbers are directionally correct but underpowered for the sweeping claim we want to make. A reviewer will say: "You have one concrete error example, α well below threshold, and 29 human labels — this is a pilot study, not a position paper." The counter: NeurIPS position papers are explicitly exempted from the burden of definitive proof. The contribution is the *argument structure* — the Condorcet + Arrow + aleatoric/epistemic framework applied to a live multi-model evaluation platform — supported by *directional* empirical evidence that is consistent across five independent model families and corroborated by multiple 2025–2026 papers finding the same effects at scale. The pilot data is an existence proof; the literature is the systematic evidence.
+
+**Net recommendation going into the final CANDIDATE POSITIONS update:** D+E+F unified remains the strongest position. The aleatoric framing in E needs the hedge described above. The Krippendorff's alpha number and Arrow's Impossibility argument should be promoted to the paper's front matter. The debate-worthiness gap is the strongest under-used empirical point.
+
+---
+
 ## CANDIDATE POSITIONS
 
-**After researching queue items 1, 2, and 3, here is the current assessment:**
+**Final assessment incorporating all five findings (updated 2026-04-05):**
 
 ---
 
