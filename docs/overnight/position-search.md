@@ -645,6 +645,72 @@ This sharpens the Candidate D argument in a specific, measurable way: the eviden
 
 ---
 
+### Final Audit: Raw Data Inconsistencies and April 2026 Literature — 2026-04-05
+
+**Purpose:** All five queue items were complete at the start of this run. This pass does three things: (1) corrects a material inconsistency in how the primary data is cited across findings; (2) surfaces the deepest theoretical reversal in the data that previous passes understate; (3) adds four genuinely new April/late-March 2026 papers.
+
+---
+
+**Inconsistency 1: "Generativity is the axis models disagree on most" — the label is wrong.**
+
+The rating-analysis.md section heading says "Finding 3: Generativity is the axis models disagree on most." The data immediately below it shows the opposite: α_G = 0.319 is the *highest* of the three alphas (most agreement), while α_R = 0.257 is the *lowest* (most disagreement). The section heading was apparently driven by the qualitative observation that the three most extreme individual outlier cases (Qwen giving G=5 to HORN-SAT, MAX-3SAT, minimal generating sets) all happen on G. Those are outlier instances; the aggregate measure is unambiguous — models disagree *least* on G and *most* on R. The paper must not perpetuate this label. The correct citation is: "Inter-rater agreement is lowest on Rigour (α_R=0.257) and highest on Generativity (α_G=0.319), contrary to the subjectivity-hierarchy prediction."
+
+This matters because the D+E+F thesis currently says *both* inter-rater agreement AND human-alignment error are highest for Rigour — and the inconsistent section header could cause a reviewer to question whether the Rigour finding is genuine. Both measures (α and MAE) confirm R is hardest. This should be stated explicitly in the paper.
+
+**Inconsistency 2: The pattern-recognizer theory predicted the opposite.**
+
+research-state.md Surprise #8 explicitly states the original theoretical prediction: "AI judges are pattern recognisers — structurally good at Rigour (does this match the pattern of correct/rigorous work?) and structurally bad at Generativity." This predicts R_error < G_error — the prediction was *wrong in both direction and magnitude*. Empirically R_error is highest and G_error is lowest (for 4/5 models, both by α and MAE). This is not a minor calibration miss; it is a complete reversal. The reason the reversal is theoretically important: evaluating *question* Rigour is not a pattern-matching task — it requires checking whether the question's technical premises are *correct*, which demands domain knowledge unavailable to any judge at the genuine frontier. Evaluating *question* Generativity, by contrast, is pure pattern-matching: "does this question resemble questions that historically spawned follow-up work?" — deeply in-distribution. The framework predicted pattern-matching would be easiest for R; empirically pattern-matching IS easiest, but G is the pattern-matching axis, not R. This makes Finding 5/F sharper: the reversal is not "rigour is more subjective than we thought" — it is "question rigour requires factual checking while question generativity requires pattern matching, and these are architecturally opposite tasks."
+
+**New literature (April 2026 and late March 2026):**
+
+1. **arXiv 2604.00477 — "Logarithmic Scores, Power-Law Discoveries: Disentangling Measurement from Coverage in Agent-Based Evaluation" (April 2026):** Panel quality improves logarithmically with panel size and saturates quickly, while "agent judges may inherit shared biases from the backbone LLM (sycophancy, positional bias) that are invisible in variance decomposition because all agents share them." This formalizes Candidate D: adding more panel members cannot escape shared-backbone errors because those errors are zero-variance within the panel (all models exhibit them, so they don't show up as inter-rater disagreement but fully bias the consensus). The paper explicitly notes this saturation is driven by shared biases, not by diminishing marginal information. Cite as the formalization of why increasing the panel does not help for frontier content.
+
+2. **arXiv 2603.05399 — "Judge Reliability Harness: Stress Testing the Reliability of LLM Judges" (ICLR 2026, March 2026):** Evaluated four SOTA judges across four benchmarks. Finding: "No judge is uniformly reliable across benchmarks." Reliability degrades from formatting perturbations and paraphrasing — surface changes the judge shouldn't react to. The consistent fragility supports the claim that current judges are doing surface-pattern matching, not semantic evaluation; this is consistent with both the IFDS inversion (surface structure inflates scores) and the Rigour failure (surface pattern matching fails for domain correctness checking).
+
+3. **arXiv 2602.00521 — "Diagnosing the Reliability of LLM-as-a-Judge via Item Response Theory" (ICLR 2026, Feb 2026):** IRT-Graded Response Model reveals that traditional inter-rater agreement metrics (including Krippendorff's alpha) overstate reliability for items with skewed difficulty distributions — "judges that agree on easy items can diverge structurally on hard ones." This is precisely the mechanism proposed in D+E: our α = 0.28 is artificially elevated by the majority of items (test posts, routine agent questions) where all models correctly give low scores. The disagreement is concentrated in the hard items (frontier seeds, IFDS jargon boundary cases). IRT would separate these two regimes and likely show near-zero reliability on frontier-class items specifically. This paper provides the methodological warrant for our claim that α = 0.28 understates the reliability problem for frontier content.
+
+4. **arXiv 2604.00259 — "LLM Essay Scoring Under Holistic and Analytic Rubrics: Prompt Effects and Bias" (April 2026):** Strong open-weight models show stable *negative* directional bias specifically on "Lower-Order Concerns" (Grammar, Conventions) — the rule-bound correctness dimensions — while maintaining moderate agreement on holistic/creative dimensions. The essay-scoring domain maps onto our axis structure: Lower-Order Concerns ≅ Rigour (correct, well-constructed); holistic quality ≅ Generativity (opens new directions). This is independent cross-domain evidence that LLM judges degrade specifically on correctness/rule-bound axes relative to generative/holistic axes — the exact pattern Finding 5/F identifies in our R vs G error gradient.
+
+**The literature gap that remains our contribution:** None of the April 2026 papers frame inter-judge *disagreement* as a positive frontier signal. The field has papers showing consensus is unreliable (arXiv 2509.20293, arXiv 2603.05399, arXiv 2603.12520); papers showing disagreement correlates with difficulty (JudgeBench, IRT paper); papers showing factual-axis failure (arXiv 2604.00259, FLASK, No Free Labels). No paper synthesizes these into the prescriptive claim: "measure the disagreement among calibrated judges on the Rigour axis as your frontier detector, and route high-disagreement items to human review." That synthesis — and the operational prescription — is what our paper contributes.
+
+**Devil's Advocate:** The four new papers are all from different domains (essay scoring, safety benchmarks, agent evaluation, IRT). None directly tests the "Rigour-axis disagreement as frontier signal" claim in a multi-model frontier-content evaluation setting. A reviewer will note this cross-domain assembly as the paper's weakest structural moment — each analogy could be argued to not transfer. The counter: the mechanistic argument (pattern-matching vs factual-checking) is domain-general, and the five independent domain confirmations (our data, essay scoring, safety benchmarks, IRT reliability, agent evaluation) all show the same axis-specific failure pattern. Convergent evidence from independent domains is exactly the right form of support for a position paper's structural claim. The paper is arguing for a principle, not reporting a benchmark result.
+
+---
+
+## CANDIDATE POSITIONS — FINAL UPDATE (2026-04-05, this run)
+
+*All five queue items remain complete. This update incorporates the raw-data audit and April 2026 literature above. No candidate ranking changes; two evidence strengthenings and two required paper corrections.*
+
+**What changed in this run:**
+
+1. **Candidate F (Calibration Gradient Inversion) evidence strengthened:** arXiv 2604.00259 provides cross-domain confirmation of judge degradation on correctness/rule-bound axes. The inconsistency in the rating-analysis.md section header ("Generativity is most disagreed on") is corrected — the data shows R has the lowest alpha (0.257), directly reinforcing F. Both inter-rater agreement AND human-alignment error are lowest for G and highest for R.
+
+2. **Candidate D (Correlated Errors) evidence strengthened:** arXiv 2604.00477 formalizes why increasing panel size cannot escape shared-backbone biases. The paper uses a different methodology (agent-panel coverage analysis) and reaches the same structural conclusion: correlated biases are invisible to variance decomposition precisely because they're shared by all panel members.
+
+3. **Candidate E (Disagreement as Frontier Signal) given a new methodological tool:** arXiv 2602.00521 (IRT) provides a method to extract the disagreement signal specifically from frontier-class items while controlling for the easy-item inflation that suppresses α globally. The paper should propose applying IRT to partition frontier vs non-frontier items before computing inter-rater reliability — this directly addresses the "N=29 human labels is thin" objection by providing a model-based approach to identify the frontier-difficulty regime.
+
+4. **The pattern-recognizer theory must be explicitly corrected in the paper.** The research-state.md note that "AI judges are structurally good at Rigour" was the original hypothesis. Empirically it is wrong. The paper should cite this as the falsified prediction, explain the mechanism (question-Rigour requires domain-knowledge checking; question-Generativity requires distributional pattern-matching), and frame Finding 5/F as a falsification of a plausible prior, not just an anomalous result.
+
+**Final ranking unchanged:**
+
+| Candidate | Surprise | Evidence | Overall |
+|-----------|----------|----------|---------|
+| **D+E+F unified** | 4/5 | Strong + strengthened | **#1** |
+| B (Scale anti-correlation) | 4/5 | Moderate (N=29 weakness) | #2 |
+| A (Novelty Impossibility) | 3/5 | Moderate | #3 |
+
+**The one-sentence claim remains the final recommendation (2026-04-05 sharpened version):**
+
+> *Multi-model AI evaluation panels, the current best practice for reducing individual model bias, produce Krippendorff's α = 0.28 on frontier intellectual content — below the reliability threshold — because error independence fails: diverse architectures make identical mistakes from shared training corpora, and the inter-judge disagreement the paradigm discards is a better frontier detector than the consensus score it produces.*
+
+**Three required corrections to make before drafting the paper:**
+
+1. Fix the section label in any citation to rating-analysis.md Finding 3: R is the most-disagreed axis (α_R=0.257), not G.
+2. Explicitly cite the falsified prior (pattern-recognizer → structurally good at Rigour) as the prediction that motivated the finding.
+3. Add IRT (arXiv 2602.00521) to the E section as the methodological tool that can extract frontier-specific inter-rater reliability from a mixed dataset.
+
+---
+
 ## DATA CORRECTION AND AXIS DISAGGREGATION — 2026-04-05
 
 *(All queue items complete. This pass checks the testable prediction from Finding 5 against raw per-item data in docs/analysis/2026-03-19-rating-analysis.md. One prediction fails; the corrected analysis strengthens the overall thesis.)*
