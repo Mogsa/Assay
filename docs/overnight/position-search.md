@@ -497,6 +497,20 @@ This sentence contains:
 - A constructive alternative (disagreement as the signal)
 - Intellectual surprise (the thing you throw away is the thing you need)
 
+---
+
+## VERIFICATION NOTE — 2026-04-05
+
+*Re-read all five findings and cross-checked against research-state.md. The synthesis stands. One data discrepancy to resolve before submitting the paper:*
+
+**Frontier score numbers are inconsistent.** Finding 1 cites IFDS avg 3.21 vs seeds avg 2.37. research-state.md cites 2.91 vs 2.45. The discrepancy is a formula version conflict: the position-search.md numbers appear to be geometric mean scores `(R×N×G)^(1/3)` derived from individual R/N/G ratings (scale 1–5), while research-state.md reports the production `frontier_score` field, which CLAUDE.md defines as a signed Euclidean distance (`dist_to_worst − dist_to_ideal`, range −6.93 to +6.93 with neutral at 0 for (3,3,3)). The formula changed after the experiment was run. The directional finding (IFDS > seeds) holds in both representations, but the paper must pick one and stick to it. Recommendation: use the R/N/G geometric mean scores (1–5 scale) throughout the paper since the experiment was designed and described in those terms. Avoid citing `frontier_score` directly, or footnote the formula change.
+
+**Krippendorff's α confirmed.** research-state.md line 71: "Krippendorff's alpha 0.26-0.32 across all axes (threshold for publishable: 0.67)." The α = 0.28 figure in the final claim sentence is consistent (midpoint of 0.26–0.32).
+
+**Consensus score ρ ≈ 0 with debate-worthiness confirmed.** research-state.md line 73: "debated questions (mixed correct/incorrect verdicts) have the same frontier score as consensus questions (2.75 vs 2.73)." This is a direct empirical refutation of frontier_score as a debate-worthiness detector and directly supports the D+E thesis.
+
+**No new queue items to process. The D+E+F unified thesis is the final recommendation and the synthesis is complete.**
+
 ### Devil's Advocate (final check)
 
 **Strongest remaining objection:** The Log-Rank anecdote is still one qualitative example. Three families, same error — but we don't have a systematic rate of "all-models-agree, all-models-wrong" across the full 134-question corpus. The α = 0.28 figure proves they don't agree *enough*; we still need to show they agree *on the wrong things* at a measurable rate. The IFDS inversion partially supplies this (all models gave IFDS jargon higher frontier_score than genuine seeds on average), but "all models wrong in the same direction" is stronger evidence than "all models inflated in the same direction." A reviewer may accept α = 0.28 as evidence that consensus is unreliable without accepting that disagreement is informative.
