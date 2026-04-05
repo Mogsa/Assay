@@ -449,6 +449,78 @@ All five findings converge on the same position: **frontier evaluation requires 
 
 ---
 
+## OVERNIGHT SYNTHESIS ADDENDUM — 2026-04-05
+
+*(All 5 queue items were complete from the previous run. This pass adds: fresh literature search results, honest complications from the primary data, and a sharpened final assessment.)*
+
+---
+
+### New Literature From This Run
+
+Two categories of new papers emerged from targeted searching:
+
+**Directly supporting the D+E+F thesis:**
+
+- **"Beyond Consensus: Mitigating the Agreeableness Bias in LLM Judge Evaluations" (arXiv 2510.11822, Oct 2025):** LLM judges achieve ~96% True Positive Rate (correctly identifying valid outputs) but <25% True Negative Rate (catching invalid ones). This is the agreeableness bias quantified — judges almost never say "bad," so consensus converges on "good" even when the content is wrong. This precisely maps our IFDS inversion finding: the jargon-loops look valid (low perplexity, formal structure), so all judges TPR-fire and give high scores. Genuine frontier content that violates expected patterns triggers TNR failure. Highly citable for Candidate A.
+
+- **"When Judgment Becomes Noise: How Design Failures in LLM Judge Benchmarks Silently Undermine Validity" (arXiv 2509.20293, Sept 2025):** Arena-Hard Auto shows >90% unexplained variance with cross-factor correlations above 0.93 — judges agree but are systematically wrong. The paper explicitly argues consensus is a false reliability signal. This is the independent-benchmark confirmation of our Candidate D claim, from a different evaluation domain.
+
+- **"Are We on the Right Way to Assessing LLM-as-a-Judge?" (arXiv 2512.16041, Dec 2025):** Critical survey paper questioning whether the consensus-seeking paradigm is valid. Identifies inter-annotator disagreement as an unresolved challenge. Strategically useful: cite this as the "field is beginning to notice" paper to justify why a position paper is timely.
+
+- **arXiv 2604.00445 (April 2026):** Very recent (post-queue) paper on truth-aligned uncertainty estimation across Qwen and Llama families — shows persistent factual verification failure across model families. Directly supports Finding 5/F (factual checking fails hardest).
+
+**Potential threats to the thesis (honest accounting):**
+
+- The literature search turned up no paper that challenges "disagreement as frontier signal" directly — but the primary data surfaced two complications the literature search could not know about (see below).
+
+---
+
+### Honest Complications From Primary Data
+
+Two findings from the codebase documentation complicate the D+E+F thesis and need honest treatment in the paper:
+
+**Complication 1: Krippendorff's alpha is poor across all axes.**
+
+From the rating analysis in the dissertation: α_R=0.257, α_N=0.285, α_G=0.319. All fall below the 0.67 threshold conventionally required for publishable inter-rater reliability. A NeurIPS reviewer will immediately notice this and ask: "If overall inter-rater agreement is at chance-adjacent levels, how can you claim disagreement is a *signal* rather than noise?"
+
+**The rebuttal:** The D+E claim is not about average agreement — it is about the *extremes of the disagreement distribution*. Low average α is consistent with: most items being rated similarly (moderate agreement, moderate disagreement), with a tail of items where disagreement is specifically concentrated and specifically informative. The "calibrated disagreement" proposal in Finding 4 explicitly uses only well-calibrated raters (Gemini Flash + Opus) and focuses on the top decile of disagreement — not the aggregate. A position paper should address this directly: "Low overall α is expected when rater heterogeneity is high (which our data shows, with Haiku MAE=1.09 and Qwen's G=5 pathology). The frontier signal comes from *excess* disagreement among calibrated judges, not average disagreement across all judges. We propose filtering by rater calibration before computing the disagreement metric."
+
+The poor α also supports a different framing: *the reason AI judge panels have poor inter-rater reliability is structural, not calibrational* — judges aren't miscalibrated in a correctable way; they are fundamentally encoding different knowledge representations. The low α is itself evidence for the "correlated errors for different reasons" mechanism in Finding 3/D.
+
+**Complication 2: "Debated questions" scored identically to consensus questions (frontier_score 2.69 vs 2.69).**
+
+The dissertation reports that questions generating genuine debate among agents on the platform (what the document calls "mixed verdicts") had frontier scores indistinguishable from consensus questions. This seems to directly challenge "disagreement → frontier."
+
+**Critical distinction:** "Debated questions" on the Assay platform = questions where different agents *argued different positions in written answers*. "Inter-rater R/N/G variance" = different numerical scores on the rigour/novelty/generativity rubric. These are measuring different things. An agent might write a long answer that argues for a position while still giving R=3/N=3/G=3 on the rating rubric. The 2.69 vs 2.69 finding is about *platform-level debate* (qualitative disagreement in text), not about *rating-level disagreement* (quantitative variance in R/N/G scores). The D+E thesis is specifically about quantitative R/N/G disagreement in evaluation ratings — not about whether agents wrote contrasting answers.
+
+This distinction matters enough to flag in the paper. Platform-level debate and evaluation-level disagreement are different signals. Our claim is about evaluation disagreement only.
+
+---
+
+### Sharpened Final Assessment After This Run
+
+The D+E+F unified thesis survives the complications above, with two required qualifications:
+
+**Required qualification 1 (addressing Krippendorff):** The frontier signal is *excess calibrated disagreement* — disagreement among raters with verified human-alignment (MAE < some threshold), focused on the top decile of the distribution. Not raw inter-rater variance. The paper should report α for the calibrated-rater subset (Gemini Flash + GPT-5.4 mini + Opus) separately from the full panel.
+
+**Required qualification 2 (addressing the 2.69 finding):** Distinguish platform debate from evaluation disagreement. The former (agents arguing) is not the signal; the latter (divergent R/N/G ratings) is. The paper should be explicit: "We use inter-judge *rating variance* (std of frontier_score), not any qualitative measure of agent debate."
+
+**Sharpened one-sentence position (incorporating both qualifications):**
+
+> *Among well-calibrated AI judges, high inter-rater variance on the Rigour axis is a more reliable signal of genuine frontier content than any consensus score — because Rigour evaluation requires domain-specific factual verification that is inconsistently encoded across model families, and when well-calibrated judges disagree about correctness, that disagreement marks the exact boundary where human evaluation is irreplaceable.*
+
+**Why this is sharper than the previous recommendation:**
+1. "Well-calibrated" addresses the Krippendorff objection up front
+2. "Rigour axis specifically" is more falsifiable than "disagreement generally" — it makes a testable prediction (R-axis variance > N-axis variance as frontier predictor)
+3. "Inconsistently encoded across model families" invokes the Condorcet mechanism directly
+4. "Irreplaceable" is the operational punchline: this isn't "route to a stronger AI judge," it's "route to human review"
+
+**The surprise score for this sharpened claim: 4/5.**
+
+The "well-calibrated disagreement on factual-checking axes is a frontier detector" claim combines four ideas that individually exist in the literature (JudgeBench, aleatoric uncertainty, FLASK, No Free Labels) but have never been assembled into a single falsifiable diagnostic tool. The testable prediction — that R-axis std is more predictive of human frontier labels than N-axis std or mean frontier_score — is original, checkable in our data, and has a clean theoretical explanation. A NeurIPS reviewer who rejects it would have to explain why the factual-verification failure mode doesn't concentrate in the Rigour axis — which requires engaging with the mechanism, not just dismissing the finding.
+
+---
+
 ## FINAL SYNTHESIS UPDATE — 2026-04-05
 
 *Re-read all five findings and cross-checked against research-state.md. Two data points not yet fully incorporated into the recommendation:*
