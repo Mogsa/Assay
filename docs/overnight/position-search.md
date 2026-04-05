@@ -1196,4 +1196,126 @@ This is more falsifiable, more operational, and more defensible than the version
 
 **Recommendation: write the paper. The thesis is complete, the mechanism is clean, the complication (calibrated-rater filtering required) is honest and addressable. The literature gap remains open as of April 2026. Ship.**
 
+---
+
+## EIGHTH PASS — 2026-04-05
+
+*(All 5 queue items confirmed complete. This pass: fresh April 2026 literature sweep, engagement with one direct challenge paper not yet cited, and final candidate position update.)*
+
+---
+
+### New Literature From This Pass
+
+**arXiv:2601.19532 — "Benchmarks Saturate When The Model Gets Smarter Than The Judge"** (January 2026)
+
+This is the strongest challenge paper found across all eight passes. Its central finding: on hard mathematical problems, a dedicated math judge (Omni-Judge) is wrong in **96.4% of its disagreements** — meaning that on genuinely hard content, judge disagreement overwhelmingly reflects judge *incompetence*, not frontier content. The paper argues that when a model surpasses the judge's own competence ceiling, inter-judge variance becomes dominated by noise, not signal.
+
+**How this challenges D+E+F:** If judge disagreement on hard content is mostly incompetence noise, then our "calibrated-judge N-axis std = frontier signal" claim is undermined. The 4/4 FRONTIER data points from the top-10 contested list could be selecting items where calibrated judges are simply wrong in different ways, not genuinely uncertain about the same property.
+
+**The rebuttal — and why it makes the thesis sharper:**
+
+1. The Omni-Judge finding (96.4% wrong on disagreements) applies to a *single* math judge operating at ceiling on a *closed-answer* math benchmark. Our setup is different in two structural ways: (a) we use a calibrated *subset* of judges with verified human-alignment, not ceiling-breaching models; (b) we are evaluating *questions*, not *answers to questions with known solutions*. A calibrated judge with MAE=0.53 on 29 human items is demonstrably not operating at its competence ceiling on our content.
+
+2. More importantly, the 96.4% finding actually supports D — it says that when the judge lacks competence, disagreement is noise. This is exactly why the calibrated-rater filter is mandatory. Without filtering, disagreement is contaminated by incompetent judges (exactly what the 7th pass's IFDS/N-std overlap finding showed). *With* filtering (Gemini Flash + GPT-5.4 mini + Opus, all MAE ≤ 0.97 on human labels), the signal-to-noise improves.
+
+3. The claim is not "any AI judge disagreement = frontier signal." It is "disagreement among *calibrated* judges = frontier signal." The 2601.19532 challenge attacks the stronger claim (raw disagreement = frontier), not the weaker claim (calibrated disagreement = frontier). The D+E+F thesis survives; the framing must be explicit.
+
+**Add to the paper's "Limitations" section:** "Judge incompetence is a confound that calibrated-rater filtering addresses but cannot eliminate. On content that genuinely surpasses all available judges' competence ceilings — what arXiv 2601.19532 shows for frontier-tier math benchmarks — disagreement becomes dominated by incompetence noise. Our calibration protocol (MAE < threshold on human-labeled items) identifies judges operating within their reliable range; the frontier probe applies only to this calibrated regime."
+
+**Devil's Advocate:** Even with calibrated judges, the 4/4 frontier item finding rests on just those 4 data points. The 2601.19532 challenge exposes the mechanism by which this sample could be unrepresentative: it's possible that all 4 items were selected into the high-disagreement top-10 precisely because the calibrated judges were *wrong* in different ways (incompetence noise), not because they were *uncertain* about a genuine property. Without the full 29-item Spearman ρ, this possibility cannot be ruled out. The position paper must flag this as a limitation and the full ρ analysis as essential future work.
+
+---
+
+**arXiv:2602.16610 — "Who Can We Trust? LLM-as-a-Jury for Comparative Assessment"** (February 2026)
+
+Proposes BT-sigma: an extension of the Bradley-Terry model that jointly infers item quality rankings and per-judge discriminability (reliability). The key finding: weighting judges by calibrated discriminability consistently outperforms naive consensus averaging. Poorly discriminating judges are effectively down-weighted; well-calibrated judges carry the ranking signal.
+
+**How this supports D+E+F:** BT-sigma is the formal analog of our "calibrated-rater subset" proposal — it replaces binary inclusion/exclusion (our MAE filter) with a continuous reliability weighting. The method independently confirms that differential judge reliability matters and that consensus averaging is inferior to reliability-weighted aggregation. This is the first paper we've found that provides a *working implementation* of the calibration-weighted aggregation approach our position prescribes. The D+E+F operational proposal (use calibrated-judge N-axis std) can now cite BT-sigma as an independent engineering realization of the same principle.
+
+**Implication for the paper:** Cite BT-sigma as a complementary approach in the "Operational Prescription" section. Our proposal (N-axis std among calibrated judges as frontier detector) and BT-sigma (reliability-weighted ranking) address different parts of the problem: BT-sigma improves the ranking metric; our disagreement metric identifies which items need human review. They are compatible, not competing.
+
+---
+
+**arXiv:2604.00259 — "LLM Essay Scoring Under Holistic and Analytic Rubrics"** (March 31, 2026)
+
+Multi-trait rubric scoring (analogous to our R/N/G axes) produces much lower inter-judge agreement (~0.6 QWK) than holistic scoring. Models show systematic per-trait miscalibration — stable negative bias on lower-order traits. Key implication for D+E+F: inter-judge disagreement on individual axes (like our N-axis) partially reflects *systematic per-model miscalibration*, not only content properties. This is consistent with the 7th pass finding that IFDS N-axis disagreement is partially driven by Qwen's rubric misapplication (interpretating "narrow" as low-N vs Gemini interpreting "formally structured" as high-N).
+
+This paper adds external validation that multi-trait rubric evaluation is harder than holistic evaluation, and that per-trait calibration errors are stable (systematic, not random). Stable per-trait miscalibration is exactly what the MAE calibration filter catches — the filter identifies models whose per-axis ratings are systematically offset from human judgment, and excludes them from the disagreement metric.
+
+---
+
+### Honest Accounting: What This Pass Changed
+
+One material update: the **2601.19532 challenge** is the sharpest objection to the "disagreement = frontier signal" claim found in any pass. It must be directly addressed in the paper (the rebuttal above is the content for that). The limitation it exposes — that calibrated-rater filtering is necessary but not sufficient to eliminate incompetence noise — had been acknowledged in passes 7 (the IFDS N-std overlap problem) but not traced to the explicit mechanism (judge competence ceiling). The paper should now explicitly name this mechanism and explain why the calibrated MAE filter addresses it in our experimental setup.
+
+No other material changes to the recommendation. The 2601.19532 challenge narrows the scope of the claim (calibrated judges only; not raw panel disagreement) without defeating it.
+
+---
+
+### Updated CANDIDATE POSITIONS (Final — Eighth Pass)
+
+All 5 queue items are complete. This is the definitive assessment after eight passes, two direct data verifications, and cross-checking against 30+ independent literature threads.
+
+---
+
+**Candidate D+E+F unified (TOP RECOMMENDATION — unchanged)**
+
+**One-sentence claim:** Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content because they violate the Condorcet independence assumption via shared training corpora — model families make identical Rigour errors (consensus amplifies shared misconceptions) while their Novelty disagreements among calibrated judges identify genuine frontier content (the informative signal discarded by averaging).
+
+**Evidence for:**
+- α = 0.26–0.32 across all three axes, confirmed against research-state.md (well below 0.67 publishable threshold)
+- Three model families (Claude, Gemini, GPT) independently called Lovett's upper bound a "proof barrier" — correlated R-axis error from shared training corpus
+- 4/4 unambiguous human-labeled FRONTIER items in top-10 contested list show calibrated-judge N-axis std as highest or tied-highest axis; the 1 failure is Haiku outlier (MAE=1.09, excluded by calibration filter)
+- consensus frontier_score ρ ≈ 0 with debate-worthiness (2.75 vs 2.73 — confirmed in research-state.md)
+- "Great Models Think Alike" (arXiv 2502.04313, ICML 2025 spotlight): as models become more capable, their errors become more similar
+- arXiv 2602.22413: formal proof Condorcet accuracy degrades under correlated information sources
+- arXiv 2603.25450: cross-model disagreement detects confident errors at AUROC 0.75 (vs AUROC 0.59 for within-model self-consistency)
+- EMNLP 2025 Oral (arXiv 2510.12817): annotator disagreement is epistemic signal, not noise — independent NLP community convergence on E thesis
+- 12+ additional corroborating papers from passes 1–7 (JudgeBench, Trust-or-Escalate, DiscoUQ, ReviewerToo, RINoBench, arXiv 2604.00085 clinical domain, etc.)
+
+**Evidence against:**
+- N = 4 unambiguous human-labeled FRONTIER items in the top-10 contested list — underpowered; full Spearman ρ across all 29 human-labeled items not yet computed
+- arXiv 2601.19532: when judges surpass competence ceiling, disagreement is incompetence noise (96.4% wrong on hard math) — calibration filter necessary but raises a circularity: calibration requires human labels, which assumes the problem we're trying to solve
+- IFDS jargon items show comparable N-std/R-std ratio to frontier items in raw calculations (7th pass finding) — calibrated-rater filter required for the signal to discriminate
+- Log-Rank Conjecture correlated error is a single anecdote, not a systematic rate of "all-models-agree-all-models-wrong" across 134 items
+- The formula discrepancy (geometric mean 3.21/2.37 vs production frontier_score 2.91/2.45) remains an unresolved presentation choice — the paper must commit to one
+
+**Surprise score: 4/5.** The combined claim (consensus is the wrong signal; calibrated disagreement is the right one; the mechanism is Condorcet independence failure from shared corpora) inverts a standard assumption held by every multi-model panel paper. Most NeurIPS reviewers use or recommend multi-model panels; being told the inter-judge variance they discard is more informative than the consensus score they report would require re-evaluation of prior work.
+
+---
+
+**Candidate B: Scale Anti-Correlates with Evaluation Quality (backup)**
+
+**One-sentence claim:** Gemini Flash (free) outperforms Claude Opus ($15/M) as a frontier judge by 2× on human-aligned MAE — model scale anti-correlates with evaluation quality via sycophancy amplification and self-recognition bias.
+
+**Evidence for:** MAE = 0.53 (Gemini Flash) vs 0.97 (Opus) on 29-item human ground truth; Semantic Capacity Asymmetry (arXiv 2601.22588); sycophancy scaling (arXiv 2310.13548, 2411.15287); "Great Models Think Alike" (ICML 2025 spotlight).
+
+**Evidence against:** N = 29 is thin; cross-family comparison confounds size with training methodology; Haiku (cheapest Anthropic) is WORST within the Anthropic family (MAE=1.09), undermining the monotonic size-anti-correlation story; Gemini's training objective (information retrieval) may explain its novelty-detection advantage independently of size.
+
+**Surprise score: 4/5.** Strongly counterintuitive to practitioners. Weakened by the sample size and confound.
+
+---
+
+**Candidate A: Novelty Impossibility (supporting evidence, not standalone)**
+
+**One-sentence claim:** LLM judges structurally invert novelty rankings — IFDS jargon outscores genuine frontier math (3.21 vs 2.37 geometric mean, across all 5 model families) — because novelty assessment requires OOD detection relative to the training distribution, which is formally impossible without external anchors.
+
+**Evidence for:** IFDS > Seeds inversion confirmed across all 5 model families; perplexity-preference mechanism (arXiv 2410.21819); OOD detection impossibility (NeurIPS 2021); RINoBench (arXiv 2603.10303, March 2026) now benchmarks AI novelty judgment as a distinct open problem; arXiv 2409.16605 shows LLMs conflate novelty with clarity of contribution statement.
+
+**Evidence against:** FrontierMath seeds (3.57) partially recover expected ordering vs IFDS (3.21) — inversion holds most strongly for HLE seeds, which are hard exam questions (not genuinely open problems), so the inversion may be correct for HLE seeds; CALM (NeurIPS 2024) has partially anticipated this mechanism.
+
+**Surprise score: 3/5.** The mechanism (OOD detection impossibility) is theoretically tight. The inversion (not just downrating — actual rank reversal) is the publishable empirical claim. Strongest as supporting evidence for D+E+F rather than as a standalone thesis.
+
+---
+
+### Final Top Recommendation
+
+**D+E+F unified is the recommendation, unchanged across eight passes.** The 2601.19532 challenge narrows the scope of the operational claim (calibrated judges only) but does not defeat it. The required qualification — *"calibrated-rater N-axis std, not raw inter-judge variance"* — was already mandated by pass 7's IFDS/N-std overlap finding. The 2601.19532 paper adds an independent external rationale for the same qualification.
+
+**The three-sentence case for D+E+F over the alternatives:**
+
+The central target (multi-model panels as best practice) is wrong in a *structural* way — not just calibration noise but Condorcet independence violated — making the claim more fundamental than "AI judges have biases" (A) or "bigger models are worse judges" (B). The positive alternative (calibrated-judge N-axis disagreement as frontier probe) gives practitioners a *concrete replacement metric*, not just a diagnosis. And the mechanism (correlated R errors from shared corpora + aleatoric N divergence for genuine frontier content) is internally consistent across all five findings, each of which independently supports one component of the thesis.
+
+**The paper has everything it needs: theoretical argument, empirical corroboration, mechanism, operational prescription, honest limitations, and a falsifiable prediction. Write the paper.**
+
 
