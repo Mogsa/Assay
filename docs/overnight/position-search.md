@@ -645,6 +645,40 @@ This sharpens the Candidate D argument in a specific, measurable way: the eviden
 
 ---
 
+### Final Run Synthesis — 2026-04-06
+
+**Higher-level unification not yet fully articulated:**
+
+Re-reading all five findings together, the unifying claim beneath D+E+F is sharper than "disagreement is the frontier signal." It is this: **AI evaluation panels are calibrated to the training distribution, and frontier content is defined as content that escapes the training distribution — so the paradigm's validity is structurally anti-correlated with the domain where it is most urgently needed.** Every finding is a different face of this one structural failure. Finding 1: novelty rankings invert because judges reward in-distribution formalism. Finding 2: large models are worse judges because optimization pressure pushes them deeper into the training distribution. Finding 3: diverse panels produce correlated errors because their errors are draws from the same training distribution. Finding 4: disagreement marks where the distribution runs out. Finding 5: Rigour fails hardest because factual-checking is the axis most dependent on out-of-distribution domain knowledge. The thesis is not "consensus is unreliable" — it is "consensus is reliably wrong in proportion to content frontier-ness."
+
+**New angle: optimal panel design from Findings 2 and 3 together.**
+
+Finding 2 (cheapest-is-best) and Finding 3 (convergent errors) together imply a non-obvious prescription for panel design: **the panel that maximizes disagreement informativeness is not the panel of the most capable models, nor the panel of the most diverse architectures, but the panel of the most calibration-heterogeneous models.** If you want disagreement that means something, you want judges that fail in structurally different ways — which requires selecting on MAE distribution against human ground truth, not on benchmark capability scores or provider diversity. Concretely: Gemini Flash (MAE=0.53, best calibrated) and Claude Opus (MAE=0.97, over-penalizes novelty) disagree for different reasons — Gemini is optimized for retrieval-like novelty detection, Opus applies excess skepticism to claims of novelty. Their disagreement on a question is therefore more epistemically informative than two models with similar MAE profiles disagreeing. The key design insight: **calibration heterogeneity is a better selection criterion for panel members than architectural diversity.** This is not in any paper we have cited, and it is directly derivable from our data. It is the operational prescription that converts Findings 2 and 3 from two separate observations into a design rule.
+
+**Devil's Advocate — hardest version not yet fully addressed:**
+
+Every prior Devil's Advocate in this document identifies weakness in the evidence (N=29, one anecdote, thin α). The harder objection is structural: **the thesis is unfalsifiable as stated.** "Inter-judge disagreement is a better frontier signal than consensus" can always be saved by saying that any failure case used a "poorly calibrated" rater, which we exclude. The Haiku case (the one failure in Finding 4) was dismissed as a "poorly-calibrated rater outlier." But the criterion for "well-calibrated" is MAE against the same 29 human labels that define the ground truth — so the claim reduces to: "disagreement among judges who agree with humans is a better frontier signal," which is circular. We defined calibration by human agreement and claim disagreement among human-aligned judges predicts human-labeled frontier content. A reviewer will say: of course — you've just re-described human agreement from a different angle. The counter requires showing that the Gemini Flash + Opus disagreement signal has *prospective* validity — it predicts human labels on items *not* used to calibrate the raters. We do not have this split currently. The paper must either acknowledge this circularity explicitly or preregister a held-out validation to address it.
+
+**Updated CANDIDATE POSITIONS — Final Rankings:**
+
+| Candidate | Claim | Surprise | Evidence | Novelty | Overall | Change from prior run |
+|-----------|-------|----------|----------|---------|---------|----------------------|
+| **D+E+F unified** | Consensus is calibrated to the training distribution; disagreement marks where the distribution ends; frontier content is defined as content past that boundary — the paradigm is anti-correlated with the domain where it is needed | 4/5 | Strong (α=0.28; 4/5 human labels; Log-Rank anecdote; 8+ independent papers) | High | **#1** | Unchanged; circularity objection added above must be addressed |
+| **B (Scale anti-correlation)** | Most capable models are worst frontier judges, because optimization pressure embeds them deepest in the training distribution | 4/5 | Moderate (N=29; cross-family confound) | High | #2 | Unchanged; gains new theoretical frame from unification above |
+| **C (Optimal panel design — NEW)** | Calibration heterogeneity is a better panel selection criterion than architectural diversity: select judges whose MAE profiles differ, not whose parameter counts or providers differ | 5/5 | Weak (not yet tested directly) | Very high | #3 (new entry) | New; directly derivable from B+D together |
+| **A (Novelty inversion)** | LLM judges reward novelty-resembling formalism over genuine novelty | 3/5 | Moderate (IFDS > FrontierMath is partial) | Medium | #4 | Unchanged |
+| **F standalone** | Rigour fails harder than Generativity — the pattern-matching vs factual-checking asymmetry | 3/5 | Moderate (4/5 models; 2 exceptions) | Medium | #5 | Unchanged |
+
+**Final TOP RECOMMENDATION:**
+
+(a) **Abstract sentence:** "Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content — one-third the publishable reliability threshold — and we show this is structural: because frontier topics are discussed in small, densely-cited corpora that all capable models have read equally, error independence fails (three model families independently made the identical terminological error on the Log-Rank Conjecture), and the inter-judge disagreement the standard paradigm discards is a more reliable frontier detector than the consensus score it produces."
+
+(b) **Two most important citations:** (1) arXiv 2502.04313 (ICML 2025 spotlight, "Great Models Think Alike") — provides the CAPA metric showing error convergence scales with model capability, giving the correlated-errors claim both theoretical grounding and an independent empirical measure; (2) arXiv 2410.12784 (JudgeBench, ICLR 2025) — provides systematic evidence at scale that judge divergence predicts item difficulty, validating the disagreement-as-signal claim outside our own dataset.
+
+(c) **One number that will land hardest with a NeurIPS reviewer:** Krippendorff's α = 0.28 across all axes for a 5-model panel on 134 frontier questions, against a publishable threshold of α ≥ 0.67. This number appears in the first paragraph, requires no context to interpret, and immediately establishes why the paper exists. Every methodological claim that follows is an explanation of that number.
+
+---
+
 ### Final Audit: Raw Data Inconsistencies and April 2026 Literature — 2026-04-05
 
 **Purpose:** All five queue items were complete at the start of this run. This pass does three things: (1) corrects a material inconsistency in how the primary data is cited across findings; (2) surfaces the deepest theoretical reversal in the data that previous passes understate; (3) adds four genuinely new April/late-March 2026 papers.
