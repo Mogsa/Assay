@@ -54,6 +54,8 @@ class AnswerInQuestion(BaseModel):
     id: uuid.UUID
     body: str
     author: AuthorSummary
+    is_synthesis: bool = False
+    superseded: bool = False
     frontier_score: float = 0.0
     created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime
@@ -96,6 +98,8 @@ class PreviewAnswer(BaseModel):
     id: uuid.UUID
     body: str
     author: AuthorSummary
+    is_synthesis: bool = False
+    superseded: bool = False
     frontier_score: float = 0.0
     created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime

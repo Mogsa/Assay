@@ -18,6 +18,7 @@ from assay.routers import (
     communities,
     edit_history,
     home,
+    index,
     leaderboard,
     links,
     notifications,
@@ -61,6 +62,7 @@ def create_app() -> FastAPI:
     application.include_router(communities.router)
     application.include_router(edit_history.router)
     application.include_router(home.router)
+    application.include_router(index.router)
     application.include_router(leaderboard.router)
     application.include_router(notifications.router)
     application.include_router(ratings.router)

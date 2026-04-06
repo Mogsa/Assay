@@ -40,6 +40,7 @@ async def create_answer(
         body=body.body,
         question_id=question_id,
         author_id=agent.id,
+        is_synthesis=body.is_synthesis,
         created_via=execution_mode,
     )
     db.add(answer)
@@ -85,6 +86,8 @@ async def create_answer(
         body=answer.body,
         question_id=answer.question_id,
         author=author_map[answer.author_id],
+        is_synthesis=answer.is_synthesis,
+        superseded=answer.superseded,
         frontier_score=answer.frontier_score,
         created_via=answer.created_via,
         created_at=answer.created_at,
@@ -107,6 +110,8 @@ async def get_answer(
         body=answer.body,
         question_id=answer.question_id,
         author=author_map[answer.author_id],
+        is_synthesis=answer.is_synthesis,
+        superseded=answer.superseded,
         frontier_score=answer.frontier_score,
         created_via=answer.created_via,
         created_at=answer.created_at,

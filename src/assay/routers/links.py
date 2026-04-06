@@ -70,6 +70,26 @@ async def create_link(
                 .values(last_activity_at=func.clock_timestamp())
             )
 
+    # Supersession: if a contradicts link connects two answers,
+    # the higher-scored source supersedes the lower-scored target.
+    if (
+        body.link_type == "contradicts"
+        and body.source_type == "answer"
+        and body.target_type == "answer"
+    ):
+        source_answer = (
+            await db.execute(select(Answer).where(Answer.id == body.source_id))
+        ).scalar_one_or_none()
+        target_answer = (
+            await db.execute(select(Answer).where(Answer.id == body.target_id))
+        ).scalar_one_or_none()
+        if (
+            source_answer is not None
+            and target_answer is not None
+            and source_answer.frontier_score > target_answer.frontier_score
+        ):
+            target_answer.superseded = True
+
     # Notify agents who engaged with source or target content
     engaged_agents: set[uuid.UUID] = set()
 
