@@ -326,6 +326,46 @@ Three additional papers confirmed by the completed search agent (findings integr
 
 ---
 
+### Novel Contribution Gaps Confirmed + New Evidence for D+E+F — 2026-04-06
+
+**Purpose of this entry:** Final literature sweep confirming the three cleanest novel-contribution gaps available to the paper, and integrating one new March 2026 paper that partially covers Gap 3 but in a way that sharpens rather than closes the D+E+F argument.
+
+**Gap 1 — Debate-worthiness prediction (genuine gap, clean contribution):**
+
+Our platform data shows frontier_score predicts whether a question gets links/spawns follow-up (Spearman ρ=0.62, 0.55) but does NOT predict whether a question generates genuine debate (ρ≈0, mean frontier_score of debate-worthy questions ≈ 2.75 vs. consensus questions ≈ 2.73). No existing paper tests this decoupling — whether AI evaluation scores are predictive of debate propensity.
+
+The closest work is "AI Debate Aids Assessment of Controversial Claims" (ICML 2025, arXiv 2506.02175), which uses AI-structured debate as a *resolver* of controversy, and "Debatable Intelligence" (already cited, arXiv 2506.05062), which evaluates judges on debate transcripts. Neither asks the prior question: can a quality score *ex ante* identify which questions will be intellectually contested? Our finding that the current frontier_score cannot make this distinction is a direct contribution. The mechanistic explanation (already in Finding 5 addendum): AI judges model confidence, not contestedness; they cannot detect that a question sits in genuinely disputed epistemic territory.
+
+**Implication for the paper:** This is a new failure mode beyond "judges miscalibrate on frontier content." Judges don't just rate frontier content wrong — they are blind to a qualitatively distinct property of frontier content (debate-worthiness), and the property they do detect (linking potential) is a different dimension entirely. The paper can claim: *AI quality scores capture "spawn new questions" (generativity) but are insensitive to "generate substantive disagreement" (contestedness) — and these are different properties of intellectual value.*
+
+**Gap 2 — Question rigour vs. answer rigour asymmetry (genuine gap, clean contribution):**
+
+The entirety of the LLM-as-judge literature treats the evaluation target as a *response* or *answer* to a known task — there is always a ground truth or reference against which correctness can be checked, even if imperfectly. Our experiment evaluated research *questions* on Rigour — where no external referent exists to verify whether the question's technical premise is itself correct. No paper isolates this asymmetry.
+
+Confirmed by a systematic survey check: Gu et al. (arXiv 2412.05579, comprehensive LLM-as-judge survey, 150+ papers) and Chang et al. (arXiv 2411.15594) both uniformly assume the evaluated object is an answer/response. The FLASK paper (ICLR 2024 Spotlight) decomposes evaluation into 12 skills, all anchored to answer quality. The "No Free Labels" paper (arXiv 2503.05061) makes the closest related argument (judge accuracy collapses when judge lacks domain knowledge), but still assumes an answer is the target.
+
+**Implication for the paper:** The question/answer asymmetry is the deepest theoretical contribution we can claim — it explains *why* R_error inverts for question evaluation specifically. Rigour of an answer has referents (facts, proofs, citations). Rigour of a research question does not — it requires meta-knowledge of whether the question's premise is well-formed, which at the frontier is exactly the knowledge that is absent. This gives the calibration gradient inversion (Finding 5/F) a specific mechanistic grounding that the existing literature cannot offer.
+
+**Gap 3 — R-axis disagreement as frontier signal (partially covered, argument extended):**
+
+A March 2026 paper was found that overlaps with Finding 4/E when applied specifically to correctness/Rigour: "Cross-Model Disagreement as a Label-Free Correctness Signal" (Gorbett & Jana, arXiv 2603.25450, March 2026). They operationalize Cross-Model Perplexity (CMP) and Cross-Model Entropy (CME) using cross-model disagreement specifically on *correctness predictions*, achieving AUROC 0.75 vs. 0.59 for within-model baselines on MMLU. This is the closest existing work: they use disagreement on a correctness axis as a signal for hard examples.
+
+**How our argument extends beyond Gorbett & Jana:**
+1. **Correlated failure mechanism:** They treat cross-model disagreement as random variation. We argue the relevant disagreements on frontier content are *correlated errors from shared training-data co-occurrence* — three model families made the SAME wrong call on the Log-Rank Conjecture, which is not random cross-model noise but a shared blind spot. The distinction matters: random noise is reducible (add more models); shared blind spots are not (same literature, same error).
+2. **Human handoff prescription:** They propose model abstention when CMP/CME is high. We propose *human review routing* — the distinction is that for frontier content the disagreement is aleatoric (no stronger AI judge has the answer), so the correct response is escalation to human expertise, not abstention. Gorbett & Jana's framework assumes a stronger oracle exists; ours assumes it doesn't for genuinely frontier content.
+3. **Multi-dimensional context:** They test on MMLU (single correctness dimension). We show this principle applies in a multi-axis evaluation framework (R/N/G), and that disagreement on the Rigour axis specifically is the best frontier probe — the other axes (N, G) produce lower-signal disagreement because they're pattern-matching tasks.
+
+**Devil's Advocate on all three gaps:**
+
+The strongest objection to claiming all three as "novel contributions" is that NeurIPS reviewers may see them as incremental framings of known problems rather than genuinely new claims. Specifically:
+- Gap 1 (debate-worthiness): A reviewer could argue "of course quality scores don't predict debate — debate is about stakeholder disagreement, not intellectual quality." The counter: our data shows this empirically in a controlled setting with AI raters, and the explanation (AI judges model confidence not contestedness, per arXiv 2505.19184) is theoretically grounded.
+- Gap 2 (question rigour): A reviewer could say "evaluation of open-ended questions is just a harder version of answer evaluation." The counter: it's qualitatively different — there is no retrievable ground truth against which to check the premise. This is a structural difference, not a scaling difference.
+- Gap 3 (extending Gorbett & Jana): The correlated failure and human handoff distinctions are real, but a reviewer familiar with Gorbett & Jana will ask whether we provide equal rigor. Our evidence (Log-Rank anecdote + 4/5 high-disagreement items human-labeled) is weaker than their MMLU AUROC result. We should cite them, acknowledge partial overlap, and emphasize that our contribution is in the *mechanism* (correlated failure) and *prescription* (human handoff for aleatoric uncertainty), not the basic disagreement-as-signal observation.
+
+**Net effect on the recommendation:** D+E+F unified remains the top recommendation. The new Gorbett & Jana paper (March 2026) should be cited in the E+F section as "closest existing work" — it validates the core mechanism (disagreement-on-correctness as frontier signal) while leaving the two key extensions (correlated failure, human handoff) as our specific contributions. The two genuine gaps (debate-worthiness, question/answer rigour asymmetry) are available as secondary contributions that sharpen the paper's novelty profile without requiring additional data.
+
+---
+
 ## CANDIDATE POSITIONS
 
 **Final assessment incorporating all five findings (updated 2026-04-06):**
