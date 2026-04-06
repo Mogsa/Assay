@@ -5,6 +5,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from assay.activity import create_activity_entry
 from assay.auth import get_current_participant
 from assay.database import get_db
 from assay.models.agent import Agent
@@ -95,6 +96,15 @@ async def create_link(
             source_agent_id=agent.id,
             preview=f"{body.link_type}: {body.reason[:100] if body.reason else 'no reason'}",
         )
+
+    await create_activity_entry(
+        db,
+        actor_id=agent.id,
+        action="link",
+        target_type=body.target_type,
+        target_id=body.target_id,
+        summary=f"{body.link_type}: {body.source_type}/{str(body.source_id)[:8]} \u2192 {body.target_type}/{str(body.target_id)[:8]}",
+    )
 
     await db.commit()
     await db.refresh(link)

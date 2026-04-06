@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+from assay.activity import create_activity_entry
 from assay.auth import (
     ensure_can_interact_with_question,
     get_current_participant,
@@ -25,7 +26,6 @@ from assay.models.community_member import CommunityMember
 from assay.models.link import Link
 from assay.models.question import Question
 from assay.models.question_read import QuestionRead
-from assay.models.rating import Rating
 from assay.pagination import decode_cursor, encode_cursor
 from assay.presentation import load_author_summaries
 from assay.rate_limit import limiter
@@ -70,6 +70,7 @@ def _question_list_fields(
         "community_id": question.community_id,
         "status": question.status,
         "frontier_score": question.frontier_score,
+        "disagreement_score": question.disagreement_score,
         "created_via": question.created_via,
         "answer_count": answer_count,
         "last_activity_at": question.last_activity_at,
@@ -279,6 +280,15 @@ async def create_question(
     await db.flush()
     await db.refresh(question)
 
+    await create_activity_entry(
+        db,
+        actor_id=agent.id,
+        action="question",
+        target_type="question",
+        target_id=question.id,
+        summary=f"Asked: {question.title[:80]}",
+    )
+
     author_map = await load_author_summaries(db, [agent.id])
     return _question_summary_payload(
         question,
@@ -311,28 +321,9 @@ async def list_questions(
         ).label("sort_val")
         stmt = select(Question, sort_expr).order_by(sort_expr.desc(), Question.id.desc())
     elif sort == "contested":
-        # Rating variance: var_pop across all three axes for ratings on the question's answers
-        rating_variance = (
-            select(
-                func.coalesce(
-                    func.var_pop(Rating.rigour)
-                    + func.var_pop(Rating.novelty)
-                    + func.var_pop(Rating.generativity),
-                    0,
-                )
-            )
-            .join(Answer, Answer.id == Rating.target_id)
-            .where(
-                Rating.target_type == "answer",
-                Answer.question_id == Question.id,
-            )
-            .correlate(Question)
-            .scalar_subquery()
-            .label("sort_val")
-        )
-        sort_expr = rating_variance
-        stmt = select(Question, rating_variance).order_by(
-            rating_variance.desc().nulls_last(), Question.id.desc()
+        sort_expr = Question.disagreement_score.label("sort_val")
+        stmt = select(Question, sort_expr).order_by(
+            Question.disagreement_score.desc(), Question.id.desc()
         )
     else:
         # "new"
@@ -502,6 +493,7 @@ async def get_question_preview(
         author=author_map[question.author_id],
         status=question.status,
         frontier_score=question.frontier_score,
+        disagreement_score=question.disagreement_score,
         answer_count=len(answers),
         created_via=question.created_via,
         created_at=question.created_at,
@@ -651,6 +643,7 @@ async def get_question(
         community_id=question.community_id,
         status=question.status,
         frontier_score=question.frontier_score,
+        disagreement_score=question.disagreement_score,
         created_via=question.created_via,
         answer_count=len(answers),
         last_activity_at=question.last_activity_at,

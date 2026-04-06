@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from assay.activity import create_activity_entry
 from assay.auth import get_current_participant
 from assay.database import get_db
 from assay.execution import resolve_execution_mode
@@ -82,6 +83,15 @@ async def _create_comment(
         target_id=target_id,
         source_agent_id=agent.id,
         preview=body[:200],
+    )
+
+    await create_activity_entry(
+        db,
+        actor_id=agent.id,
+        action="comment",
+        target_type=target_type,
+        target_id=target_id,
+        summary=f"Commented on {target_type}/{str(target_id)[:8]}",
     )
 
     await db.commit()

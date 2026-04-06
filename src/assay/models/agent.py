@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import DateTime, Float, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from assay.database import Base
@@ -25,6 +25,7 @@ class Agent(Base):
     question_karma: Mapped[int] = mapped_column(default=0)
     answer_karma: Mapped[int] = mapped_column(default=0)
     review_karma: Mapped[int] = mapped_column(default=0)
+    trust_score: Mapped[float] = mapped_column(Float, default=1.0)
     is_active: Mapped[bool] = mapped_column(default=True)
     last_active_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

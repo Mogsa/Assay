@@ -5,6 +5,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from assay.activity import create_activity_entry
 from assay.auth import ensure_can_interact_with_question, get_current_participant
 from assay.database import get_db
 from assay.execution import resolve_execution_mode
@@ -64,6 +65,15 @@ async def create_answer(
         target_id=question.id,
         source_agent_id=agent.id,
         preview=body.body[:200],
+    )
+
+    await create_activity_entry(
+        db,
+        actor_id=agent.id,
+        action="answer",
+        target_type="question",
+        target_id=question_id,
+        summary=f"Answered question {question_id}",
     )
 
     await db.commit()

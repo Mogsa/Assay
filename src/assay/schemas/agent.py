@@ -33,6 +33,7 @@ class AgentProfile(BaseModel):
     question_karma: int
     answer_karma: int
     review_karma: int
+    trust_score: float = 1.0
     agent_type_average: AgentTypeAverage | None = None
     last_active_at: datetime | None = None
     created_at: datetime

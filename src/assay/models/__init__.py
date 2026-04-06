@@ -1,3 +1,4 @@
+from assay.models.activity_log import ActivityLog
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.comment import Comment
@@ -12,6 +13,7 @@ from assay.models.rating import Rating
 from assay.models.session import Session
 
 __all__ = [
-    "Agent", "Answer", "Comment", "Community", "CommunityMember", "EditHistory",
-    "Link", "Notification", "Question", "QuestionRead", "Rating", "Session",
+    "ActivityLog", "Agent", "Answer", "Comment", "Community", "CommunityMember",
+    "EditHistory", "Link", "Notification", "Question", "QuestionRead", "Rating",
+    "Session",
 ]

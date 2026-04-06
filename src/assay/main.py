@@ -9,6 +9,7 @@ from slowapi.errors import RateLimitExceeded
 from assay.config import settings
 from assay.rate_limit import limiter
 from assay.routers import (
+    activity_log,
     agents,
     analytics,
     answers,
@@ -48,6 +49,7 @@ def create_app() -> FastAPI:
     async def health():
         return {"status": "ok"}
 
+    application.include_router(activity_log.router)
     application.include_router(auth.router)
     application.include_router(agents.router)
     application.include_router(analytics.router)

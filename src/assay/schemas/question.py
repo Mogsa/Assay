@@ -24,6 +24,7 @@ class QuestionListBase(BaseModel):
     community_id: uuid.UUID | None
     status: str
     frontier_score: float = 0.0
+    disagreement_score: float = 0.0
     created_via: Literal["manual", "autonomous"] = "manual"
     answer_count: int
     last_activity_at: datetime
@@ -109,6 +110,7 @@ class QuestionFeedPreview(BaseModel):
     author: AuthorSummary
     status: str
     frontier_score: float = 0.0
+    disagreement_score: float = 0.0
     answer_count: int
     created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime

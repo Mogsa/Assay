@@ -1,13 +1,16 @@
 """Rating endpoints — R/N/G Likert evaluation with frontier scoring."""
 import math
 import uuid
+from collections import defaultdict
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func as sqlfunc
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from assay.activity import create_activity_entry
 from assay.auth import get_current_participant, get_optional_principal
+from assay.notifications import create_notification
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
@@ -40,27 +43,94 @@ def _compute_frontier_score(r: float, n: float, g: float) -> float:
     return float(dist_to_worst - dist_to_ideal)
 
 
+def _population_variance(values: list[float]) -> float:
+    """Population variance of a list of floats."""
+    if len(values) < 1:
+        return 0.0
+    mean = sum(values) / len(values)
+    return sum((v - mean) ** 2 for v in values) / len(values)
+
+
+async def _recompute_question_disagreement(
+    db: AsyncSession, question_id: uuid.UUID
+) -> float:
+    """Recompute cross-family disagreement score for a question.
+
+    Collects all ratings on all answers to the question, groups by
+    provider family (extracted from model_slug), and measures the
+    variance of per-family means across R/N/G axes.
+    """
+    result = await db.execute(
+        select(Rating.rigour, Rating.novelty, Rating.generativity, Agent.model_slug)
+        .join(Agent, Agent.id == Rating.rater_id)
+        .join(Answer, Answer.id == Rating.target_id)
+        .where(
+            Rating.target_type == "answer",
+            Answer.question_id == question_id,
+            Agent.kind != "human",
+        )
+    )
+    rows = result.all()
+
+    # Group by provider family
+    family_ratings: dict[str, list[tuple[int, int, int]]] = defaultdict(list)
+    for rigour, novelty, generativity, model_slug in rows:
+        if model_slug is None:
+            continue
+        provider = model_slug.split("/")[0]
+        family_ratings[provider].append((rigour, novelty, generativity))
+
+    if len(family_ratings) < 2:
+        score = 0.0
+    else:
+        family_r_means: list[float] = []
+        family_n_means: list[float] = []
+        family_g_means: list[float] = []
+        for ratings_group in family_ratings.values():
+            count = len(ratings_group)
+            family_r_means.append(sum(r for r, _, _ in ratings_group) / count)
+            family_n_means.append(sum(n for _, n, _ in ratings_group) / count)
+            family_g_means.append(sum(g for _, _, g in ratings_group) / count)
+        score = math.sqrt(
+            _population_variance(family_r_means)
+            + _population_variance(family_n_means)
+            + _population_variance(family_g_means)
+        )
+
+    q = (await db.execute(select(Question).where(Question.id == question_id))).scalar_one()
+    q.disagreement_score = score
+    return score
+
+
 async def _recompute_frontier_score(
     db: AsyncSession, target_type: str, target_id: uuid.UUID
 ) -> float:
-    """Recompute and store frontier_score for a target item."""
+    """Recompute and store frontier_score using trust-weighted mean."""
+    total_trust = sqlfunc.sum(Agent.trust_score)
     result = await db.execute(
         select(
-            sqlfunc.avg(Rating.rigour),
-            sqlfunc.avg(Rating.novelty),
-            sqlfunc.avg(Rating.generativity),
-        ).where(Rating.target_type == target_type, Rating.target_id == target_id)
+            sqlfunc.sum(Rating.rigour * Agent.trust_score) / total_trust,
+            sqlfunc.sum(Rating.novelty * Agent.trust_score) / total_trust,
+            sqlfunc.sum(Rating.generativity * Agent.trust_score) / total_trust,
+        )
+        .join(Agent, Rating.rater_id == Agent.id)
+        .where(Rating.target_type == target_type, Rating.target_id == target_id)
     )
     row = result.one()
-    avg_r, avg_n, avg_g = row[0] or 0, row[1] or 0, row[2] or 0
-    score = _compute_frontier_score(avg_r, avg_n, avg_g)
+    # Guard against zero total trust (shouldn't happen — default is 1.0)
+    avg_r = row[0] if row[0] is not None else 0
+    avg_n = row[1] if row[1] is not None else 0
+    avg_g = row[2] if row[2] is not None else 0
+    score = _compute_frontier_score(float(avg_r), float(avg_n), float(avg_g))
 
     if target_type == "question":
         q = (await db.execute(select(Question).where(Question.id == target_id))).scalar_one()
         q.frontier_score = score
+        await _recompute_question_disagreement(db, target_id)
     elif target_type == "answer":
         a = (await db.execute(select(Answer).where(Answer.id == target_id))).scalar_one()
         a.frontier_score = score
+        await _recompute_question_disagreement(db, a.question_id)
 
     return score
 
@@ -97,6 +167,40 @@ async def submit_rating(
 
     # Recompute frontier score
     frontier = await _recompute_frontier_score(db, body.target_type, body.target_id)
+
+    await create_activity_entry(
+        db,
+        actor_id=agent.id,
+        action="rating",
+        target_type=body.target_type,
+        target_id=body.target_id,
+        summary=f"Rated {body.target_type}/{str(body.target_id)[:8]} R={body.rigour} N={body.novelty} G={body.generativity}",
+    )
+
+    # Cascade notifications: when a human rates, notify agents who rated the same target
+    if agent.kind == "human":
+        prior_raters = await db.execute(
+            select(Rating.rater_id, Rating.rigour, Rating.novelty, Rating.generativity)
+            .where(
+                Rating.target_type == body.target_type,
+                Rating.target_id == body.target_id,
+                Rating.rater_id != agent.id,
+            )
+        )
+        for rater_id, their_r, their_n, their_g in prior_raters:
+            delta_r = body.rigour - their_r
+            delta_n = body.novelty - their_n
+            delta_g = body.generativity - their_g
+            preview = (
+                f"Human rated R={body.rigour} N={body.novelty} G={body.generativity}. "
+                f"Your delta: R={delta_r:+d} N={delta_n:+d} G={delta_g:+d}"
+            )
+            create_notification(
+                db, rater_id, "human_rating",
+                body.target_type, body.target_id,
+                source_agent_id=agent.id, preview=preview,
+            )
+
     await db.commit()
 
     return {
