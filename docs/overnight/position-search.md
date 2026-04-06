@@ -2246,3 +2246,18 @@ Proposes RL-based debiasing of LLM judges. Key finding for our paper: RLHF align
 **arXiv 2501.00274 — "LLM-Rubric: A Multidimensional, Calibrated Approach to Automated Evaluation" (ACL 2024)**
 Evaluates dialogue systems on 9 dimensions and shows a calibration network combining LLM dimension scores outperforms uncalibrated multi-dimensional scoring by 2×. Does not directly report inter-dimension correlations but the calibration gain implies raw LLM multi-axis scores are not optimally independent. Relevant to Q2 axis-independence addendum: if axes were genuinely independent, a linear calibration network would not improve over raw scores — the improvement is evidence of axis entanglement. Cite as independent support for the N≈G collapse finding.
 
+
+---
+
+### Literature Addendum — Scale Nuance Papers (parallel agent run 2026-04-06)
+
+*(Two papers from parallel search that nuance Candidate B / scale anti-correlation claim — not yet cited)*
+
+**arXiv 2403.02839 — "Fine-tuned Judge Model is not a General Substitute for GPT-4" (ACL Findings 2025)**
+Studies JudgeLM, PandaLM, Auto-J, Prometheus against GPT-4. Smaller fine-tuned judges match or exceed GPT-4 *within their training domain* but collapse on OOD evaluation (e.g., a pairwise-trained judge used for pointwise scoring), and sometimes perform worse than random on adversarial sets. **Critical nuance for our Candidate B:** Gemini Flash is NOT a fine-tuned judge — it's a general-purpose model. This paper's finding (smaller is better only in-domain) does not contradict our result; Gemini Flash's superiority may reflect better retrieval-optimized training, not scale effects. Use to pre-empt "smaller general models are better judges" as an overclaim.
+
+**arXiv 2310.17631 — "JudgeLM: Fine-tuned Large Language Models are Scalable Judges" (ICLR 2025 Spotlight)**
+Claims 7B models can surpass GPT-3.5 and approach GPT-4 on in-domain judge tasks. The "smaller can work" claim, constrained to in-domain settings. Together with 2403.02839, these papers bracket the scale finding: neither confirms "smaller is generally better." The safest Candidate B framing: "model scale within a provider does not predict evaluation quality for frontier content; training methodology (RLHF optimization, retrieval tasks) predicts it better than parameter count."
+
+**Bottom line for the paper:** Candidate B should not lead with "cheaper/smaller is better" — that overclaims and JudgeBench (arXiv 2410.12784, already cited) directly contradicts it. Lead instead with the mechanistic claim (sycophancy + RLHF + self-recognition bias explain why Opus underperforms), and the empirical observation (MAE 0.53 vs 0.97) as a motivating finding that the mechanism explains.
+
