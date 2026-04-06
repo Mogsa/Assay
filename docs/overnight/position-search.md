@@ -2062,4 +2062,127 @@ New precision 2: The "Smallest n" item corrects a prior understatement — cal-N
 **Literature gap confirmed open as of April 6, 2026.** No paper proposes calibrated residual N-axis std as a human-review routing signal for frontier intellectual content. The D+E+F thesis is ready to write.
 
 
+---
+
+### Final Synthesis and Venue Assessment — 2026-04-06
+
+**Purpose:** All 5 queue items are complete; 13 passes of findings exist. This entry performs a full cross-reading, evaluates the thesis's readiness for paper writing, identifies the one claim the prior synthesis undersells, and provides a venue-strategic note.
+
+**What thirteen passes have established — the honest ledger:**
+
+The D+E+F unified thesis is structurally sound and multiply confirmed. But the empirical backbone deserves a clear-eyed accounting. The strongest claims in rank order of evidence:
+
+1. *α = 0.28* — verified twice against research-state.md and rating-analysis.md. Unambiguous. This number alone justifies a paper.
+2. *Consensus score fails to predict debate-worthiness* (2.69 vs 2.69, exact equality from the analysis file) — this is the motivating failure. A frontier detection metric that cannot identify contested questions is functionally useless at its core purpose.
+3. *IFDS jargon (3.21) outscores genuine frontier math (2.37)* — confirmed across all 5 model families, with a calibration example specifically designed to prevent the inversion already in the prompt. The failure despite explicit counter-example is direct evidence against "prompting can fix it."
+4. *Three model families, identical Log-Rank error* — a single anecdote, but mechanistically precise. The correct framing (cited now by arXiv 2602.09341): "confabulation consensus."
+5. *Cal-N-std > 1.2 threshold achieves clean separation* (Pass 12) — 4/4 FRONTIER items above threshold, 5/5 non-frontier items below. Spearman ρ = 0.825 (cal-N-std) vs 0.80 (mean_fs) on N=5 items. Operationally clean; statistically meaningless at this sample size.
+
+The weakest link remains: the full 29-item Spearman ρ analysis has not been run. The paper must either run this before submission or frame the cal-N-std threshold as a hypothesis to test, not a result.
+
+**The one thing prior synthesis undersells: the routing/detection distinction is the paper's cleanest original contribution.**
+
+Pass 13 correctly noted that cal-N-std is a *routing* signal (needs-human-review), not a *ranking* metric (is-frontier-above-everything-else). This distinction matters for the paper's positioning: the paper is not claiming to beat mean_fs as a general frontier ranking metric — it is claiming to identify *which items the panel cannot reliably assess*, which is a different and more tractable claim. No prior paper in the review literature explicitly proposes any acquisition function for routing frontier intellectual content to human review based on judge disagreement. This gap is narrower but cleaner than "disagreement is better than consensus." The paper should lead with this framing rather than making the broader claim.
+
+**Venue-strategic note (new information from this run's literature search):**
+
+NeurIPS 2026 announced a dedicated **Evaluations Datasets Track** (March 23, 2026). This track appears optimized for evaluation methodology papers — exactly the thesis domain. The main NeurIPS position track (2-page + supplementary) is the original target, but the Evaluations Track may accommodate the empirical components more naturally if the Spearman ρ analysis is run before submission. If the 29-item ρ analysis confirms cal-N-std > mean_fs, submit to the Evaluations Track as an empirical paper with the D+E+F framework as its theoretical context. If only pilot data is available by the deadline, submit to the main position track.
+
+**Devil's Advocate:**
+
+After 13 passes, the most uncomfortable truth is that the thesis has been refined so many times it risks becoming unfalsifiable by self-repair. Each pass introduced a complication (IFDS/N-std overlap, causal direction ambiguity, competence-ceiling noise) and was immediately followed by a rebuttal ("calibrated-rater filter solves it"). The paper needs to pick one version of the claim and commit — not present 13 nested qualifications. The sharpest-possible falsifiable version: *"Among raters with MAE < 0.8 on human-labeled items, N-axis standard deviation identifies needs-human-review items with better routing precision than mean frontier_score at the 1.2 threshold."* This is testable with the 29 human labels. Run the test before writing the paper. If the ρ comparison favors mean_fs in the full 29-item set, the routing framing weakens but the theoretical argument (Condorcet + Arrow + OOD) stands independently. Separate the theoretical argument from the empirical operationalization and the paper survives either ρ result.
+
+---
+
+## CANDIDATE POSITIONS — DEFINITIVE FINAL VERSION (2026-04-06)
+
+*This supersedes all prior CANDIDATE POSITIONS entries. Incorporates all thirteen passes, full data cross-checks, and the routing/detection distinction.*
+
+---
+
+### Candidate D+E+F Unified — TOP RECOMMENDATION
+
+**One-sentence claim:** Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content — below the publishable reliability threshold — because they violate the Condorcet independence assumption via shared training corpora ("confabulation consensus"), making Rigour-axis consensus an amplifier of shared misconceptions; calibrated inter-judge Novelty-axis disagreement (threshold > 1.2) is the only available human-review routing signal in this ground-truth-free regime, and the standard paradigm discards it by averaging.
+
+**Evidence for:**
+- α = 0.26–0.32 across all three axes (confirmed against research-state.md and rating-analysis.md)
+- Consensus frontier_score ρ ≈ 0 with debate-worthiness: debated vs settled questions score 2.69 vs 2.69 (exact equality — the metric cannot find contested questions)
+- IFDS jargon (3.21) > genuine frontier math (2.37) across all 5 model families, despite explicit counter-example in prompt
+- Three model families independently called Lovett's upper bound a "proof barrier" (confabulation consensus; arXiv 2602.09341 names this mechanism)
+- Cal-N-std > 1.2 threshold: 4/4 human-labeled FRONTIER items above it; 5/5 non-frontier items below it (Pass 12 computation)
+- Spearman ρ(cal-N-std, human_fs) = 0.825 — viable routing signal, comparable to mean_fs (0.80) with less information (Pass 13)
+- "Great Models Think Alike" (arXiv 2502.04313, ICML 2025 spotlight): error similarity scales with model capability
+- arXiv 2602.22413: formal proof Condorcet degrades under correlated information sources
+- arXiv 2603.25450: cross-model disagreement detects confident errors at AUROC 0.75 vs AUROC 0.59
+- EMNLP 2025 Oral (arXiv 2510.12817): annotator disagreement is epistemic signal — NLP community convergence
+- AgentAuditor (arXiv 2602.09341): 5% accuracy gain from routing divergence vs voting it away
+- arXiv 2601.18061: human expert evaluators also show irreducible disagreement at domain frontiers
+- 25+ additional corroborating papers from 13 passes
+
+**Evidence against:**
+- Cal-N-std frontier signal demonstrated on N=4 human-labeled items — statistically thin; full 29-item Spearman ρ not computed
+- Spearman comparison (0.825 vs 0.80) is meaningless at N=5 — not evidence of superiority over mean_fs
+- Calibration circularity: identifying "calibrated raters" requires human labels, which assumes the problem we're solving
+- arXiv 2601.19532: 96.4% of judge disagreements on hard math are incompetence noise — calibrated-rater filter necessary but not validated beyond the top-10 contested set
+- IFDS N-std comparable to FRONTIER in raw calculations (calibrated-rater filter required; full-panel raw metric does not separate cleanly)
+- Log-Rank Conjecture correlated error is a single qualitative anecdote
+- Formula discrepancy (geometric mean 3.21/2.37 vs production signed Euclidean 2.91/2.45) must be resolved before submission
+
+**Surprise score: 4/5** — "The signal you're discarding (disagreement) is more informative than the signal you're publishing (consensus)" would require most NeurIPS practitioners to re-evaluate standard multi-model panel methodology. The Condorcet framing elevates this from empirical complaint to formal impossibility argument, which is the move that makes it publishable.
+
+---
+
+### Candidate B: Scale Anti-Correlation
+
+**One-sentence claim:** Model scale anti-correlates with evaluation quality for frontier intellectual content — Gemini Flash (free) outperforms Claude Opus ($15/M) by 2× on human-aligned MAE — because optimization pressure embeds larger models deeper into the training distribution, amplifying sycophancy and self-recognition bias at the cost of frontier sensitivity.
+
+**Evidence for:** MAE 0.53 (Gemini Flash) vs 0.97 (Opus) on 29 human-rated items; Semantic Capacity Asymmetry (arXiv 2601.22588); sycophancy scaling (arXiv 2310.13548, 2411.15287); ICML 2025 spotlight (arXiv 2502.04313).
+
+**Evidence against:** N=29 human items is thin — confidence intervals likely overlap; Haiku (cheapest Anthropic) is worst within Anthropic family, undermining monotonic scale-anti-correlation; cross-family comparison confounds size with training methodology.
+
+**Surprise score: 4/5** — counterintuitive to practitioners who default to the most capable model for evaluation. Limited by sample size.
+
+---
+
+### Candidate A: Novelty Impossibility
+
+**One-sentence claim:** AI judges structurally invert novelty rankings — IFDS jargon outscores genuine frontier math across all 5 model families despite a calibration example specifically designed to prevent it — because novelty assessment requires OOD detection relative to the training distribution, which is PAC-impossible without external anchors.
+
+**Evidence for:** IFDS 3.21 > Seeds 2.37 (geometric mean); calibration example failure (explicit counter-example in prompt didn't prevent inversion — this is direct evidence against prompt-based fixes); perplexity-preference mechanism (arXiv 2410.21819); OOD impossibility (NeurIPS 2021); RINoBench (arXiv 2603.10303, March 2026).
+
+**Evidence against:** FrontierMath seeds (3.57) partially recover — inversion strongest for HLE seeds, which are hard exam questions, not open problems; CALM (NeurIPS 2024) has partially anticipated this bias mechanism.
+
+**Surprise score: 3/5** — the OOD impossibility framing is the novel theoretical move; the bias itself is increasingly anticipated.
+
+---
+
+### Candidate C: Optimal Panel Design by Calibration Heterogeneity
+
+**One-sentence claim:** Calibration heterogeneity — selecting panel members with opposite systematic N-axis biases (one lenient, one skeptical) — is a better panel selection criterion than architectural diversity, because their item-level disagreement marks exactly the content where neither model's prior applies.
+
+**Evidence for:** Gemini Flash (avg N=2.76, lenient) + Opus (avg N=1.79, skeptical) produce maximally informative N-axis disagreement; BT-σ (arXiv 2602.16610) and Judge-Aware Ranking (arXiv 2601.21817) provide engineering implementations; MFRM (arXiv 2604.00979) provides calibration tooling; arXiv 2408.14141 confirms disagreement structure informs calibration.
+
+**Evidence against:** Not directly tested in our data; requires pre-existing human labels to identify systematic N-biases per model; operational claim, not theoretical.
+
+**Surprise score: 5/5** — the most operationally novel finding. "Don't pick the most capable models or the most architecturally diverse — pick the ones whose disagreement structure tells you the most" is genuinely unexpected. Limited by absence of direct validation.
+
+---
+
+## TOP RECOMMENDATION
+
+**D+E+F unified.** Unchanged across all thirteen passes.
+
+**Why D+E+F over the alternatives:**
+
+Candidate B (scale anti-correlation) makes a counterintuitive claim but rests on N=29 human labels with a cross-family confound. It is a finding, not a mechanism. D+E+F provides the mechanism that *explains* why Gemini Flash outperforms Opus — Gemini's retrieval-optimized training makes it less sycophantic and more sensitive to genuine novelty patterns. Candidate B is a corollary of D+E+F, not an independent thesis.
+
+Candidate A (novelty impossibility) is the strongest single finding in the data — the calibration example failure is particularly compelling because it rules out "prompting can fix it." But as a standalone thesis, it is a diagnosis without a prescription. D+E+F subsumes A: the reason jargon beats genuine frontier math (Candidate A) is the same reason consensus fails (Candidate D) — both trace to the training distribution preference mechanism.
+
+Candidate C (calibration heterogeneity) is the most surprising operational finding, but it is derivable from D+E+F rather than independent. Its high surprise score (5/5) combined with its lack of direct validation makes it a section in the paper's prescription, not the paper's thesis.
+
+**The paper's argument in three sentences:**
+
+The field uses multi-model panels as LLM juries, implicitly invoking the Condorcet Jury Theorem. But error independence fails for frontier content — models share training corpora and make identical Rigour errors (the thesis) — and no amount of aggregation can fix a violation of Condorcet's core assumption (the impossibility). The signal the paradigm discards — Novelty-axis disagreement among calibrated judges — is a better human-review routing criterion than the consensus score it produces, because frontier novelty assessment is structurally OOD detection, and where models disagree about novelty, human judgment is irreplaceable (the prescription).
+
+**Immediate next action:** Run Spearman ρ(cal-N-std per item, human frontier label) vs ρ(mean_fs, human frontier label) across all 29 human-labeled items. If cal-N-std wins, submit to NeurIPS 2026 Evaluations Datasets Track as an empirical paper. If the comparison is within noise, submit to the main position track with the D+E+F theoretical argument as the contribution and the 1.2-threshold result as a motivating pilot finding. Either way: write the paper.
 
