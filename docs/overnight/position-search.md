@@ -1981,5 +1981,85 @@ Fresh search for April 2026 arXiv papers confirms the literature gap remains ope
 
 *Twelfth pass complete. The calibrated-N-std threshold (>1.2 for human review routing) is the most operationally concrete contribution from this overnight session. The dual-corruption finding adds a new angle for the introduction. CogBias (2604.01366) is the sharpest new challenge paper; the rebuttal above holds. The D+E+F thesis stands. Literature gap confirmed as of April 6, 2026.*
 
+---
+
+## THIRTEENTH PASS — 2026-04-06
+
+*(All 5 queue items confirmed complete. This pass: (1) first actual Spearman ρ computation comparing cal-N-std vs mean_fs against human labels — the key unrun analysis called for across all 12 prior passes; (2) a nuanced finding about the Smallest n item that refines the thesis; (3) two new supporting papers from the fresh literature sweep; (4) updated CANDIDATE POSITIONS.)*
+
+---
+
+### Spearman ρ Computation: Cal-N-std vs Mean-fs vs Human Labels
+
+All 12 prior passes called for a Spearman ρ comparison between calibrated-rater N-axis std and mean frontier_score against human labels, but noted it required the full 29-item dataset. This pass computes the analysis on the 5 human-labeled items available from the top-10 contested set — the subset with both individual model ratings AND human ground-truth labels.
+
+**Calibrated-rater N-axis std** (Gemini Flash + GPT-5.4 mini + Opus; N values [G/P/O], sample std):
+
+| Item | Cal-N [G/P/O] | Cal-N-std | Mean-fs (all 5) | Human-fs (geom mean) |
+|------|--------------|-----------|-----------------|----------------------|
+| Galois polynomial (FRONTIER) | [5,1,1] | 2.31 | 3.06 | 4.64 |
+| 87-byte Python seq (FRONTIER) | [4,1,2] | 1.53 | 2.60 | 3.63 |
+| Smallest pos int n (FRONTIER) | [4,1,1] | 1.73 | 2.61 | 2.88 |
+| Hadamard order 668 (FRONTIER) | [5,2,2] | 1.73 | 3.32 | 4.22 |
+| Math models HLE (NOT-FRONTIER) | [1,1,1] | 0.00 | 1.77 | 1.00 |
+
+**Spearman ρ(mean_fs, human_fs) = 0.80**
+
+**Spearman ρ(cal-N-std, human_fs) = 0.825**
+
+Both metrics achieve high correlation with human ground truth. Cal-N-std has a marginal advantage (+0.025). With N=5, this difference is statistically meaningless — the comparison is included for completeness, not as a statistical claim. The key finding is that cal-N-std achieves *comparable* performance to mean_fs using strictly less information (N-axis variance only vs full R/N/G mean) — it is not dramatically superior in this tiny sample, but it is not dramatically inferior either. The clean threshold separation (cal-N-std > 1.2: FRONTIER items 1.53–2.31 vs non-FRONTIER items 0.00–1.00) remains the operationally precise claim.
+
+---
+
+### Nuanced Finding: The Smallest n Item Is a Correct True Positive, Not a Limitation
+
+Previous passes treated the Smallest n item (human=4/2/3, human_fs=2.88) as the weakest case for the N-axis signal — the item where human gives N=2 yet cal-N-std=1.73 (highest disagreement among frontier items alongside Hadamard). This was interpreted as the signal over-triggering on a not-very-novel question.
+
+The more careful reading: the human's verdict is R=4, N=2, G=3. This is a *genuinely frontier* item (frontier_score 2.88) despite low novelty. The calibrated judges disagree about N (Gemini: 4, GPT: 1, Opus: 1) because the question — "find the smallest positive integer n satisfying a specific algebraic property" — genuinely sits at the boundary of "well-known technique applied to new instance" vs "instance-specific open problem." Gemini sees it as a genuine instance-specific problem (N=4); GPT and Opus see it as a known technique (N=1). Neither is wrong; the content is at the evaluative boundary.
+
+The human's N=2 sides with the skeptics — but the human's R=4 and G=3 confirm the question IS worth routing to human review. **The cal-N-std signal (1.73) correctly triggered human review; human review correctly assessed the item as frontier despite low novelty.** This is the routing system working as designed: cal-N-std flagged "disagreement about novelty, needs human," and human review produced the correct nuanced answer (rigorous, generative, but less novel than it looks). The prior passes understated this by framing it as a weakened case — it is actually a confirmation.
+
+The more precise reframing: cal-N-std is not a "frontier" signal — it is a "needs-human-review" signal. For items where model novelty assessments split (some give N=4–5, others give N=1), human review is the correct response regardless of whether the human ultimately agrees with the high-N or low-N models. The routing is justified by the divergence, not by the direction.
+
+---
+
+### New Literature From This Pass
+
+**arXiv 2602.11898 — "Benchmark Illusion: Disagreement among LLMs and Its Scientific Consequences"** (February 2026):
+
+Confirms at scale that frontier models show ~80% disagreement *magnitude* variance despite converging on effect direction — systematic shared directional biases coexist with quantitative disagreement. This is precisely the R-axis vs N-axis split in our data: models converge on Rigour direction (all agree on relative R rankings) but diverge on Novelty magnitude (different numerical assessments of the same item). The paper explicitly notes that consensus on direction masks disagreement in magnitude, which is the "consensus as confound" mechanism the D+E+F paper names. Add to Candidate D evidence as point 10.
+
+**arXiv 2408.14141 — "Crowd-Calibrator: Can Annotator Disagreement Inform Calibration in Subjective Tasks?"** (August 2024):
+
+Demonstrates empirically that disagreement patterns among annotators improve calibration detection for subjective judgment tasks. The paper's key finding: the *structure* of disagreement (which annotators agree with which, and on which items) is more informative than the disagreement magnitude alone for identifying well-calibrated annotators. This supports the "calibration direction matters more than threshold" insight from Pass 11 (Undersell #2): Gemini Flash and Opus disagree in structurally informative ways (opposite systematic N-biases), making their item-level disagreement a maximally calibrated frontier signal. Add to Candidate E evidence as point 16.
+
+---
+
+### Devil's Advocate
+
+The Spearman ρ result (cal-N-std ρ=0.825 vs mean_fs ρ=0.80) is essentially identical within N=5. A reviewer will correctly note that this provides no statistical evidence for cal-N-std outperforming mean_fs. The honest framing: the Spearman computation validates that cal-N-std is *compatible* with human ordering (ρ=0.825 is high) but does not establish superiority. The paper's contribution is the MECHANISM and the THRESHOLD — not a claim that cal-N-std is dramatically more accurate than mean_fs on this tiny sample. The operational value of cal-N-std over mean_fs is that it identifies items for human review routing *before* averaging suppresses the signal — an ex-ante acquisition function, not a post-hoc accuracy comparison.
+
+The second objection: with N=5, both metrics put the Math models NOT-FRONTIER item correctly at rank 1 (lowest), which drives both Spearman ρ values high. The real discriminative challenge is ranking the 4 FRONTIER items among themselves — where cal-N-std ties Smallest n and Hadamard (both at 1.73) while human gives them different scores (2.88 vs 4.22). This tie is a limitation: cal-N-std cannot distinguish within the set of frontier items, only between frontier and non-frontier. Mean_fs does better at differentiating within the frontier set (3.32 for Hadamard vs 2.61 for Smallest n, matching the human ordering). The paper should acknowledge this: cal-N-std is a routing/detection metric, not a ranking metric within the frontier class.
+
+---
+
+### Updated CANDIDATE POSITIONS (Thirteenth Pass)
+
+No ranking changes from the Twelfth Pass. Two precision additions:
+
+**D+E+F unified (TOP RECOMMENDATION — unchanged):**
+
+New precision 1: The first Spearman ρ computation confirms cal-N-std achieves ρ=0.825 with human labels on the contested set — comparable to mean_fs (ρ=0.80) with less information. Cal-N-std is confirmed as a viable routing signal, not a replacement for mean_fs as a ranking metric within the frontier class.
+
+New precision 2: The "Smallest n" item corrects a prior understatement — cal-N-std=1.73 correctly triggered human review routing; human review correctly assessed the item as frontier (R=4, G=3) despite low N=2. This is the routing system working as designed. The nuanced framing (cal-N-std = "needs-human-review" signal, not "is-frontier" signal) is more defensible and more precise than the prior "frontier detector" framing.
+
+**New supporting literature:** arXiv 2602.11898 (direction/magnitude split in benchmark disagreement) and arXiv 2408.14141 (disagreement structure informs calibration detection) both confirm the D+E mechanism from independent directions.
+
+**Final one-sentence claim (unchanged, but the routing framing now more precise):**
+
+> *Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content — below the publishable reliability threshold — because they violate the Condorcet independence assumption via shared training corpora: model families make identical Rigour errors (consensus amplifies shared misconceptions) while their Novelty disagreements among calibrated judges are aleatoric — a PAC-impossible OOD detection problem that no additional training can resolve, and that human review routing should use as its primary acquisition signal instead of the consensus score it currently discards.*
+
+**Literature gap confirmed open as of April 6, 2026.** No paper proposes calibrated residual N-axis std as a human-review routing signal for frontier intellectual content. The D+E+F thesis is ready to write.
+
 
 
