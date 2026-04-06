@@ -2186,3 +2186,44 @@ The field uses multi-model panels as LLM juries, implicitly invoking the Condorc
 
 **Immediate next action:** Run Spearman ρ(cal-N-std per item, human frontier label) vs ρ(mean_fs, human frontier label) across all 29 human-labeled items. If cal-N-std wins, submit to NeurIPS 2026 Evaluations Datasets Track as an empirical paper. If the comparison is within noise, submit to the main position track with the D+E+F theoretical argument as the contribution and the 1.2-threshold result as a motivating pilot finding. Either way: write the paper.
 
+
+---
+
+### Addendum: Q2 — R/N/G Axis Independence and the N≈G Collapse — 2026-04-06T08:30
+
+*(Added by parallel overnight agent run. Complements the D+E+F framework with a rubric-design observation not covered in prior passes.)*
+
+**The question:** If a model always gives R≈N≈G, it outputs a single "general quality" score three times — not three independent assessments. This would invalidate any multi-rubric framework regardless of inter-model agreement.
+
+**Per-model average spread across 134 items:**
+
+| Model | Avg R | Avg N | Avg G | R−N | N−G | Independence |
+|-------|-------|-------|-------|-----|-----|--------------|
+| Haiku 4.5 | 3.24 | 3.04 | 2.88 | 0.20 | 0.16 | **Near-halo** |
+| Gemini Flash | 3.98 | 2.76 | 2.90 | 1.22 | 0.14 | R independent; N≈G |
+| GPT-5.4 mini | 3.40 | 2.14 | 2.84 | 1.26 | 0.70 | Most 3D independent |
+| Qwen Coder | 3.31 | 2.19 | 2.50 | 1.12 | 0.31 | R independent |
+| Opus 4.6 | 3.11 | 1.79 | 1.90 | 1.32 | 0.11 | R independent; N≈G |
+| Human | 3.62 | 2.66 | 2.79 | 0.96 | **0.13** | R independent; N≈G |
+
+**Key observations:**
+
+1. **N≈G collapse is universal — including the human.** The N−G spread is 0.11–0.16 for Gemini, Opus, and the human rater. Even GPT-5.4 mini (most 3D independent) only reaches 0.70 N−G spread. This suggests N and G are not practically distinguishable by any current rater, human or AI. The philosophical distinction (Lakatos progressive shift vs Peirce abduction) does not map onto a measurable behavioral difference.
+
+2. **R is the genuinely independent axis.** All raters — including the human — separate R from N and G with a spread of 0.96–1.32. Rigour is being evaluated as a distinct dimension. N and G are not. The R/N/G framework is effectively a 2D system: one R axis, one combined N+G axis.
+
+3. **Per-item GPT-5.4 mini shows 3D independence is possible.** On the Galois group seed: GPT rates R=4, N=1, G=5 — "well-posed question, not novel, but highly generative." This is genuine three-way independence. But it appears at item level, not at distribution level. The average N−G = 0.70 suggests GPT mini differentiated N and G on specific items where the distinction was clear, not systematically.
+
+**Implications for the position paper:**
+
+The N≈G collapse is a rubric design problem, not a model limitation. If even the human rater can't systematically separate "adds unresolved information" (N) from "opens new questions" (G), the two axes are likely measuring the same underlying property from different angles. For the position paper, this strengthens the D+E+F argument in two ways:
+
+- The "Novelty-axis std" claim in D+E+F may need to be "N+G combined axis std" — since N and G disagree less than they agree within a rater, treating them as two separate signals creates noise that reduces the frontier-detection power of the std metric.
+- The Arrow's Impossibility argument (invoked in research-state.md Design Decision 10) only bites when axes genuinely conflict. If N≈G, there is no aggregation problem for those two axes — they already agree. The Arrow argument applies specifically to R vs (N+G), not to all three pairwise combinations.
+
+**Devil's Advocate:**
+
+Per-item N−G correlations across all 134 items (Pearson r per rater) would settle whether N≈G is genuine collapse or artifact of averaging. This data exists in the database but was not computed here. The averaged N−G spread is a weak proxy — an agent could have average N=2.76 and G=2.90 while giving genuinely different N and G on individual items if the differences cancel out. GPT-5.4 mini is evidence that item-level independence exists. Until the per-item correlations are run, the "N≈G collapse" claim is directional, not definitive.
+
+The most important follow-up: compute r(N,G) per rater across all 134 items. If r > 0.80 for most raters (including the human), the N≈G collapse is real and the rubric needs redesign. If r < 0.60, the collapse is an artifact of averaging and the full 3D framework survives.
+
