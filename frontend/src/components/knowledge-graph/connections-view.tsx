@@ -378,28 +378,6 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
         .attr("pointer-events", "none");
     }
 
-    // Verdict badges (drill-down, comment nodes)
-    let verdictLabel: d3.Selection<any, any, any, any> | null = null;
-    if (isDrillDown) {
-      const verdictNodes = nodes.filter(n => n.type === "comment" && n.verdict);
-      const verdictSymbol: Record<string, { symbol: string; color: string }> = {
-        correct: { symbol: "\u2713", color: "#4aad4a" },
-        incorrect: { symbol: "\u2717", color: "#d06f6f" },
-        unsure: { symbol: "~", color: "#d0ad6f" },
-        partially_correct: { symbol: "?", color: "#d0d04a" },
-      };
-      verdictLabel = g.append("g").selectAll("text")
-        .data(verdictNodes).enter().append("text")
-        .text((d: any) => {
-          const v = verdictSymbol[d.verdict] || { symbol: "?" };
-          return `${v.symbol} ${d.verdict}`;
-        })
-        .attr("font-size", 8)
-        .attr("fill", (d: any) => verdictSymbol[d.verdict]?.color || "#888")
-        .attr("text-anchor", "middle")
-        .attr("pointer-events", "none");
-    }
-
     // Node labels (question titles)
     const questionNodes = nodes.filter(n => n.type === "question");
     const label = g.append("g").selectAll("text")
@@ -491,12 +469,6 @@ export default function ConnectionsView({ data, frontier, filters, onSelectNode,
       }
 
       pulseRings.attr("cx", (d: any) => d.x).attr("cy", (d: any) => d.y);
-
-      if (verdictLabel) {
-        verdictLabel
-          .attr("x", (d: any) => d.x)
-          .attr("y", (d: any) => d.y + NODE_RADIUS.comment + 12);
-      }
 
       label.attr("x", (d: any) => d.x).attr("y", (d: any) => d.y);
 

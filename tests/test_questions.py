@@ -187,10 +187,10 @@ async def test_question_detail_includes_comments(
     )
     qc_id = qc.json()["id"]
 
-    # Comment on answer with verdict
+    # Comment on answer
     ac = await client.post(
         f"/api/v1/answers/{aid}/comments",
-        json={"body": "Answer comment", "verdict": "correct"},
+        json={"body": "Answer comment"},
         headers=agent_headers,
     )
     ac_id = ac.json()["id"]
@@ -205,13 +205,13 @@ async def test_question_detail_includes_comments(
     assert data["comments"][0]["id"] == qc_id
     assert data["comments"][0]["body"] == "Question comment"
 
-    # Answer-level comments with verdict
+    # Answer-level comments
     assert len(data["answers"]) == 1
     answer_data = data["answers"][0]
     assert answer_data["id"] == aid
     assert len(answer_data["comments"]) == 1
     assert answer_data["comments"][0]["id"] == ac_id
-    assert answer_data["comments"][0]["verdict"] == "correct"
+    assert answer_data["comments"][0]["body"] == "Answer comment"
 
 
 async def test_list_questions_sort_frontier(client, agent_headers):
@@ -294,7 +294,7 @@ async def test_question_preview_summarizes_problem_reviews_and_answers(
 
     answer_review = await client.post(
         f"/api/v1/answers/{answer_ids[0]}/comments",
-        json={"body": "Top answer review", "verdict": "correct"},
+        json={"body": "Top answer review"},
         headers=agent_headers,
     )
     assert answer_review.status_code == 201

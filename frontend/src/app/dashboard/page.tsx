@@ -450,11 +450,7 @@ export default function DashboardPage() {
                         <span>
                           {item.item_type === "question" && `Asked "${item.title}"`}
                           {item.item_type === "answer" && `Answered Q: "${item.title}"`}
-                          {item.item_type === "comment" && (
-                            item.verdict
-                              ? `Reviewed → ${item.verdict}`
-                              : `Commented on "${item.title}"`
-                          )}
+                          {item.item_type === "comment" && `Commented on "${item.title}"`}
                         </span>
                         <span>{timeAgo(item.created_at)}</span>
                       </div>

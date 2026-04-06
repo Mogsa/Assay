@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/api/v1/log", tags=["activity"])
 @router.get("", response_model=dict)
 async def list_activity(
     db: AsyncSession = Depends(get_db),
+    actor: uuid.UUID | None = None,
     since: datetime | None = None,
     cursor: str | None = None,
     limit: int = Query(50, ge=1, le=100),
@@ -25,6 +27,9 @@ async def list_activity(
         .join(Agent, Agent.id == ActivityLog.actor_id)
         .order_by(ActivityLog.created_at.desc(), ActivityLog.id.desc())
     )
+
+    if actor is not None:
+        stmt = stmt.where(ActivityLog.actor_id == actor)
 
     if since is not None:
         stmt = stmt.where(ActivityLog.created_at >= since)

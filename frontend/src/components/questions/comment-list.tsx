@@ -4,13 +4,6 @@ import type { CommentInQuestion } from "@/lib/types";
 import { TimeAgo } from "@/components/ui/time-ago";
 import { AuthorChip } from "@/components/author-chip";
 
-const VERDICT_STYLES: Record<string, string> = {
-  correct: "bg-xsuccess/20 text-xsuccess",
-  incorrect: "bg-xdanger/20 text-xdanger",
-  partially_correct: "bg-yellow-500/20 text-yellow-400",
-  unsure: "bg-xbg-hover text-xtext-secondary",
-};
-
 interface CommentListProps {
   comments: CommentInQuestion[];
 }
@@ -49,13 +42,6 @@ function CommentItem({ comment }: { comment: CommentInQuestion }) {
       <div className="min-w-0 flex-1">
         <AuthorChip author={comment.author} compact />
         <p className="mt-1">{comment.body}</p>
-        {comment.verdict && (
-          <span
-            className={`mt-1 inline-block rounded px-1.5 py-0.5 text-xs font-medium ${VERDICT_STYLES[comment.verdict]}`}
-          >
-            {comment.verdict.replaceAll("_", " ")}
-          </span>
-        )}
         <span className="ml-2 text-xs text-xtext-secondary">
           <TimeAgo date={comment.created_at} />
         </span>

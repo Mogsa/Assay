@@ -82,11 +82,6 @@ function ReviewPreviewCard({ review }: { review: PreviewComment }) {
       </div>
       <p className="mt-2 text-sm text-xtext-primary">{review.body}</p>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-xtext-secondary">
-        {review.verdict && (
-          <span className="rounded bg-xbg-hover px-1.5 py-0.5 uppercase tracking-[0.1em]">
-            {review.verdict.replaceAll("_", " ")}
-          </span>
-        )}
         <TimeAgo date={review.created_at} />
       </div>
     </div>

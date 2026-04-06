@@ -38,7 +38,6 @@ async def test_comment_on_question(client, agent_headers):
     assert data["target_type"] == "question"
     assert data["target_id"] == qid
     assert data["parent_id"] is None
-    assert data["verdict"] is None
 
 
 async def test_nested_comment(client, agent_headers, second_agent_headers):
@@ -132,7 +131,7 @@ async def test_comment_requires_auth(client, agent_headers):
     assert resp.status_code in (401, 403)
 
 
-# --- Task 3: Comments on answers + verdicts ---
+# --- Task 3: Comments on answers ---
 
 
 async def test_comment_on_answer(client, agent_headers, second_agent_headers):
@@ -148,113 +147,3 @@ async def test_comment_on_answer(client, agent_headers, second_agent_headers):
     data = resp.json()
     assert data["target_type"] == "answer"
     assert data["target_id"] == aid
-    assert data["verdict"] is None
-
-
-async def test_comment_with_verdict(client, agent_headers, second_agent_headers):
-    qid = await _create_question(client, agent_headers)
-    aid = await _create_answer(client, qid, second_agent_headers)
-
-    resp = await client.post(
-        f"/api/v1/answers/{aid}/comments",
-        json={"body": "Verified!", "verdict": "correct"},
-        headers=agent_headers,
-    )
-    assert resp.status_code == 201
-    assert resp.json()["verdict"] == "correct"
-
-
-async def test_invalid_verdict_rejected(client, agent_headers, second_agent_headers):
-    qid = await _create_question(client, agent_headers)
-    aid = await _create_answer(client, qid, second_agent_headers)
-
-    resp = await client.post(
-        f"/api/v1/answers/{aid}/comments",
-        json={"body": "Amazing!", "verdict": "amazing"},
-        headers=agent_headers,
-    )
-    assert resp.status_code == 422
-
-
-# --- Verdict behaviour ---
-
-
-async def test_single_correct_verdict_does_not_close_question(
-    client, agent_headers, second_agent_headers
-):
-    """One correct verdict is not enough to auto-close — need ≥2."""
-    qid = await _create_question(client, agent_headers)
-    aid = await _create_answer(client, qid, second_agent_headers)
-
-    await client.post(
-        f"/api/v1/answers/{aid}/comments",
-        json={"body": "This is correct.", "verdict": "correct"},
-        headers=agent_headers,
-    )
-
-    q = await client.get(f"/api/v1/questions/{qid}")
-    assert q.json()["status"] == "open"
-
-
-async def test_two_correct_verdicts_do_not_auto_close_question(
-    client, agent_headers, second_agent_headers, third_agent_headers
-):
-    """Auto-close is removed in v2 — two correct verdicts keep the question open."""
-    qid = await _create_question(client, agent_headers)
-    aid = await _create_answer(client, qid, second_agent_headers)
-
-    await client.post(
-        f"/api/v1/answers/{aid}/comments",
-        json={"body": "Looks right.", "verdict": "correct"},
-        headers=agent_headers,
-    )
-    await client.post(
-        f"/api/v1/answers/{aid}/comments",
-        json={"body": "Confirmed correct.", "verdict": "correct"},
-        headers=third_agent_headers,
-    )
-    q = await client.get(f"/api/v1/questions/{qid}")
-    assert q.json()["status"] == "open"
-
-
-async def test_correct_plus_incorrect_does_not_close(
-    client, agent_headers, second_agent_headers, third_agent_headers
-):
-    """Correct + incorrect = contested. Do not close."""
-    qid = await _create_question(client, agent_headers)
-    aid = await _create_answer(client, qid, second_agent_headers)
-
-    await client.post(
-        f"/api/v1/answers/{aid}/comments",
-        json={"body": "This is correct.", "verdict": "correct"},
-        headers=agent_headers,
-    )
-    await client.post(
-        f"/api/v1/answers/{aid}/comments",
-        json={"body": "No it is not.", "verdict": "incorrect"},
-        headers=third_agent_headers,
-    )
-
-    q = await client.get(f"/api/v1/questions/{qid}")
-    assert q.json()["status"] == "open"
-
-
-async def test_correct_verdict_same_author_does_not_close(
-    client, agent_headers, second_agent_headers
-):
-    # agent_a creates question, agent_b creates answer
-    qid = await _create_question(client, agent_headers)
-    aid = await _create_answer(client, qid, second_agent_headers)
-
-    # agent_b reviews their OWN answer with verdict="correct"
-    resp = await client.post(
-        f"/api/v1/answers/{aid}/comments",
-        json={"body": "I think I got it right.", "verdict": "correct"},
-        headers=second_agent_headers,
-    )
-    assert resp.status_code == 201
-
-    # Question should remain "open" — self-review must not trigger auto-close
-    q = await client.get(f"/api/v1/questions/{qid}")
-    assert q.status_code == 200
-    assert q.json()["status"] == "open"

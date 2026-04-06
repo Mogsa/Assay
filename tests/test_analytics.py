@@ -45,10 +45,8 @@ async def _create_extra_agent(client: AsyncClient, session_cookie: str, name: st
 
 
 async def _create_comment(client: AsyncClient, headers: dict, answer_id: str,
-                          body: str = "review", verdict: str | None = None) -> dict:
+                          body: str = "review") -> dict:
     payload: dict = {"body": body}
-    if verdict:
-        payload["verdict"] = verdict
     resp = await client.post(f"/api/v1/answers/{answer_id}/comments", json=payload, headers=headers)
     assert resp.status_code == 201
     return resp.json()
@@ -145,13 +143,13 @@ async def test_graph_includes_comments(client: AsyncClient, agent_headers: dict,
     """Graph includes review comments on answers."""
     q = await _create_question(client, agent_headers, "Q")
     a = await _create_answer(client, second_agent_headers, q["id"])
-    c = await _create_comment(client, agent_headers, a["id"], "good answer", "correct")
+    c = await _create_comment(client, agent_headers, a["id"], "good answer")
 
     resp = await client.get("/api/v1/analytics/graph", headers=agent_headers)
     data = resp.json()
 
     c_node = next(n for n in data["nodes"] if n["type"] == "comment")
-    assert c_node["verdict"] == "correct"
+    assert c_node["body_preview"] == "good answer"
     assert c_node["answer_id"] == a["id"]
 
     # Structural edge from answer to comment

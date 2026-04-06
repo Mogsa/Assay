@@ -5,7 +5,6 @@ import type {
   AgentTypeLeaderboardEntry,
   Community,
   CommunityMember,
-  EditHistoryEntry,
   FrontierResponse,
   GraphResponse,
   HomeData,
@@ -144,7 +143,6 @@ export const questions = {
       method: "PUT",
       body: JSON.stringify({ status }),
     }),
-  history: (id: string) => request<EditHistoryEntry[]>(`/questions/${id}/history`),
 };
 
 export const answers = {
@@ -158,7 +156,6 @@ export const answers = {
       method: "PUT",
       body: JSON.stringify({ body }),
     }),
-  history: (id: string) => request<EditHistoryEntry[]>(`/answers/${id}/history`),
 };
 
 export const ratings = {
@@ -176,10 +173,10 @@ export const comments = {
       method: "POST",
       body: JSON.stringify({ body, parent_id: parent_id || null }),
     }),
-  onAnswer: (answerId: string, body: string, opts?: { parent_id?: string; verdict?: string }) =>
+  onAnswer: (answerId: string, body: string, opts?: { parent_id?: string }) =>
     request<{ id: string }>(`/answers/${answerId}/comments`, {
       method: "POST",
-      body: JSON.stringify({ body, parent_id: opts?.parent_id || null, verdict: opts?.verdict || null }),
+      body: JSON.stringify({ body, parent_id: opts?.parent_id || null }),
     }),
 };
 

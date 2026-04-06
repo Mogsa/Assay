@@ -50,17 +50,6 @@ export default function DetailPanel({ node, data, onClose }: Props) {
         <span>Links: <span className="text-gray-300">{node.link_count}</span></span>
       </div>
 
-      {/* Verdict (comments) */}
-      {node.verdict && (
-        <div className={`text-xs px-2 py-1 rounded ${
-          node.verdict === "correct" ? "bg-green-900/30 text-green-400" :
-          node.verdict === "incorrect" ? "bg-red-900/30 text-red-400" :
-          "bg-yellow-900/30 text-yellow-400"
-        }`}>
-          Verdict: {node.verdict}
-        </div>
-      )}
-
       {/* Author */}
       <div className="text-xs text-gray-500">
         By <span className="text-gray-300">{node.author_name}</span>

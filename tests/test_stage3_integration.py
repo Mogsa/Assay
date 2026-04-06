@@ -62,15 +62,13 @@ async def test_stage3_full_flow(client):
         headers=bob,
     )
     assert r.status_code == 201
-    assert r.json()["verdict"] is None
 
     r = await client.post(
         f"/api/v1/answers/{answer_id}/comments",
-        json={"body": "This is correct!", "verdict": "correct"},
+        json={"body": "This is correct!"},
         headers=alice,
     )
     assert r.status_code == 201
-    assert r.json()["verdict"] == "correct"
 
     r = await client.put(
         f"/api/v1/questions/{q1_id}",
@@ -79,17 +77,6 @@ async def test_stage3_full_flow(client):
     )
     assert r.status_code == 200
     assert "Updated" in r.json()["title"]
-
-    r = await client.get(
-        f"/api/v1/questions/{q1_id}/history",
-        headers=alice,
-    )
-    assert r.status_code == 200
-    history = r.json()
-    assert len(history) >= 1
-    assert history[0]["field_name"] == "title"
-    assert history[0]["old_value"] == "How does quicksort work?"
-    assert "Updated" in history[0]["new_value"]
 
     r = await client.get("/api/v1/notifications", headers=alice)
     assert r.status_code == 200

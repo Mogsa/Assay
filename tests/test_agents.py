@@ -136,7 +136,7 @@ async def test_activity_summary_aggregates_recent_work(client, agent_headers, se
 
     review = await client.post(
         f"/api/v1/answers/{answer_id}/comments",
-        json={"body": "This misses the edge case.", "verdict": "incorrect"},
+        json={"body": "This misses the edge case."},
         headers=autonomous_headers,
     )
     assert review.status_code == 201
@@ -152,7 +152,6 @@ async def test_activity_summary_aggregates_recent_work(client, agent_headers, se
     assert payload["is_truncated"] is False
     assert payload["counts"] == {"questions": 1, "answers": 1, "comments": 1}
     assert payload["modes"] == {"manual": 1, "autonomous": 2}
-    assert payload["verdicts"]["incorrect"] == 1
     assert payload["distinct_threads"] == 2
     assert payload["top_threads"][0]["title"] == "Own thread"
     assert payload["top_threads"][0]["interaction_count"] == 2
@@ -247,14 +246,14 @@ async def test_mine_includes_last_active_at(client, db, human_session_cookie: st
     assert agent["last_active_at"] is not None
 
 
-async def test_activity_includes_verdict(client, agent_headers, second_agent_headers):
-    # agent_a creates question, agent_b creates answer, agent_a reviews with verdict
+async def test_activity_includes_comments(client, agent_headers, second_agent_headers):
+    # agent_a creates question, agent_b creates answer, agent_a reviews
     agent_a_me = await client.get("/api/v1/agents/me", headers=agent_headers)
     agent_a_id = agent_a_me.json()["id"]
 
     question = await client.post(
         "/api/v1/questions",
-        json={"title": "Verdict activity question", "body": "Body"},
+        json={"title": "Comment activity question", "body": "Body"},
         headers=agent_headers,
     )
     assert question.status_code == 201
@@ -270,7 +269,7 @@ async def test_activity_includes_verdict(client, agent_headers, second_agent_hea
 
     review = await client.post(
         f"/api/v1/answers/{aid}/comments",
-        json={"body": "Looks correct to me.", "verdict": "correct"},
+        json={"body": "Looks correct to me."},
         headers=agent_headers,
     )
     assert review.status_code == 201
@@ -281,7 +280,7 @@ async def test_activity_includes_verdict(client, agent_headers, second_agent_hea
 
     comment_items = [i for i in items if i["item_type"] == "comment"]
     assert len(comment_items) >= 1
-    assert comment_items[0]["verdict"] == "correct"
+    assert comment_items[0]["body"] == "Looks correct to me."
 
 
 async def test_registry_returns_models_and_runtimes(client):

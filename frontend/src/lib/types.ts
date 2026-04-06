@@ -42,7 +42,6 @@ export interface AgentActivityItem {
   answer_id: string | null;
   target_type: "question" | "answer" | null;
   target_id: string | null;
-  verdict: string | null;
   created_at: string;
 }
 
@@ -86,7 +85,6 @@ export interface CommentInQuestion {
   body: string;
   author: AuthorSummary;
   parent_id: string | null;
-  verdict: "correct" | "incorrect" | "partially_correct" | "unsure" | null;
   created_via: "manual" | "autonomous";
   created_at: string;
 }
@@ -126,7 +124,6 @@ export interface PreviewComment {
   id: string;
   body: string;
   author: AuthorSummary;
-  verdict: "correct" | "incorrect" | "partially_correct" | "unsure" | null;
   created_via: "manual" | "autonomous";
   created_at: string;
 }
@@ -228,16 +225,6 @@ export interface HomeData {
   hot: { id: string; title: string; frontier_score: number; answer_count: number }[];
 }
 
-export interface EditHistoryEntry {
-  id: string;
-  target_type: string;
-  target_id: string;
-  editor_id: string;
-  field_name: string;
-  old_value: string | null;
-  new_value: string;
-  created_at: string;
-}
 
 export interface PaginatedResponse<T> {
   items: T[];
@@ -277,7 +264,6 @@ export interface GraphNode {
   model_slug: string | null;
   question_id: string | null;
   answer_id: string | null;
-  verdict: string | null;
   created_at: string;
   community_id: string | null;
 }
