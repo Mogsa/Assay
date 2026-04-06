@@ -2742,3 +2742,74 @@ After 17 passes, this document has accumulated so many qualifications, sub-claim
 
 **Literature gap confirmed open by three independent searches across 17 passes.** The D+E+F+C thesis, grounded in triple-impossibility (Arrow + Condorcet + OOD PAC) and validated by 30+ independent literature threads, is ready for paper writing.
 
+---
+
+## OVERNIGHT RUN — 2026-04-06 (Third Pass)
+
+*(All 5 queue items confirmed complete. This pass: fresh April 2026 literature search via independent agent; two new papers not yet in the document; validity framing that sharpens D; REM-CTX grounding argument that sharpens A/E; updated CANDIDATE POSITIONS.)*
+
+---
+
+### New Evidence: Criterion Validity Gap and Grounded Novelty — 2026-04-06
+
+**Fresh literature search (this session, 2026-04-06)** confirmed the contribution gap remains open and surfaced two previously uncited April 2026 papers directly on-topic.
+
+---
+
+**arXiv:2604.00022 — "Criterion Validity of LLM-as-Judge for Business Outcomes in Conversational Commerce"**
+
+This paper tests whether LLM-as-Judge quality scores predict real-world business conversion outcomes (downstream criterion validity), not just inter-rater agreement. Finding: **LLM judge scores correlate only weakly with verified downstream business outcomes** — high internal agreement among judges does not imply external criterion validity.
+
+**Why this matters for the D+E+F thesis:** The existing argument against consensus focuses on *internal* reliability (α = 0.28, Log-Rank correlated error, IFDS inversion). arXiv:2604.00022 adds an *external validity* angle that has not been in the document: even if panel agreement were high, that agreement might still have no external validity — because judges share the same latent biases that correlate with "looks good" rather than "is good." The Rigour-axis correlated error is the clearest case: three model families agreed the Log-Rank Lovett result was a "proof barrier" — but this consensus has zero criterion validity; it was confidently wrong.
+
+This paper converts the D argument from "internal reliability is low" to "internal reliability is both low AND decoupled from external validity — fixing the agreement would not fix the problem." For frontier content specifically, criterion validity is impossible to verify directly (there is no business outcome, no deployment metric), making external-validity calibration impossible. The IFDS inversion demonstrates this: all five judges agree that jargon-loops are frontier, but the criterion (do these questions generate linked, cited, extended discussion?) is not what they are measuring.
+
+**Add to Candidate D evidence (point 9):** "arXiv:2604.00022 shows that even high inter-rater agreement does not guarantee criterion validity against real-world outcomes — for frontier content where no external criterion is available, the D+E+F disagreement-routing approach is the only available proxy for validity."
+
+---
+
+**arXiv:2604.00248 — "REM-CTX: Automated Peer Review via Reinforcement Learning with Auxiliary Context"**
+
+An 8B model trained with GRPO and a separate **novelty-correspondence reward grounded in prior literature** outperforms six baselines including larger commercial LLMs on automated peer review across three scientific domains. The key mechanism: the novelty reward component explicitly checks the submitted work against retrieved prior-literature context before assigning a novelty score. Without this external grounding, the model's novelty assessment is unreliable.
+
+**Why this matters for the A/E synthesis:** Finding 1 (Novelty Impossibility) argues that AI judges can only detect "novelty-resembling" content, not actual novelty, because genuine novelty requires knowing what *doesn't* exist in the training distribution — a PAC-impossible OOD detection task. REM-CTX is the engineering evidence for this theoretical claim: the only way to get reliable novelty assessment from an LLM is to explicitly provide external literature grounding (retrieved prior work), converting the task from OOD detection to in-context comparison.
+
+This has a direct implication for Finding 4/E (N-axis disagreement as frontier signal): the reason N-axis disagreement is informative is precisely that models *without* external grounding disagree about novelty — because each model has encoded different fragments of the frontier literature, creating genuinely divergent novelty assessments for the same item. REM-CTX's explicit grounding mechanism is exactly what no AI judge in our panel has access to for frontier questions. Their disagreement is therefore not noise but the signal that ungrounded novelty assessment has been asked to operate beyond its reliable range.
+
+**Add to Candidate A evidence:** "arXiv:2604.00248 demonstrates that reliable novelty assessment by an LLM requires explicit external literature grounding (retrieved prior work), confirming the structural claim that ungrounded AI judges can only detect 'novelty-resemblance' rather than genuine novelty."
+
+**Add to Candidate E evidence (point 18):** "arXiv:2604.00248 explains *why* N-axis disagreement is informative: calibrated judges with different training-distribution encodings of frontier literature diverge specifically on novelty because the task requires external grounding that none possess. Their disagreement maps the exact points where ungrounded novelty assessment fails — which is the frontier."
+
+---
+
+**Devil's Advocate — this pass:**
+
+The strongest objection to including arXiv:2604.00022 is that it operates in a commercial conversational AI domain (e-commerce), not research evaluation. The "business outcome criterion" for a chatbot is a different construct from "frontier-ness of a research question." The mapping is by analogy, not by equivalence. A NeurIPS reviewer could say: "You're importing a criterion-validity concept from a domain where ground truth exists (did the customer buy?), but frontier research evaluation by definition has no comparable ground truth." The counter: this is precisely the *strength* of the analogy. In our setting, there is no easily measurable external criterion — which is worse than the commercial setting. If panels fail criterion validity even when an external criterion *is* available, they fail even harder when it isn't. The argument runs in one direction: commercial domain results understate the problem for frontier evaluation.
+
+The strongest objection to arXiv:2604.00248 is that it demonstrates grounded novelty assessment is possible — which could be read as undercutting the "novelty impossibility" claim. If an 8B model can reliably assess novelty when given retrieved context, maybe the solution is to always retrieve context. The counter: frontier research questions are, by definition, at the boundary of the literature. For open mathematical conjectures (Hadamard 668, Log-Rank), "retrieving prior work" would retrieve the same sparse, densely-cited papers all models have already seen, providing no independent grounding. REM-CTX works for routine novelty detection (is this paper different from prior papers?); it cannot solve the true frontier case (is this question at the edge of what anyone has asked?), where the relevant prior literature is the training data itself.
+
+---
+
+### CANDIDATE POSITIONS — Updated (Eighteenth Pass, 2026-04-06)
+
+No ranking changes. Two evidence additions:
+
+**Candidate D (within D+E+F+C):** Add arXiv:2604.00022 as point 9 — criterion validity decouples from internal agreement, strengthening the external-validity argument against consensus.
+
+**Candidates A and E:** Add arXiv:2604.00248 — grounded novelty assessment requires external retrieval, confirming: (a) ungrounded judges can only detect novelty-resemblance (A), and (b) N-axis disagreement maps the points where retrieval-free novelty assessment fails (E).
+
+**One precision update on Candidate C:** The "calibration-heterogeneity panel" claim (Gemini Flash lenient + Opus skeptical as the maximum-ambiguity pair for N-axis) gains additional support from arXiv:2604.00248's grounding insight. Gemini Flash has been trained with retrieval-augmented mechanisms, making it functionally closer to the REM-CTX paradigm — more likely to assess novelty via pattern-matching across large retrieved corpora. Opus has the opposite failure mode (N MAE = 1.03, harshest N rater) — it systematically under-counts novelty for HLE seeds by applying excess skepticism. Their disagreement on N is therefore *structurally grounded* in different mechanisms (retrieval-like vs skeptic-prior) — exactly the kind of calibration heterogeneity the Ambiguity Decomposition says maximizes ensemble informativeness.
+
+**Final recommended paper title (unchanged from Pass 17, confirmed for Pass 18):**
+
+> "Consensus as Confound: Inter-Judge Variance, Not Agreement, Detects Frontier Intellectual Content in Multi-Model Evaluation"
+
+**Literature gap: confirmed open (fourth independent search, this session).**
+
+| Candidate | Surprise | Evidence | Status |
+|-----------|----------|----------|--------|
+| **D+E+F+C unified** | 4/5 | Strong + arXiv:2604.00022 + arXiv:2604.00248 added | **#1 — UNCHANGED** |
+| B (Scale anti-correlation) | 4/5 | Moderate (N=29) | #2 — UNCHANGED |
+| A (Novelty Impossibility) | 3/5 | Moderate + REM-CTX confirms grounding-requirement | #3 — UNCHANGED |
+| C (Calibration Heterogeneity) | 5/5 | Formally grounded + Gemini/Opus mechanism sharpened | #4 — UNCHANGED |
+
