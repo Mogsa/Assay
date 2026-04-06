@@ -1180,11 +1180,19 @@ This matters for the paper's theoretical claim. Finding 1 (Novelty Impossibility
 
 ---
 
-### Literature Sweep Result: No New Papers Found
+### Literature Sweep Result: One New Paper, Gap Confirmed
 
-A fresh arXiv search for April 1–6, 2026 papers on LLM judge disagreement, correlated errors, AI novelty assessment, calibration heterogeneity, and Condorcet jury theorems for LLM panels returned no papers not already in this document. The most recent relevant papers remain those from late March 2026 (arXiv 2603.25450, 2603.20975, 2603.12520). The literature gap is confirmed stable: no existing paper operationalizes calibrated-judge N-axis std as a per-item frontier detector.
+A fresh arXiv search for April 1–6, 2026 papers across all five topic areas (LLM judge disagreement, correlated errors, novelty impossibility, calibration heterogeneity, Condorcet jury theorems for LLM panels) found no papers making new theoretical contributions to topics 2, 3, or 5. Topics 1 and 4 yielded one paper of interest:
 
-This is the correct timing for a position paper: the field has accumulated enough evidence (2024–2026 citations) to validate the mechanism, but has not yet assembled the mechanism into the specific prescriptive claim we are making.
+**arXiv 2604.00085 — "One Panel Does Not Fit All: Case-Adaptive Multi-Agent Deliberation for Clinical Prediction"** (April 2026):
+
+Proposes CAMP — a case-adaptive panel where divergent predictions under minor prompt changes trigger different specialist compositions. The voting scheme includes principled abstention (KEEP/REFUSE/NEUTRAL), with an arbitration router that handles disagreement. The central mechanism: panel divergence on a case signals diagnostic complexity and drives specialist escalation. This is the clinical domain implementation of arXiv 2602.22413's selective-abstention-recovers-Condorcet result, and it independently validates the "disagreement routes to specialist review" operational prescription from Finding 4/E.
+
+What this adds: the CAMP paper is a third independent implementation (alongside JudgeBench's routing and Trust-or-Escalate's provable bounds) of the disagreement-as-routing-signal principle — in a domain completely separate from NLP evaluation. Cross-domain corroboration strengthens the position that the principle is general, not evaluation-methodology-specific. Add as point 14 in Finding 4/E's literature list.
+
+The literature gap remains clean: no April 2026 paper operationalizes calibrated-judge N-axis std as a per-item frontier detector for research content. The D+E+F unified thesis occupies an original position.
+
+This is the correct timing for a position paper: the field has accumulated enough corroborating evidence across multiple domains (2024–2026 citations) to validate the mechanism, but has not yet assembled the mechanism into the specific prescriptive claim we are making.
 
 ---
 
