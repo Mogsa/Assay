@@ -312,6 +312,18 @@ The strongest unified objection: this entire paper risks being a collection of "
 
 The counter, and why it still works for a NeurIPS *position paper*: Position papers at NeurIPS are not expected to present definitive proof; they are expected to argue a position with sufficient evidence to make the community take the claim seriously and test it. Our combination of (a) directional empirical evidence consistent across 5 model families, (b) independent cross-context replication in peer review literature, (c) theoretical grounding in Condorcet + aleatoric uncertainty, and (d) a concrete testable prediction (R-axis disagreement specifically outperforms consensus as a frontier probe) meets this bar. The paper's contribution is the *framework and the position*, not a meta-analysis.
 
+**Addendum — literature search completed 2026-04-06:**
+
+Three additional papers confirmed by the completed search agent (findings integrated here):
+
+- **"Who Can We Trust? LLM-as-a-jury for Comparative Assessment" (arXiv:2602.16610, February 2026):** Introduces BT-sigma (Bradley-Terry with per-judge discriminator parameters) to jointly infer item rankings and judge reliability from pairwise comparisons. Directly formalizes that *different judges have different reliability on different dimensions* — the theoretical grounding for why R_error is highest for some models (Haiku, Opus) but in different directions. Provides a principled Bayesian alternative to the flat consensus we critique.
+
+- **"Debatable Intelligence: Benchmarking LLM Judges via Debate Speech Evaluation" (arXiv:2506.05062, EMNLP/September 2025):** Tests LLM judges on 600+ annotated debate speeches. Qwen-72B reaches human-level agreement on individual scores but all LLMs diverge substantially from humans in *overall scoring behavior*, especially in absolute distribution (larger LLMs score lower). Most relevant: this is the only empirical study testing LLM judges specifically on debate/contestation content — and it finds systematic deviation. Supports the debate-worthiness gap (frontier_score doesn't predict debate: ρ≈0) by showing that AI evaluators are miscalibrated on intellectually contested material.
+
+- **"When Two LLMs Debate, Both Think They'll Win" (arXiv:2505.19184, May 2025):** LLMs enter debates with ~73% average certainty and fail to update appropriately when facing genuine opposition — a metacognitive deficit. Direct implication: AI judges cannot reliably detect that a question is in genuinely contested territory. They model confidence, not uncertainty about contested terrain. This is the mechanistic explanation for why frontier_score fails to distinguish debate-worthy from non-debate-worthy content (both score ~2.75): the judges don't perceive the contestedness.
+
+**Gap confirmed:** The literature search agent's honest assessment: no paper directly tests whether AI quality scores *predict debate-worthiness or intellectual contestedness*. The question-rigour vs answer-rigour distinction also has no direct treatment in any existing paper. Both remain available as clean novel contribution claims.
+
 ---
 
 ## CANDIDATE POSITIONS
