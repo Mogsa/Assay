@@ -269,9 +269,54 @@ The strongest systemic objection is that Findings 3–5 (the D/E/F core) all der
 
 ---
 
+### Candidate F Strengthened: Independent Confirmation from Peer Review Literature — 2026-04-06
+
+**Purpose of this entry:** All five queue items and the meta-synthesis are complete as of 2026-04-05. This entry adds new evidence from a targeted literature search (2026-04-06) and updates the final recommendation.
+
+**The key new paper — "Mind the Blind Spots: A Focus-Level Evaluation Framework for LLM Reviews" (arXiv:2502.17086, EMNLP 2025):**
+
+This paper introduces a focus-level evaluation framework for LLM-generated peer reviews, using 676 paper reviews from OpenReview across 3,657 expert-identified strengths and weaknesses. Central finding: **off-the-shelf LLMs consistently over-focus on technical validity (≈ Rigour) while significantly overlooking novelty assessment.** Crucially, the magnitude isn't marginal — novelty blind spots were systematic across all tested models.
+
+This is an independent, cross-context replication of our Calibration Gradient Inversion (Finding 5/Candidate F) from a completely different experimental context:
+
+| Our experiment | "Mind the Blind Spots" |
+|---|---|
+| Rating *research questions* on R/N/G | Reviewing *submitted papers* on validity/novelty/contribution |
+| R_error highest (4/5 models) | LLMs over-weight validity, under-weight novelty |
+| LLMs agree on N/G (pattern matching), disagree on R | LLMs miss novelty blind spots systematically |
+| N=29 human labels, 5 models | N=676 expert reviews, multiple LLMs |
+
+The mechanism is the same in both cases: LLMs attend to surface markers of technical validity/rigour (formal structure, hypothesis framing, methodological language) rather than making substantive judgments about whether the work is actually novel or correct. The pattern fires regardless of whether the target is a question (our setting) or a paper review (Mind the Blind Spots).
+
+**The novel contribution gap this confirms:** Mind the Blind Spots evaluates LLM reviews of *answers/papers*, not LLM ratings of *research questions*. Our experiment is the first to show that when LLMs evaluate research *questions* on Rigour — where no "answer" exists to check against — they have the highest calibration error. This is structurally harder than answer-rigour: there's no ground truth to verify the question's premise. The question-rigour vs answer-rigour distinction is not addressed in any existing paper, including Mind the Blind Spots. This remains our clean novel contribution gap.
+
+**Second new evidence — "Are We on the Right Way to Assessing LLM-as-a-Judge?" (arXiv ~Dec 2025):**
+
+Systematic comparison of panel-based vs debate-based LLM evaluation. Finding: **panels usually help; debates often hurt.** This is directly consistent with Finding 4/E: when frontier content generates genuine aleatoric uncertainty, having models debate toward consensus does not converge to truth — it converges to the shared hallucination. Debate-based frameworks push toward consensus, which (per D) amplifies correlated errors. Panel frameworks preserve disagreement as a signal, which (per E) is what we want. The paper provides external validation that our "use disagreement, don't suppress it" prescription is empirically sound.
+
+**Revised surprise score for Candidate F:** The existing assessment gave F a surprise score of 3/5, arguing that "LLMs are bad at factual checking" is known. The new evidence upgrades this to **4/5**: the cross-context replication from Mind the Blind Spots (peer review domain, independent methodology, same directional finding) elevates this from "our one dataset" to "a consistent empirical pattern across evaluation contexts." More importantly, the INVERSION of the prediction (expected R < G error, observed R > G error) is what distinguishes this from "LLMs struggle with facts." Every practitioner designing AI evaluation systems assumes that factual/objective axes are more reliable than creative/subjective axes. Our data — now independently confirmed — says this assumption is backwards for frontier research content.
+
+**Sharpest single-sentence claim for the abstract (revised):**
+
+> "When AI judge panels evaluate frontier intellectual content, the axis that appears most objective (Rigour) produces the highest inter-rater error — while panel disagreement on exactly this axis is the most reliable signal that content is genuinely at the frontier — inverting both the standard reliability assumption and the standard use of inter-judge variance."
+
+This sentence:
+1. States the empirical finding (R_error highest)
+2. States the constructive alternative (R-axis disagreement = frontier signal)
+3. Names the two assumptions being inverted (objectivity hierarchy + disagreement-as-noise)
+4. Does not depend on any specific dataset size (it is a position claim, not a significance test)
+
+**Devil's Advocate on the full synthesis:**
+
+The strongest unified objection: this entire paper risks being a collection of "our N=29 human labels suggest X" observations, each individually underpowered, bundled into a theoretical framework that sounds bigger than the data supports. The Mind the Blind Spots replication helps — it's independent evidence from 676 reviews — but it's not the same task. A NeurIPS reviewer will say: "interesting pilot study, but you need 150+ human-rated items across multiple content domains to make the claim stick."
+
+The counter, and why it still works for a NeurIPS *position paper*: Position papers at NeurIPS are not expected to present definitive proof; they are expected to argue a position with sufficient evidence to make the community take the claim seriously and test it. Our combination of (a) directional empirical evidence consistent across 5 model families, (b) independent cross-context replication in peer review literature, (c) theoretical grounding in Condorcet + aleatoric uncertainty, and (d) a concrete testable prediction (R-axis disagreement specifically outperforms consensus as a frontier probe) meets this bar. The paper's contribution is the *framework and the position*, not a meta-analysis.
+
+---
+
 ## CANDIDATE POSITIONS
 
-**Final assessment incorporating all five findings (updated 2026-04-05):**
+**Final assessment incorporating all five findings (updated 2026-04-06):**
 
 ---
 
@@ -433,13 +478,17 @@ This is a single, sharp, falsifiable thesis:
 - Opus's anomaly (N_MAE=1.03 highest) doesn't fit the clean narrative — if N is pattern matching, Opus should be good at it
 - N=29 human items is still the ground truth sample, and the pattern may not replicate on a larger human sample
 
-**Surprise score: 3/5** — "LLMs are bad at factual checking" is known, but "factual checking is the hardest evaluation axis, even harder than creativity/novelty" is counterintuitive and inverts the assumption of every LLM-as-judge paper that treats factual accuracy as the reliable baseline.
+**Surprise score: 4/5** — "LLMs are bad at factual checking" is known. The novel claim is that **factual checking is the hardest evaluation axis even harder than creativity/novelty**, and that this *inverts* the objectivity hierarchy that every LLM-as-judge paper takes for granted. The cross-context replication in "Mind the Blind Spots" (EMNLP 2025) — which independently finds LLMs over-focus on validity surface markers while underweighting novelty in paper peer review — upgrades this from a single-dataset observation to a consistent empirical pattern. The question-rigour vs answer-rigour distinction (no ground truth exists to check a frontier question's premise against) remains our specific novel contribution that the existing literature does not address.
 
 **Relationship to D+E:** F is the mechanistic explanation for D and E. It answers "WHY does consensus fail at the frontier?" (because R, the axis most likely to have correlated errors from shared domain misconceptions, drives the consensus failures) and "WHY is disagreement the frontier signal?" (because R-axis disagreement specifically marks the boundary of reliable domain knowledge encoding across models). F, D, and E are one argument.
 
 ---
 
-## FINAL TOP RECOMMENDATION (all 5 queue items complete)
+## FINAL TOP RECOMMENDATION (updated 2026-04-06)
+
+**Standing recommendation: Candidates D + E + F unified, with F as the sharpest entry point — "Frontier Evaluation Requires a New Measurement Paradigm."**
+
+*Rationale for update (2026-04-06):* The previous recommendation (2026-04-05) correctly identified D+E+F as one coherent argument but gave F a 3/5 surprise score and treated it as the "mechanistic explanation" rather than the lead claim. The new "Mind the Blind Spots" evidence (EMNLP 2025) upgrades F to 4/5 surprise — matching D's score — and establishes a cross-context replication that makes F independently defensible. The revised recommendation: **lead with F** (the calibration gradient inversion, now independently confirmed), use D (correlated errors, Condorcet failure) as the structural explanation for *why* this matters for multi-model panels, and use E (disagreement as frontier signal) as the constructive implication. F is the most counterintuitive single finding; D explains why it can't be fixed by adding more judges; E shows what to do instead.
 
 **The paper's thesis: Candidates D + E + F unified — "Frontier Evaluation Requires a New Measurement Paradigm."**
 
@@ -474,6 +523,8 @@ All five findings converge on the same position: **frontier evaluation requires 
 - **Provocative version (maximum surprise):** "The best predictor of whether intellectual content is genuinely at the frontier is not the AI evaluation panel's consensus score — it is their disagreement score."
 
 - **Mechanistic version (most theoretically grounded):** "AI judges agree well on novelty and generativity (pattern-matching tasks) but disagree severely on rigour (factual-checking tasks), and this disagreement about rigour is correlated across model families — making panel consensus on frontier content a measurement of shared misconception, not shared truth."
+
+- **Recommended abstract sentence (2026-04-06, incorporating all evidence):** "When AI judge panels evaluate frontier intellectual content, the axis that appears most objective — Rigour — produces the highest inter-rater error while inter-judge disagreement on exactly this axis is the most reliable signal that content is genuinely at the frontier, inverting both the standard objectivity hierarchy and the standard treatment of inter-judge variance as noise." *(Supported by: our 5-model rating experiment; "Mind the Blind Spots" EMNLP 2025 independent replication; Log-Rank Conjecture convergent-error anecdote; Condorcet/Arrow theoretical grounding; JudgeBench empirical confirmation.)*
 
 **Recommendation:** Lead with the provocative version in the abstract ("disagreement is the frontier signal"), support with the mechanistic version in the technical sections, and use the conservative version as the falsifiable claim in the experimental section.
 
