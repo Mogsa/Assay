@@ -2634,3 +2634,111 @@ No ranking changes. Two additions to the evidence record:
 
 **Literature gap confirmed open as of April 6, 2026, by independent search (this session).** Write the paper.
 
+---
+
+## SEVENTEENTH PASS — 2026-04-06
+
+*(All 5 queue items confirmed complete. This pass: (1) fresh independent literature search confirming the contribution gaps are still open; (2) two new papers not yet in the document — one partial support, one genuine challenge; (3) a "dual routing" synthesis resolving the tension between CyclicJudge (eliminate disagreement) and D+E+F (preserve disagreement); (4) a devil's advocate on the entire 17-pass enterprise; (5) definitive final CANDIDATE POSITIONS.)*
+
+---
+
+### Fresh Literature Search — Independent Session (2026-04-06)
+
+A dedicated literature agent searched five topics: judge disagreement as frontier signal, Condorcet jury theorem applied to LLM panels, question vs. answer evaluation difficulty, calibration heterogeneity for panel selection, and aleatoric/epistemic uncertainty in frontier evaluation.
+
+**Bottom line:** No April 1–6, 2026 paper directly preempts the "inter-judge N-axis disagreement as frontier routing signal" claim. The literature gap from Pass 16 remains open. Two papers not previously cited are relevant:
+
+---
+
+**arXiv:2602.15481 — "LLM-as-Judge on a Budget" (February 2026)**
+
+Proposes variance-adaptive query allocation using multi-armed bandit theory: allocate repeated AI-judge queries to item pairs with the highest score variance (σᵢ²), concentrating evaluation budget where disagreement is highest. This is the closest published work to the D+E+F routing claim — it operationalizes "high-variance items deserve more evaluation attention" — but routes *query budget* (how many AI-judge calls to make), not *human attention* (whether to escalate to human review). The distinction is critical for the paper's framing: arXiv:2602.15481 reduces AI-judge cost for hard items by concentrating AI queries there; our proposal says "at the frontier, no number of additional AI-judge queries resolves the disagreement — only human judgment can." The two papers are complementary: LLM-as-Judge-on-a-Budget is optimal for the pre-frontier regime; D+E+F routing is optimal for the frontier regime where AI queries are saturated.
+
+**Add to Candidate E evidence as point 17:** "arXiv:2602.15481 independently validates variance-adaptive allocation — concentrating evaluation effort on high-disagreement items — but routes query budget rather than human attention. Our proposal extends this principle to the ground-truth-free frontier regime: when AI-judge variance cannot be reduced by additional AI queries (aleatoric uncertainty), human review is the only available escalation path."
+
+---
+
+**arXiv:2603.01865 — "CyclicJudge: Mitigating Judge Bias Efficiently" (March 2026)**
+
+Applies generalizability theory (G-theory) to decompose benchmark variance into scenario, generation, judge, and residual components. Proves that round-robin judge assignment eliminates systematic judge bias at single-judge cost. The paper treats judge heterogeneity as a *nuisance to eliminate*, the direct opposite of D+E+F's use of heterogeneity as a *signal to exploit*.
+
+**Challenge assessment:** CyclicJudge is a real engineering alternative to the D+E+F panel design. If round-robin cycling eliminates systematic bias, a practitioner could argue: "don't preserve calibration heterogeneity — cycle judges to cancel it out, then average the result." This would produce a consensus with lower systematic bias without requiring the disagreement-as-signal framework.
+
+**The rebuttal — and a new synthesis:** CyclicJudge reduces *systematic bias* in consensus scores. It does not address *correlated errors* from shared training confounders (the CARE mechanism — arXiv:2603.00039). Even if each judge's systematic bias is cancelled by round-robin averaging, all judges still share the IFDS confounder (formality bias, low perplexity preference) — and cycling cannot remove a confounder that all judges possess equally. CyclicJudge also discards disagreement information entirely, making it blind to the frontier signal D+E+F identifies. The appropriate synthesis: apply CyclicJudge to maximize consensus reliability on *non-frontier* items, and apply D+E+F routing to flag high-N-std items for human review. These are two stages of a single pipeline:
+
+1. **CyclicJudge stage:** Round-robin assignment, compute bias-corrected consensus frontier_score. Items in the top-60% by consensus → reliable, non-frontier. Items in the ambiguous middle 40% → pass to stage 2.
+2. **D+E+F routing stage:** Compute calibrated-rater N-std on the ambiguous items. Items with cal-N-std > 1.2 → route to human review. Items with cal-N-std < 1.2 but high R-std → likely confusable non-frontier, deprioritize.
+
+This two-stage pipeline is more defensible than pure D+E+F routing (CyclicJudge handles the easy cases reliably) and more informative than pure CyclicJudge (D+E+F handles the hard cases). Neither paper proposes this combination.
+
+**Add to the paper's Section 4 (Operational Prescription):** "For the reliable non-frontier regime, CyclicJudge (arXiv:2603.01865) eliminates systematic bias; our disagreement-routing applies in the frontier regime where CyclicJudge has no advantage over raw averaging (all judges share the same confounders). The two approaches are complementary stages of a frontier-aware evaluation pipeline."
+
+---
+
+### New Angle: The Dual Corruption Shows a Measurement Invariance Problem
+
+Pass 12 established "dual corruption" — IFDS items simultaneously score high on consensus frontier_score AND generate high debate activity (mixed agent verdicts). Sixteen passes have not named this for what it is in the measurement literature: **measurement invariance failure**.
+
+Measurement invariance (Horn & McArdle 1992; Vandenberg & Lance 2000) requires that a scale measures the same construct across groups and conditions. The frontier_score fails this test: it appears to measure "frontier-ness" for seed items (where it correlates with human labels), but measures "in-distribution resemblance to frontier content" for IFDS items (where it conflates formalism with frontier-ness). The same scale, the same rubric, the same numerical output — but measuring different latent constructs depending on content type.
+
+This framing adds a third formal impossibility argument (alongside Arrow and Condorcet) that the paper can invoke: **measurement non-invariance** for AI judge scales across content types. No paper in the LLM-as-judge literature has framed the IFDS inversion as a measurement invariance failure, connecting it to the psychometric literature on scale validity. The paper can cite IRT (arXiv:2602.00521) and MFRM (arXiv:2604.00979) as methods that would detect and correct for measurement non-invariance — since both models explicitly estimate item-level parameters that can identify content where the scale has shifted meaning.
+
+**Devil's Advocate:** "Measurement invariance" is a psychometric term that NeurIPS reviewers may not recognize or may dismiss as jargon-relabeling. The counter: the IRT and MFRM papers already cited (arXiv:2602.00521, arXiv:2604.00979) are from communities that use measurement invariance testing as standard practice. Invoking the framework imports a body of established diagnostics — configural models, metric invariance tests, scalar invariance — that can validate the claim rigorously. The IFDS/seed inversion IS a measurement non-invariance problem by the formal psychometric definition, and naming it as such adds diagnostic precision.
+
+---
+
+### Devil's Advocate on the Whole 17-Pass Enterprise
+
+After 17 passes, this document has accumulated so many qualifications, sub-claims, and supporting papers that it risks serving as a substitute for writing the paper rather than a preparation for it. The honest assessment:
+
+**What is established beyond dispute:**
+1. α = 0.28 — the panel disagrees at well below publishable reliability. This is the one incontrovertible fact.
+2. Consensus frontier_score ρ ≈ 0 with debate-worthiness (2.69 vs 2.69, exact equality). The primary metric fails its primary use case.
+3. IFDS jargon outscores genuine frontier math (2.91 vs 2.45 in research-state.md; 3.21 vs 2.37 in analysis file — formula discrepancy, directional result is unambiguous).
+
+**What is strongly supported but not definitive:**
+4. Three model families made the identical Log-Rank error — a single concrete anecdote with strong mechanism (CARE confounders, shared corpora).
+5. 4/4 human-labeled frontier items in the top-10 contested set have cal-N-std > 1.2; 5/5 non-frontier items have cal-N-std ≤ 1.00 — clean separation at N=9.
+
+**What requires the 29-item Spearman ρ before it can be claimed:**
+6. Cal-N-std is a *better* routing signal than mean frontier_score. Current evidence: ρ=0.825 vs ρ=0.80 at N=5, statistically meaningless.
+
+**The bottom line:** The position paper can be written on claims 1–5 without claim 6. The theoretical argument (Condorcet + Arrow + OOD impossibility + measurement non-invariance) stands independently of the ρ comparison. The operational threshold (cal-N-std > 1.2) is a testable prediction, not a result. Writing a NeurIPS position paper around claims 1–5 + the testable prediction is appropriate for the position paper track. Claim 6 converts this to an empirical paper — run the analysis before targeting an empirical venue.
+
+---
+
+### Updated CANDIDATE POSITIONS — Definitive Final Table (Seventeenth Pass)
+
+*Supersedes all prior tables. Incorporates all 17 passes.*
+
+| # | Candidate | One-sentence claim | Evidence for | Evidence against | Surprise | Status |
+|---|-----------|-------------------|-------------|-----------------|----------|--------|
+| **1** | **D+E+F+C unified** | Multi-model panels produce α=0.28 on frontier content because "confabulation consensus" (shared confounders + Condorcet independence violated) amplifies correlated Rigour errors and discards informative N-axis disagreement; calibration-heterogeneous panel design (Ambiguity Decomposition) paired with cal-N-std > 1.2 routing is the human-review acquisition function the paradigm needs. | α=0.28 (confirmed); 2.69=2.69 debate-worthiness failure; 4/4 frontier items pass cal-N-std threshold; Log-Rank correlated error; CARE (arXiv:2603.00039); Krogh-Vedelsby Ambiguity Decomposition; "confabulation consensus" (arXiv:2602.09341); 30+ corroborating papers | N=9 human-labeled items for the threshold claim; full 29-item ρ not computed; calibration circularity; CyclicJudge (arXiv:2603.01865) as an engineering alternative | **4/5** | **TOP RECOMMENDATION** |
+| **2** | **B: Scale anti-correlation** | Gemini Flash (free) outperforms Claude Opus ($15/M) by 2× on human-aligned MAE because optimization pressure embeds larger models deeper in the training distribution, amplifying sycophancy at the cost of frontier sensitivity. | MAE 0.53 vs 0.97 on N=29; Semantic Capacity Asymmetry (arXiv:2601.22588); RLHF sycophancy scaling | N=29 thin; Haiku (cheapest Anthropic) is WORST within family; cross-family training-objective confound | **4/5** | Strong backup; limited by sample |
+| **3** | **A: Novelty Impossibility** | AI judges structurally invert novelty rankings (IFDS 3.21 > Seeds 2.37 despite explicit calibration counter-example) because frontier novelty assessment is PAC-impossible OOD detection without external anchors. | IFDS > seeds across all 5 families; calibration example failure; perplexity-preference mechanism; RINoBench | FrontierMath partially recovers; CALM 2024 anticipated mechanism | **3/5** | Best supporting evidence, standalone viable at shorter venues |
+| **4** | **C: Calibration Heterogeneity** | Select panel members by maximum pairwise N-axis severity difference (Gemini Flash: lenient, Opus: skeptical) subject to MAE < 0.8 — the Ambiguity Decomposition proves this maximizes ensemble improvement from calibrated judges. | Ambiguity Decomposition (NeurIPS 1995); LLM-TOPLA (arXiv:2410.00233); MFRM tooling (arXiv:2604.00979); Gemini/Opus pair identified empirically as max-ambiguity pair | Not independently validated beyond our dataset; requires pre-existing human labels for calibration profiling | **5/5** | Most operationally novel; formally grounded; Section 4 of the paper |
+
+---
+
+### TOP RECOMMENDATION — Final (Seventeenth Pass)
+
+**D+E+F+C unified. Unchanged across 17 passes. Write the paper.**
+
+**The argument in exactly three sentences:**
+
+1. Multi-model AI evaluation panels — the standard bias-reduction practice — produce Krippendorff's α = 0.28 on frontier intellectual content and cannot distinguish debated from settled questions (consensus score 2.69 vs 2.69 — exact equality), because shared training-distribution confounders create zero-variance correlated errors ("confabulation consensus") that consensus aggregation amplifies rather than cancels.
+
+2. The disagreement the paradigm discards is the signal: calibrated-rater N-axis standard deviation (cal-N-std > 1.2) achieves clean separation of human-labeled frontier from non-frontier content in the contested set, because frontier Novelty assessment is PAC-impossible OOD detection — models can only detect "novelty-resembling" content, not genuine novelty, making their divergence on Novelty the only signal the shared training distribution cannot corrupt.
+
+3. The optimal panel design, derived from the Krogh-Vedelsby Ambiguity Decomposition, selects judges by calibration heterogeneity (opposite systematic N-axis biases, not architectural diversity), applies CyclicJudge for reliable non-frontier items, and routes high-cal-N-std items to human review — converting a failing consensus machine into a working frontier acquisition system.
+
+**Immediate pre-submission actions (ranked by importance):**
+
+1. **(Blocking)** Run Spearman ρ(cal-N-std per item, human frontier label) vs ρ(mean_fs, human frontier label) across all 29 human-labeled items. If cal-N-std wins, this becomes an empirical paper; if comparable, keep as position paper.
+2. **(Blocking)** Compute per-item Pearson r(N,G) per rater across 134 items to resolve the N≈G collapse question — determines whether the claim is "N-axis" or "N+G combined axis."
+3. **(Blocking)** Commit to one frontier_score formula throughout: geometric mean (1–5 scale) from the analysis file, with a footnote on the production formula change.
+4. **(Recommended)** Integrate the two-stage pipeline (CyclicJudge for non-frontier + D+E+F for frontier) as Section 4. This is the most practical operational contribution and directly addresses the CyclicJudge challenge.
+5. **(Recommended)** Reframe the F mechanism (calibration gradient inversion) as the question/answer paradigm mismatch — the crisper theoretical explanation from Pass 15.
+
+**Literature gap confirmed open by three independent searches across 17 passes.** The D+E+F+C thesis, grounded in triple-impossibility (Arrow + Condorcet + OOD PAC) and validated by 30+ independent literature threads, is ready for paper writing.
+
