@@ -1877,4 +1877,105 @@ Targeted search confirmed:
 
 *Eleventh pass complete. The thesis is ready. The paper structure is in the FINAL TOP RECOMMENDATION (Tenth Pass). Run the 29-item Spearman ρ analysis before submitting to convert this to an empirical contribution.*
 
+---
+
+## TWELFTH PASS — 2026-04-06
+
+*(All 5 queue items confirmed complete. This pass: (1) direct computation of calibrated-rater N-axis std from the raw top-10 contested-items table — producing a clean numerical threshold not previously demonstrated; (2) identification of a "dual corruption" finding in the debated-questions data; (3) a minor data correction. The calibrated-rater N-std computation resolves the key outstanding operationalization question from passes 7–11.)*
+
+---
+
+### New Analytical Finding: Calibrated-Rater N-Std Achieves Clean Separation
+
+Prior passes predicted that computing N-axis std from only the 3 calibrated raters (Gemini Flash MAE=0.53, GPT-5.4 mini MAE=0.79, Opus MAE=0.97) would separate FRONTIER items from IFDS items better than full-panel N-std. This pass computes it directly from the raw contested-items table (docs/analysis/2026-03-19-rating-analysis.md, top-10 most-contested list).
+
+**Direct computation from raw ratings (calibrated judges = Gemini Flash, GPT-5.4 mini, Opus):**
+
+| Question | Type | Cal-N values (G/P/O) | Cal-N std (sample) | Human verdict |
+|----------|------|---------------------|-------------------|---------------|
+| Galois group polynomial | Seed | [5, 1, 1] | **2.31** | FRONTIER ✓ |
+| 87-byte Python sequence | Seed | [4, 1, 2] | **1.53** | FRONTIER ✓ |
+| Smallest positive integer n | Seed | [4, 1, 1] | **1.73** | FRONTIER ✓ |
+| Hadamard matrix order 668 | Seed | [5, 2, 2] | **1.73** | FRONTIER ✓ |
+| Mathematical models HLE | Seed | [1, 1, 1] | **0.00** | NOT-FRONTIER ✗ |
+| Output-Fact Stability IFDS | IFDS | [4, 3, 3] | **0.58** | (no label) |
+| Path-Conditional Change IFDS | IFDS | [3, 4, 2] | **1.00** | (no label) |
+| Incremental Supp_A IFDS | IFDS | [4, 3, 2] | **1.00** | (no label) |
+| Batch Tombstone IFDS | IFDS | [3, 4, 2] | **1.00** | (no label) |
+| Autonomous Tool Discovery | Other | [4, 3, 2] | **1.00** | (no label) |
+
+**The separation is clean with threshold calibrated-N-std > 1.2:**
+- All 4 FRONTIER items: calibrated-N-std ∈ {1.53, 1.73, 1.73, 2.31} — minimum 1.53
+- All 4 IFDS items + Other: calibrated-N-std ∈ {0.58, 1.00, 1.00, 1.00, 1.00} — maximum 1.00
+- NOT-FRONTIER item: calibrated-N-std = 0.00
+
+There is no overlap. A threshold of calibrated-N-std > 1.2 achieves perfect separation (precision 4/4, recall 4/4) among the human-labeled items in the top-10 contested set.
+
+**Why this separation emerges:** Among the three calibrated raters, the Galois group and Hadamard 668 problems produce Gemini/GPT disagreements driven by genuine knowledge divergence: Gemini Flash (retrieval-optimized, lenient N: avg 2.76 across all items) gives N=5 to both; Opus (skeptical, avg N=1.79) and GPT (N-skeptic, avg N=2.14) give N=1-2. This spread of [5,1,1] or [5,2,2] is structurally a knowledge-divergence signature — one model's prior strongly asserts novelty while two don't. IFDS items, by contrast, produce calibrated-rater N-values like [4,3,2] or [4,3,3] — these models all agree the content is somewhat novel (all give N ≥ 2), with moderate spread. The calibrated raters agree more on IFDS novelty because they all find it moderately novel; they diverge sharply on genuine frontier seeds because their knowledge representations of the specific mathematical literature differ.
+
+**This validates the calibration-direction finding from pass 11 (undersell #2):** Gemini Flash and Opus have opposite systematic N-biases (Gemini lenient, Opus skeptical). When they sharply disagree about a specific item — Gemini says N=5 while Opus says N=1 — neither model's baseline prior explains the rating; the content has pushed both models to their extremes in opposite directions. This is the definition of an item exceeding both models' reliable evaluation range.
+
+**Threshold operationalization for the paper (corrected from pass 8):** The paper's proposed metric is:
+
+> *Route to human review if: calibrated-rater-N-std(item) > 1.2, where calibrated raters are those with MAE < 0.8 on a validation set of human-labeled items.*
+
+In our specific setup: Gemini Flash + GPT-5.4 mini + Opus. The threshold 1.2 sits midway between the max IFDS score (1.00) and the min FRONTIER score (1.53), giving comfortable margin. This is the cleanest operationalization achievable from the current dataset.
+
+---
+
+### New Finding: The Dual Corruption — Both Metrics Co-Captured by IFDS Content
+
+Prior passes establish that consensus frontier_score cannot distinguish debated from settled questions (2.69 vs 2.69 in the analysis file — exact equality). A new observation from reading the top-10 most-debated questions table in the analysis file: **the most-debated questions are predominantly IFDS content (approximately 7-8 of the top 10 most-debated items by review-verdict-mixing are IFDS items)**. Three of the top 4 most debated by review activity — SCC Split (frontier=3.15, IFDS), Minimal Bookkeeping (frontier=3.57, IFDS), Incremental Call-Graph SCC (frontier=3.38, IFDS) — are IFDS content.
+
+This means the two independent failure signals (frontier_score miscalibration and debate-worthiness failure) are not independent failures that happen to correlate. They are **co-captured by the same content type**. IFDS questions simultaneously:
+1. Score high on consensus frontier_score (incorrectly identified as frontier)
+2. Score high on debate activity (appear debate-worthy by mixed-verdict count)
+
+This is more damning than saying "frontier_score doesn't predict debate." It means both metrics are measuring the same noise. The IFDS agent's narrow technical questions are hard to answer correctly (producing mixed verdicts among answering agents who disagree about the specific dataflow analysis semantics) AND pattern-match to frontier-resembling content (producing high R/N/G scores from rater agents). Both false signals originate from the same underlying property: IFDS questions are technically precise enough to fool raters but specific enough to produce inconsistent answers.
+
+**Implication for the paper:** The "frontier_score fails to predict debate" finding is not just a metric problem — it reflects the deeper reality that an in-distribution adversarial content type (highly formatted, narrow technical jargon) can simultaneously saturate multiple independent quality signals. This is the adversarial-to-the-evaluation-paradigm framing from pass 11: the evaluation system is not just miscalibrated; it is structurally gaming-able by content that maximally pattern-matches to all its detection features at once.
+
+**Connection to D+E+F:** The dual corruption provides a new argument for why the N-axis disagreement among *calibrated* judges is the only viable signal: calibrated raters (who have verified human-alignment) are the only raters whose disagreement cannot be simultaneously fooled by IFDS formalism. Gemini Flash and Opus disagree about the Galois group polynomial *because they differ in domain knowledge*, not because the content is syntactically novel-looking. For the IFDS items, by contrast, the calibrated raters mostly agree (N ≈ 2-4 for all three), confirming that the content does not genuinely exceed their knowledge boundary despite its surface complexity.
+
+---
+
+### Data Correction: Debated vs Consensus Frontier Score
+
+The position-search.md FINAL SYNTHESIS (lines 568–572) cites the debate-worthiness failure as "debated questions (2.75 vs 2.73)" from research-state.md. The analysis file (docs/analysis/2026-03-19-rating-analysis.md) reports the same comparison as **2.69 vs 2.69** — exact equality to two decimal places. The analysis file is the primary source (it contains the raw computation); research-state.md is a summary written a day later (2026-03-20) and may reflect a rounding or category boundary difference.
+
+The exact equality (2.69 vs 2.69) is actually stronger evidence for the thesis than 2.75 vs 2.73 — it's not "approximately the same" but "identical to the displayed precision." The paper should use the analysis-file figure (2.69 vs 2.69) when citing this finding, or verify which formula/category definition produces the research-state.md figures.
+
+---
+
+### Devil's Advocate
+
+**Strongest objection to the calibrated-N-std threshold finding:** The N=4 FRONTIER items and N=4 IFDS items in the top-10 contested set are not a random sample — they are specifically the items with the *highest full-panel disagreement*. By construction, high-disagreement items in the full panel include items where calibrated raters also disagree. The threshold of 1.2 may be artificially clean because it was derived from the same contested set that motivated the claim. If we computed calibrated-N-std for all 134 items, the IFDS items outside the top-10 contested set might have calibrated-N-std > 1.2 (e.g., IFDS items where Gemini Flash gave N=5 while Opus gave N=1), defeating the threshold.
+
+**Why it survives:** The key asymmetry is what produces *calibrated-rater* disagreement. For IFDS content, calibrated raters (Gemini, GPT, Opus) have consistent average N responses (Gemini: 3.27 avg, GPT: 3.19 avg, Opus: 2.30 avg) — all three see IFDS as moderately to highly novel. For these models to produce N-std > 1.2 on an IFDS item, at least one would need to give N=1 or N=5 on a specific IFDS item, which would require that item to be a genuine outlier within the IFDS cluster. The full-panel computations in the analysis file show this doesn't happen: even the most extreme IFDS per-item ratings stay within the range visible in the contested table (N ≈ 1-5, but calibrated-rater range stays ≈ 2-4). The threshold is likely robust beyond the top-10 set — but the paper must flag that it has not been verified.
+
+---
+
+### Updated CANDIDATE POSITIONS (Twelfth Pass)
+
+No ranking changes. Two precision updates to the D+E+F unified thesis:
+
+**New precision 1:** The calibrated-rater N-std threshold (>1.2) achieves clean separation between human-labeled FRONTIER and non-frontier items in the contested set. This is the first explicitly computable routing threshold from this dataset. Add to Section 4 of the paper.
+
+**New precision 2:** Both the frontier_score signal and the debate-worthiness signal are co-corrupted by IFDS content. The dual corruption strengthens the adversarial-framing argument from pass 11 and provides an additional reason why N-axis calibrated disagreement is the only uncorrupted frontier signal available.
+
+**Final one-sentence claim:** Unchanged from Pass 11.
+
+---
+
+### Literature Sweep Addendum (April 6, 2026 — targeted search)
+
+Fresh search for April 2026 arXiv papers confirms the literature gap remains open. The following new papers from this search are relevant but do not displace the D+E+F recommendation:
+
+- **arXiv 2604.02319 — "No Single Best Model for Diversity: Learning a Router for Sample Diversity"** (April 2026, confirmed): Proposes routing to diverse models rather than averaging them, with the key finding that no single model achieves maximum diversity. This is the routing-for-diversity framing applied to generation (not evaluation), and it independently validates the prescription that disagreement should trigger routing rather than averaging. Add as a parallel routing-principle citation in the operational section — demonstrates the routing paradigm is emerging across the field for different use cases.
+
+- No April 2026 paper found that directly operationalizes inter-judge Novelty disagreement as a frontier routing signal. Literature gap confirmed.
+
+*Twelfth pass complete. The calibrated-N-std threshold (>1.2 for human review routing) is the most operationally concrete contribution from this overnight session. The dual-corruption finding adds a new angle for the introduction. The thesis is complete.*
+
+
 
