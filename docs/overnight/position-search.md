@@ -1975,7 +1975,11 @@ Fresh search for April 2026 arXiv papers confirms the literature gap remains ope
 
 - No April 2026 paper found that directly operationalizes inter-judge Novelty disagreement as a frontier routing signal. Literature gap confirmed.
 
-*Twelfth pass complete. The calibrated-N-std threshold (>1.2 for human review routing) is the most operationally concrete contribution from this overnight session. The dual-corruption finding adds a new angle for the introduction. The thesis is complete.*
+**New challenge paper: arXiv 2604.01366 — "CogBias: Measuring and Mitigating Cognitive Bias in Large Language Models"** (April 2026): Finds that bias directions in model activations are near-orthogonal across architectures (mean cosine similarity ≈ 0.01). This could be read as evidence against the D+E+F thesis: if model biases are orthogonal, errors should be less correlated than we claim.
+
+**Rebuttal:** Orthogonal activation-space biases do not preclude correlated surface-level errors on shared training content. CogBias measures bias as a direction in the representation space of model internals; our claim is about correlated *outputs* on specific content that all models have seen in training. The Log-Rank Conjecture error is not caused by shared internal bias vectors — it is caused by shared misleading co-occurrence patterns in academic complexity theory papers. These are different levels of analysis. Additionally, CogBias finds that debiasing *backfires for Judgment biases* (the category most analogous to evaluation) while working for Response biases — this actually supports the thesis that evaluation biases are harder to eliminate than surface biases, consistent with the claim that correlated frontier-evaluation errors are structural, not removable by prompting.
+
+*Twelfth pass complete. The calibrated-N-std threshold (>1.2 for human review routing) is the most operationally concrete contribution from this overnight session. The dual-corruption finding adds a new angle for the introduction. CogBias (2604.01366) is the sharpest new challenge paper; the rebuttal above holds. The D+E+F thesis stands. Literature gap confirmed as of April 6, 2026.*
 
 
 
