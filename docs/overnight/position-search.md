@@ -1160,6 +1160,103 @@ The strongest remaining objection is N=4 data points for the "N-axis std = front
 
 ---
 
+### Overnight Literature Sweep — 2026-04-06 (Sixth Pass)
+
+**Purpose:** Full re-read of all five passes plus a fresh targeted literature search for April 2026 papers. All queue items confirmed complete. This pass: (1) confirms the literature gap is still open; (2) identifies one under-developed contribution not yet fully articulated; (3) delivers the cleanest possible final CANDIDATE POSITIONS update.
+
+**Literature sweep result:** Web search for April 2026 arXiv papers on LLM judge correlated errors, disagreement-as-signal, and Condorcet-jury-for-AI returned no papers not already cited in this document. The existing citation set (arXiv 2603.25450, 2603.20975, 2603.10303, 2602.22413, 2604.00477, 2604.00259, 2502.04313, 2602.00521, and others) is current and comprehensive. The thesis is not under threat from recent preprints.
+
+**One under-developed contribution: Calibration Heterogeneity as a Panel Design Rule**
+
+Previous passes briefly mentioned this in the "Final Run Synthesis" section but never elevated it to a standalone claim. It deserves elevation. The insight: Findings 2 and 3 together imply a concrete panel selection criterion that is not stated anywhere in the literature.
+
+Finding 2 shows Gemini Flash (MAE=0.53) and Opus (MAE=0.97) calibrate differently and in structurally different ways — Gemini's low MAE is driven by accurate N-axis recognition (information-retrieval-like), Opus's higher MAE reflects over-penalization of HLE novelty (excess skepticism). When these two calibrate differently *for different reasons*, their disagreement on a given item carries information: it is not two miscalibrated raters accidentally diverging, but two well-calibrated raters diverging because the item genuinely sits at the boundary of their respective knowledge representations.
+
+Finding 3 shows that architectural diversity (Claude vs Gemini vs GPT) does NOT produce epistemic independence for frontier content. But *calibration heterogeneity* — selecting judges whose MAE profiles differ in direction, not magnitude — produces genuine disagreement. Gemini Flash (retrieval-optimized, good on N) vs Opus (skepticism-optimized, harsh on N for non-open questions) is the prototype of a calibration-heterogeneous pair. Their N-axis disagreement on a frontier question is maximally informative because it signals that the item falls between two structurally different knowledge representations.
+
+**The paper's novel prescriptive contribution (sharpened):** "Select panel members by calibration heterogeneity — choose judges whose human-alignment MAE profiles differ in direction across axes, not just magnitude — rather than by architectural diversity or benchmark rank. A calibration-heterogeneous panel of two well-calibrated judges with different failure modes produces more informative disagreement than a large panel of architecturally diverse judges with similar calibration profiles."
+
+This is not in any cited paper and is directly derivable from our experimental data. It is more actionable than the N-axis signal claim and serves as the paper's concrete novel prescription.
+
+**Devil's Advocate:** The N=29 human-label dataset is still the ground truth for determining which judges are "calibrated" and which have "heterogeneous MAE profiles." Selecting a panel based on MAE profiles derived from only 29 items is overfitting — the calibration ranking could shift with a larger human label set. Counter: the principle holds regardless of which specific pair is "calibration-heterogeneous"; what matters is the measurement approach (MAE against human ground truth, per axis). Once we have 100+ human labels, the same procedure identifies the right pair. The paper's claim is about the selection criterion, not about the specific models.
+
+**One data point that would make this paper airtight:** If we had the full 29-item per-axis per-model ratings AND could compute per-item N-axis std for calibrated judges vs. human frontier label, the Spearman ρ would either confirm or challenge the N-axis frontier signal claim quantitatively. The analysis has not been run. This is the single most important empirical step before submitting.
+
+---
+
+## CANDIDATE POSITIONS — FINAL CLEAN UPDATE (2026-04-06, Sixth Pass)
+
+*Full re-read complete. This is the authoritative final assessment incorporating all five passes, the DATA CORRECTION, and the Sixth Pass. All prior candidate assessments are superseded by this table.*
+
+---
+
+### Candidate A: "The Novelty Impossibility"
+
+**One-sentence claim:** LLM judges structurally invert novelty rankings — formally-structured in-distribution jargon consistently outscores genuine frontier content because novelty detection is OOD detection, which is formally impossible for a model trained on a fixed corpus.
+
+**Evidence for:** IFDS jargon avg 3.21 > Seeds avg 2.37 (geometric mean, all 5 model families). Perplexity-preference mechanism (arXiv 2410.21819). OOD detection impossibility (NeurIPS 2021). CALM bias framework (NeurIPS 2024). ReviewerToo (arXiv 2510.08867): AI reviewers fail specifically on novelty assessment. RINoBench (arXiv 2603.10303) establishes this as an open research problem.
+
+**Evidence against:** FrontierMath partially recovers expected ordering (3.57 > IFDS 3.21) — inversion is strongest against HLE seeds, which may genuinely not be "novel questions." CALM (NeurIPS 2024) partially anticipated this; a reviewer may call it incremental.
+
+**Surprise score: 3/5** — The mechanism is known; the systematic *inversion* (not just downrating) is the novel contribution. Good supporting evidence for D+E+F but not strong enough to anchor a standalone position paper.
+
+---
+
+### Candidate B: "Scale Anti-Correlates With Evaluation Quality"
+
+**One-sentence claim:** Model capability and judge calibration are dissociable for frontier content — Gemini Flash (free) achieves MAE=0.53 vs Opus ($15/M) MAE=0.97 because optimization pressure embeds larger models deeper in the training distribution, amplifying sycophancy and self-projection at the cost of sensitivity to genuine novelty.
+
+**Evidence for:** 5-model MAE table against 29 human items. Sycophancy scaling literature (arXiv 2310.13548, 2411.15287). Self-recognition bias (arXiv 2404.13076). Semantic Capacity Asymmetry (arXiv 2601.22588).
+
+**Evidence against:** N=29 human items; confidence intervals likely overlap. Cross-family comparison confounds size with training methodology. Haiku (cheap Anthropic) is worst within Anthropic family — cost correlation is not monotonic even within families.
+
+**Surprise score: 4/5** — "Don't use your flagship model as a judge for frontier content" is genuinely counterintuitive. Strong standalone backup if D+E+F is rejected.
+
+---
+
+### Candidate D+E+F (Unified — TOP RECOMMENDATION): "The Disagreement Dividend"
+
+**One-sentence claim:** Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content because Condorcet independence fails — model families make correlated Rigour errors from shared training corpora — while the N-axis disagreement they discard is the only reliable per-item frontier signal.
+
+**Mechanism (F):** AI judges show correlated systematic error on Rigour (per-item R-std is LOWEST for frontier content; α_R=0.257 is model-scale-offset, not item-level noise) and informative aleatoric divergence on Novelty (per-item N-std is HIGHEST for frontier content, driven by genuine differences in knowledge of rare academic literature). G-axis disagreement is confounded by Qwen's G=5 outlier pathology on non-frontier IFDS items.
+
+**Correlated failure (D):** The Log-Rank Conjecture anecdote: three model families (Claude, Gemini, GPT) independently called Lovett's upper bound a "proof barrier" — identical wrong answer, textbook correlated-error pattern. "Great Models Think Alike" (arXiv 2502.04313, ICML 2025 spotlight): as model capability grows, errors converge. arXiv 2602.22413: formal proof that Condorcet panel accuracy degrades under correlated information sources ("collective hallucination"). The independence assumption is structurally violated for frontier topics discussed in small, densely-cited corpora all capable models have read.
+
+**Frontier signal (E):** 4/4 human-labeled unambiguous frontier items in the top-10 contested list have the highest N-axis std (not R or G). Aleatoric uncertainty framework (Zerva EMNLP 2022): frontier content produces irreducible evaluative disagreement because it exceeds the reliable knowledge range of all judges. arXiv 2603.25450: cross-model disagreement detects confident errors at AUROC 0.75 vs AUROC 0.59 for within-model uncertainty. DiscoUQ (arXiv 2603.20975): structured disagreement achieves AUROC 0.802 with 5-agent ensembles. Consensus frontier_score ρ ≈ 0 with debate-worthiness (2.75 vs 2.73 — debated questions are indistinguishable from consensus ones on the consensus metric).
+
+**Novel prescription:** Replace `mean(frontier_score)` ranking with `mean + λ·std_N(calibrated_judges)`. Select panel members by calibration heterogeneity, not architectural diversity. Route top-decile N-std items to human review — not as a fallback but as the evaluation system's primary output for the frontier regime.
+
+**Evidence against:** N=4 data points for N-axis frontier signal (top-10 contested list). Full Spearman ρ(N-axis std, human frontier label) across all 29 human-rated items has not been computed — the key testable prediction is unvalidated. α = 0.28 is across all items (frontier and routine); routine items may inflate agreement, making frontier-specific α even lower. "Calibrated judges" defined by the same 29 human labels used to validate the claim — circularity risk. The Log-Rank error is one qualitative anecdote, not a systematic count.
+
+**Surprise score: 4/5** — Inverts two standard assumptions simultaneously: (1) consensus = reliability; (2) disagreement = noise. Attackable but requires engaging with the mechanism; cannot be dismissed with a citation to CALM or MT-Bench.
+
+**Literature gap confirmed (sixth pass):** No paper connects Condorcet independence failure to frontier-specific training corpus overlap, distinguishes R-axis correlated errors from N-axis aleatoric divergence as two failure modes of the same panel, or proposes N-axis calibrated-judge std as the operational frontier detector. The four-part synthesis is original.
+
+---
+
+### Summary Table
+
+| Candidate | Claim (one sentence) | Surprise | Evidence | Novelty to NeurIPS | Overall |
+|-----------|---------------------|----------|----------|---------------------|---------|
+| **D+E+F unified** | Panels amplify correlated R errors while discarding informative N disagreement — the throwaway signal is the frontier probe | **4/5** | Strong (theory + 5 empirical threads + 12+ independent papers) | High | **#1** |
+| B (Scale anti-correlation) | Gemini Flash > Opus as frontier judge; optimization pressure anti-correlates with evaluation quality | 4/5 | Moderate (N=29, cross-family confound) | High | #2 |
+| A (Novelty Impossibility) | LLM judges invert novelty rankings; jargon loops outscore genuine frontier math | 3/5 | Moderate (FrontierMath partially recovers) | Medium | #3 |
+
+---
+
+### Top Recommendation (Definitive)
+
+**Candidate D+E+F unified.** Lead with the provocative title: **"Consensus as Confound"** or **"The Disagreement Dividend."**
+
+**Abstract sentence:**
+> *Multi-model AI evaluation panels — the standard bias-reduction practice — produce Krippendorff's α = 0.28 on frontier intellectual content because they violate the Condorcet independence assumption: model families share training corpora and make identical Rigour errors, while their genuine Novelty disagreements — the only informative per-item frontier signal — are averaged away.*
+
+**Two actions required before submission:**
+1. Run Spearman ρ(N-axis std per item, human frontier label) vs ρ(mean frontier_score, human frontier label) across all 29 human-labeled items. This is the single most important empirical validation.
+2. Compute per-axis α for the calibrated-judge subset (Gemini Flash + GPT-5.4 mini + Opus) separately — expected to show calibrated-judge N-axis α even lower than the full-panel figure, strengthening the E claim.
+
+---
+
 ## OVERNIGHT RUN — 2026-04-06 (Second Pass)
 
 *(All 5 queue items confirmed complete. No new April 1–6, 2026 arXiv papers found that materially change the recommendation — literature gap confirmed stable. This pass: deep per-axis disaggregation of the raw contested-items table; a new three-way taxonomy of disagreement types backed by actual numbers; one mechanism not previously made explicit.)*
