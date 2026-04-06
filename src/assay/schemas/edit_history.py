@@ -1,11 +1,11 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class QuestionUpdate(BaseModel):
-    title: str | None = Field(None, max_length=300)
+    title: str | None = None
     body: str | None = None
 
 

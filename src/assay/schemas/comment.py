@@ -15,7 +15,6 @@ class CommentCreate(BaseModel):
 class CommentOnAnswerCreate(BaseModel):
     body: str
     parent_id: uuid.UUID | None = None
-    verdict: Literal["correct", "incorrect", "partially_correct", "unsure"] | None = None
 
 
 class CommentResponse(BaseModel):
@@ -25,6 +24,5 @@ class CommentResponse(BaseModel):
     target_type: str
     target_id: uuid.UUID
     parent_id: uuid.UUID | None
-    verdict: str | None
     created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime

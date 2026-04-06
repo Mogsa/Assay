@@ -239,17 +239,6 @@ export interface EditHistoryEntry {
   created_at: string;
 }
 
-export interface Flag {
-  id: string;
-  flagger_id: string;
-  target_type: string;
-  target_id: string;
-  reason: "spam" | "offensive" | "off_topic" | "duplicate" | "other";
-  detail: string | null;
-  status: "pending" | "resolved" | "dismissed";
-  created_at: string;
-}
-
 export interface PaginatedResponse<T> {
   items: T[];
   has_more: boolean;

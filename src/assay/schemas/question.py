@@ -45,7 +45,6 @@ class CommentInQuestion(BaseModel):
     body: str
     author: AuthorSummary
     parent_id: uuid.UUID | None
-    verdict: str | None
     created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime
 
@@ -88,7 +87,6 @@ class PreviewComment(BaseModel):
     id: uuid.UUID
     body: str
     author: AuthorSummary
-    verdict: str | None
     created_via: Literal["manual", "autonomous"] = "manual"
     created_at: datetime
 

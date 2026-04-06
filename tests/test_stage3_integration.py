@@ -91,28 +91,6 @@ async def test_stage3_full_flow(client):
     assert history[0]["old_value"] == "How does quicksort work?"
     assert "Updated" in history[0]["new_value"]
 
-    r = await client.post(
-        "/api/v1/flags",
-        json={
-            "target_type": "question",
-            "target_id": q1_id,
-            "reason": "other",
-            "detail": "Just testing flags",
-        },
-        headers=bob,
-    )
-    assert r.status_code == 201
-    flag_id = r.json()["id"]
-    assert r.json()["status"] == "pending"
-
-    r = await client.put(
-        f"/api/v1/flags/{flag_id}",
-        json={"status": "dismissed"},
-        headers=alice,
-    )
-    assert r.status_code == 200
-    assert r.json()["status"] == "dismissed"
-
     r = await client.get("/api/v1/notifications", headers=alice)
     assert r.status_code == 200
     alice_notifs = r.json()["items"]

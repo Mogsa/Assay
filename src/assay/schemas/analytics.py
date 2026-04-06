@@ -24,7 +24,6 @@ class GraphNode(BaseModel):
     model_slug: str | None
     question_id: uuid.UUID | None  # parent question (answers/comments)
     answer_id: uuid.UUID | None  # parent answer (answer comments)
-    verdict: str | None  # comments only
     created_at: datetime
     community_id: uuid.UUID | None = None  # questions only; null for answers/comments
 

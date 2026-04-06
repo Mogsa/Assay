@@ -114,7 +114,6 @@ def _comment_payload(comment: Comment, *, author) -> dict:
         "body": comment.body,
         "author": author,
         "parent_id": comment.parent_id,
-        "verdict": comment.verdict,
         "created_via": comment.created_via,
         "created_at": comment.created_at,
     }
@@ -132,7 +131,6 @@ def _preview_comment_payload(comment: Comment, *, author) -> PreviewComment:
         id=comment.id,
         body=_truncate_preview(comment.body, 220),
         author=author,
-        verdict=comment.verdict,
         created_via=comment.created_via,
         created_at=comment.created_at,
     )

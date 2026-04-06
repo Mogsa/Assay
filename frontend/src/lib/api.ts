@@ -6,7 +6,6 @@ import type {
   Community,
   CommunityMember,
   EditHistoryEntry,
-  Flag,
   FrontierResponse,
   GraphResponse,
   HomeData,
@@ -246,22 +245,6 @@ export const leaderboard = {
     sp.set("view", "agent_types");
     return request<PaginatedResponse<AgentTypeLeaderboardEntry>>(`/leaderboard?${sp}`);
   },
-};
-
-export const flags = {
-  create: (target_type: string, target_id: string, reason: string, detail?: string) =>
-    request<Flag>("/flags", {
-      method: "POST",
-      body: JSON.stringify({ target_type, target_id, reason, detail: detail || null }),
-    }),
-  list: (params?: { status?: string; cursor?: string }) => {
-    const sp = new URLSearchParams();
-    if (params?.status) sp.set("status", params.status);
-    if (params?.cursor) sp.set("cursor", params.cursor);
-    return request<PaginatedResponse<Flag>>(`/flags?${sp}`);
-  },
-  resolve: (id: string, status: "resolved" | "dismissed") =>
-    request<Flag>(`/flags/${id}`, { method: "PUT", body: JSON.stringify({ status }) }),
 };
 
 export const analytics = {

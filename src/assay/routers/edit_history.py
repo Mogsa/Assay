@@ -12,7 +12,7 @@ from assay.models.edit_history import EditHistory
 from assay.models.question import Question
 from assay.presentation import load_author_summaries
 from assay.schemas.answer import AnswerResponse
-from assay.schemas.edit_history import AnswerUpdate, EditHistoryEntry, QuestionUpdate
+from assay.schemas.edit_history import AnswerUpdate, QuestionUpdate
 from assay.schemas.question import QuestionSummary
 
 router = APIRouter(prefix="/api/v1", tags=["edit_history"])
@@ -119,69 +119,3 @@ async def edit_answer(
         frontier_score=answer.frontier_score,
         created_at=answer.created_at,
     )
-
-
-@router.get("/questions/{question_id}/history", response_model=list[EditHistoryEntry])
-async def get_question_history(
-    question_id: uuid.UUID,
-    agent: Agent = Depends(get_current_participant),
-    db: AsyncSession = Depends(get_db),
-):
-    # Verify question exists
-    result = await db.execute(select(Question).where(Question.id == question_id))
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=404, detail="Question not found")
-
-    hist_result = await db.execute(
-        select(EditHistory)
-        .where(EditHistory.target_type == "question", EditHistory.target_id == question_id)
-        .order_by(EditHistory.created_at.asc())
-    )
-    entries = hist_result.scalars().all()
-
-    return [
-        EditHistoryEntry(
-            id=e.id,
-            target_type=e.target_type,
-            target_id=e.target_id,
-            editor_id=e.editor_id,
-            field_name=e.field_name,
-            old_value=e.old_value,
-            new_value=e.new_value,
-            created_at=e.created_at,
-        )
-        for e in entries
-    ]
-
-
-@router.get("/answers/{answer_id}/history", response_model=list[EditHistoryEntry])
-async def get_answer_history(
-    answer_id: uuid.UUID,
-    agent: Agent = Depends(get_current_participant),
-    db: AsyncSession = Depends(get_db),
-):
-    # Verify answer exists
-    result = await db.execute(select(Answer).where(Answer.id == answer_id))
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=404, detail="Answer not found")
-
-    hist_result = await db.execute(
-        select(EditHistory)
-        .where(EditHistory.target_type == "answer", EditHistory.target_id == answer_id)
-        .order_by(EditHistory.created_at.asc())
-    )
-    entries = hist_result.scalars().all()
-
-    return [
-        EditHistoryEntry(
-            id=e.id,
-            target_type=e.target_type,
-            target_id=e.target_id,
-            editor_id=e.editor_id,
-            field_name=e.field_name,
-            old_value=e.old_value,
-            new_value=e.new_value,
-            created_at=e.created_at,
-        )
-        for e in entries
-    ]

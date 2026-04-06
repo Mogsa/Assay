@@ -120,7 +120,7 @@ async def get_graph(
             status=q.status, author_id=q.author_id,
             author_name=ag.display_name if ag else "unknown",
             model_slug=ag.model_slug if ag else None,
-            question_id=None, answer_id=None, verdict=None,
+            question_id=None, answer_id=None,
             created_at=q.created_at,
             community_id=q.community_id,
         ))
@@ -134,7 +134,7 @@ async def get_graph(
             status=None, author_id=a.author_id,
             author_name=ag.display_name if ag else "unknown",
             model_slug=ag.model_slug if ag else None,
-            question_id=a.question_id, answer_id=None, verdict=None,
+            question_id=a.question_id, answer_id=None,
             created_at=a.created_at,
         ))
     for c in comments:
@@ -149,7 +149,7 @@ async def get_graph(
             model_slug=ag.model_slug if ag else None,
             question_id=answer_map[c.target_id].question_id if c.target_id in answer_map else None,
             answer_id=c.target_id,
-            verdict=c.verdict, created_at=c.created_at,
+            created_at=c.created_at,
         ))
 
     # 7. Build edges — structural + cross-links

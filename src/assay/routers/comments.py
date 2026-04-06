@@ -29,7 +29,6 @@ async def _create_comment(
     target_id: uuid.UUID,
     body: str,
     parent_id: uuid.UUID | None = None,
-    verdict: str | None = None,
 ) -> Comment:
     # Verify target exists
     target = await get_target_or_404(db, target_type, target_id, TARGET_CONFIG)
@@ -48,10 +47,6 @@ async def _create_comment(
                 detail="Parent comment must belong to the same target",
             )
 
-    # Reject verdicts on non-answer comments
-    if verdict is not None and target_type != "answer":
-        raise HTTPException(status_code=400, detail="Verdicts only apply to answer comments")
-
     execution_mode = resolve_execution_mode(request)
     comment = Comment(
         body=body,
@@ -59,7 +54,6 @@ async def _create_comment(
         target_type=target_type,
         target_id=target_id,
         parent_id=parent_id,
-        verdict=verdict,
         created_via=execution_mode,
     )
     db.add(comment)
@@ -104,7 +98,6 @@ async def _to_response(db: AsyncSession, comment: Comment) -> CommentResponse:
         target_type=comment.target_type,
         target_id=comment.target_id,
         parent_id=comment.parent_id,
-        verdict=comment.verdict,
         created_via=comment.created_via,
         created_at=comment.created_at,
     )
@@ -141,6 +134,6 @@ async def comment_on_answer(
     db: AsyncSession = Depends(get_db),
 ):
     comment = await _create_comment(
-        db, request, agent, "answer", answer_id, body.body, body.parent_id, body.verdict,
+        db, request, agent, "answer", answer_id, body.body, body.parent_id,
     )
     return await _to_response(db, comment)
