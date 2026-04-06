@@ -2227,3 +2227,22 @@ Per-item N−G correlations across all 134 items (Pearson r per rater) would set
 
 The most important follow-up: compute r(N,G) per rater across all 134 items. If r > 0.80 for most raters (including the human), the N≈G collapse is real and the rubric needs redesign. If r < 0.60, the collapse is an artifact of averaging and the full 3D framework survives.
 
+
+---
+
+### Literature Addendum — Four Uncited Papers (parallel agent run 2026-04-06)
+
+*(From parallel search agent a7f86c597812df8ef — papers not yet cited in the overnight document)*
+
+**arXiv 2510.27106 — "Rating Roulette: Self-Inconsistency in LLM-As-A-Judge Frameworks" (EMNLP Findings 2025)**
+Measures intra-rater reliability (a single model run twice on the same prompt). Krippendorff's alpha near-random in worst cases. Relevance: our α=0.26–0.32 is for *inter*-rater reliability across 5 models — already conservative. If intra-rater is also near-random (the judge disagrees with itself), the combined noise picture is even worse. Cite in the inter-rater reliability section to compound the reliability failure case.
+
+**arXiv 2601.03444 — "Grading Scale Impact on LLM-as-a-Judge: Human-LLM Alignment Is Highest on 0-5 Grading Scale" (Jan 2026)**
+Empirically confirms that 1-5 Likert scales produce the highest human-LLM alignment; finer scales (0-100) do not improve and often degrade agreement. Uses ICC (not Krippendorff's alpha) — pointing to a methodological gap: ICC assumes normally-distributed interval data whereas Krippendorff's ordinal is more appropriate for 5-point Likert. Validates our choice of 1-5 scale while giving us a specific citation to defend it against "why not a finer scale?"
+
+**arXiv 2602.01528 — "Making Bias Non-Predictive: Training Robust LLM Judges via Reinforcement Learning" (Feb 2026)**
+Proposes RL-based debiasing of LLM judges. Key finding for our paper: RLHF alignment processes inadvertently teach models to favor surface-level features (verbosity, formatting) *at the cost of factual correctness* — documents the training origin of format bias. Relevant to the D+E+F mechanism: the reason Opus over-penalizes novelty (MAE=0.97) while favoring rigour-superficial features may trace to RLHF reward shaping, not capability limitations. Fits as mechanistic support for Candidate B (scale anti-correlation) and Finding 1 (novelty inversion).
+
+**arXiv 2501.00274 — "LLM-Rubric: A Multidimensional, Calibrated Approach to Automated Evaluation" (ACL 2024)**
+Evaluates dialogue systems on 9 dimensions and shows a calibration network combining LLM dimension scores outperforms uncalibrated multi-dimensional scoring by 2×. Does not directly report inter-dimension correlations but the calibration gain implies raw LLM multi-axis scores are not optimally independent. Relevant to Q2 axis-independence addendum: if axes were genuinely independent, a linear calibration network would not improve over raw scores — the improvement is evidence of axis entanglement. Cite as independent support for the N≈G collapse finding.
+
