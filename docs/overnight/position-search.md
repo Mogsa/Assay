@@ -5679,3 +5679,11 @@ Run Spearman ρ(calibrated N-axis std per item, human frontier label) vs ρ(mean
 **The definitive abstract sentence:**
 
 > *Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content — below the publishable reliability threshold — because they violate the Condorcet independence assumption via shared training corpora, amplifying correlated Rigour errors (α_R=0.257, lowest axis) while discarding the one reliable frontier signal: calibrated inter-judge Novelty disagreement (α_N=0.285, confirmed as the per-item frontier discriminator across 4/4 human-labeled contested items) — a finding now independently implemented in clinical AI, where disagreement-triggered case-adaptive routing outperforms flat majority voting across four LLM backbones.*
+
+---
+
+**Addendum — concurrent literature sweep (2026-04-07):**
+
+A parallel search confirmed the document's coverage is comprehensive through April 7, 2026. The two strongest papers from the concurrent sweep (arXiv 2603.06612 "Consensus is Not Verification" and arXiv 2603.00039 CARE) were already in the document. One additional paper not yet cited:
+
+- **arXiv 2603.16244 — "More Rounds, More Noise: Why Multi-Turn Review Fails to Improve Cross-Context Verification" (March 17, 2026):** In a controlled artifact-review experiment, single-pass review (F1=0.376) outperforms all multi-turn variants; extra review rounds inflate false positives by 62% as reviewers fabricate findings once real errors are exhausted. Domain is code/artifact review — not scientific novelty evaluation — so applicability is indirect. The mechanism (additional rounds produce hallucinated consensus rather than genuine convergence) is consistent with the D mechanism but does not add new theoretical weight beyond what arXiv 2603.06612 and arXiv 2602.09341 already supply. Cite optionally as a supporting data point for the "more judges ≠ better" claim.
