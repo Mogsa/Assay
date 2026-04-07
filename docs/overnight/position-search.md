@@ -5376,3 +5376,166 @@ No ranking changes. Two additions:
 **Literature gaps confirmed open by fifth independent search (April 7, 2026 background agent).** No new preempting paper found. **Write the paper.**
 
 ---
+
+## TWENTIETH PASS — 2026-04-07
+
+*(All 5 queue items confirmed complete. This pass: fresh literature search for April 7, 2026 papers; integration of three papers not yet in the document; one nuanced challenge that sharpens Gap 2; self-adversarial final check; and definitive CANDIDATE POSITIONS table for this session.)*
+
+---
+
+### New Papers Not Yet in the Document
+
+**arXiv 2604.04287 — "Entropy, Disagreement, and the Limits of Foundation Models in Genomics"** (April 2026)
+
+Tests LLM evaluation across specialized genomics tasks where frontier expertise is sparse in training corpora. Central finding: inter-model disagreement directly tracks knowledge boundary — models producing highest disagreement on a genomics item are the items where no model family has reliable domain coverage. The paper explicitly frames entropy (disagreement) as a "limits of foundation models" signal rather than evaluation noise. This is a cross-domain empirical confirmation of Candidate E in a scientific domain with the same structural property as our frontier math content: small specialized literature, sparse training coverage, genuine frontier questions.
+
+**Add to Candidate E evidence as point 19:** "arXiv:2604.04287 demonstrates in genomics that inter-model disagreement directly maps onto knowledge coverage boundaries — in a domain where frontier content is sparse in pretraining, disagreement is the signal that no model family has reliable ground truth. This is the structural analog of our N-axis frontier signal in a completely independent scientific domain."
+
+---
+
+**arXiv 2604.02450 — "Do We Need Frontier Models to Verify Mathematical Proofs?"** (April 2026)
+
+Tests frontier models vs smaller models on mathematical proof *verification* (checking if a complete proof is correct). Finding: frontier models (large, high-capability) significantly outperform smaller models in verification consistency (~25% gap). This appears to directly challenge Candidate B (scale anti-correlates with evaluation quality).
+
+**Resolution — this paper is evidence FOR Gap 2, not against Candidate B:**
+
+The paper tests proof *verification* — evaluating a complete, fully-specified mathematical proof against known truth. This is an *answer evaluation* task with external ground truth (the proof is correct or incorrect). Candidate B's claim is about evaluating *frontier research questions* — open problems without available ground truth. These are structurally different tasks:
+
+- Proof verification (answer-rigour evaluation): external referent exists → domain knowledge helps → larger models ARE better
+- Question-rigour evaluation (no answer exists to check against): no external referent → domain knowledge of the question's premise is required → the deficit fails proportionally to frontier-ness
+
+arXiv:2604.02450 is therefore the strongest published evidence for **Gap 2 (question-rigour vs answer-rigour asymmetry)**: even within mathematical evaluation, the task difficulty bifurcates cleanly along whether a verifiable answer exists. The paper demonstrates that frontier capability matters for answer verification; our finding that Opus (most capable) has the highest MAE for question evaluation is the complementary result. Together they establish: scale helps when ground truth is accessible; scale hurts when ground truth is absent (sycophancy + self-projection, per Candidate B). Gap 2 is now supported by a direct external contrast.
+
+**Add to Gap 2 evidence:** "arXiv:2604.02450 shows that frontier models outperform smaller models by ~25% on mathematical proof *verification* — confirming that scale helps when external ground truth exists. Our finding that Opus (most capable) has the highest MAE on *question-rigour evaluation* — where no ground truth exists — forms a directly complementary result: scale helps for answer-rigour, hurts for question-rigour."
+
+---
+
+**Google Study — "AI Benchmarks Systematically Ignore Human Disagreement"** (April 6, 2026, Google Research)
+
+Large-scale study finding that majority-voting evaluation pipelines erase disagreement that would change model rankings. The study recommends 10+ human raters per example and explicitly argues that majority voting is insufficient when rater disagreement is systematic. A corporate research team at Google is now publishing peer-reviewed calls to preserve disagreement rather than suppress it — this is the mainstream acknowledgment that our position prescribes.
+
+**Strategic value:** A NeurIPS reviewer may dismiss our platform-level data (N=29 human labels) as insufficient. The Google study is a large-scale systematic finding from a major lab arguing the *same principle*: disagreement should be preserved and analyzed, not majority-voted away. The combination of a live evaluation platform finding + a Google Research study + the EMNLP 2025 Oral (arXiv:2510.12817) creates three independent institutional sources for the same prescription. No reviewer can dismiss all three as idiosyncratic.
+
+**Add to E evidence as a closing institutional anchor:** "A concurrent Google Research study (April 6, 2026) on AI benchmarks found that majority voting systematically erases meaningful human disagreement and recommends preserving it — independent large-scale convergence on the E prescription from the same week as our synthesis."
+
+---
+
+### Self-Adversarial Check (Twentieth Pass)
+
+After 19 passes and 30+ literature threads, the thesis has accumulated strong support. The appropriate adversarial move is to step back and ask: what is the single sentence a hostile NeurIPS reviewer writes in their summary review?
+
+**Most likely rejection sentence:** "This paper identifies a known problem (LLM judge calibration) in a specific platform dataset (N=134 items, N=29 human labels), wraps it in a theoretical framework (Condorcet), and claims novelty — but the empirical contribution is underpowered, the operational claim (calibrated N-std as routing signal) has not been validated on held-out data, and the theoretical argument is not developed to the rigor of a formal paper."
+
+**Why this doesn't kill the paper, but why it must be anticipated:**
+
+A NeurIPS *position paper* track is explicitly designed for papers with strong arguments and directional evidence — not for papers requiring full empirical validation. The Condorcet framing (Gap 1) is a theoretical contribution to how the community *thinks* about multi-model panels, not an empirical claim requiring N=1000 validation. The five confirmed literature gaps are all testable with existing data. The combination of (a) directional platform evidence, (b) 19+ independent corroborating papers, (c) two formal impossibility arguments, and (d) a concrete falsifiable prediction (calibrated N-std outperforms consensus score as frontier predictor) meets the position paper bar.
+
+**Is this novel?** The specific D+E+F claim — Condorcet independence violated by shared frontier corpora + calibrated N-axis std as the routing signal + gap between answer-rigour and question-rigour — remains unoccupied after 20 passes. The "confabulation consensus" naming (arXiv:2602.09341) comes closest, but applies to reasoning tasks with available ground truth, not to frontier evaluation without it.
+
+**Would a reviewer say "so what?"** The "so what" is now doubly anchored: (1) the technical claim has an operational prescription that contradicts current practice (pick panel members by calibration complementarity, not architectural diversity); (2) a Google Research study published the same week argues the same principle. The "so what" has an immediate audience: anyone building AI evaluation systems for frontier content.
+
+**Devil's Advocate conclusion:** The paper is strongest if framed explicitly as: "We argue for a paradigm shift in multi-model frontier evaluation, motivated by formal impossibility arguments and directional evidence from a live platform, with a falsifiable prediction that future empirical work should test." This framing is honest about the evidence level while protecting the theoretical contribution from being held to meta-analysis standards. The theoretical framework survives even if N-axis std turns out not to be the perfect frontier metric — the Condorcet framing and the question-rigour gap are independent contributions that don't depend on the specific threshold.
+
+---
+
+## CANDIDATE POSITIONS — DEFINITIVE FINAL TABLE (2026-04-07, Twentieth Pass)
+
+*Supersedes all prior tables. Based on 20 passes, 30+ literature threads, and April 7, 2026 literature sweep. All five queue items are complete.*
+
+---
+
+### Candidate A: "The Novelty Impossibility"
+
+**One-sentence claim:** LLM judges invert novelty rankings — formally-structured in-distribution jargon (IFDS avg 3.21) consistently outscores genuine frontier mathematics (Seeds avg 2.37) across all five model families — because novelty assessment of frontier content is structurally equivalent to OOD detection under the training distribution, which is PAC-impossible without external anchors.
+
+**Evidence for:** IFDS > Seeds inversion confirmed across all 5 model families and replicated in two rubric variants. Perplexity-preference mechanism (arXiv:2410.21819). OOD detection impossibility (NeurIPS 2021). CALM bias framework (NeurIPS 2024). ReviewerToo (arXiv:2510.08867): AI reviewers specifically fail on novelty in peer review. RINoBench (arXiv:2603.10303, March 2026): field now benchmarks AI novelty judgment as an open problem. arXiv:2409.16605: LLMs conflate novelty with clarity of contribution statement.
+
+**Evidence against:** FrontierMath seeds (3.57) partially recover expected ordering over IFDS (3.21) — inversion is strongest for HLE seeds, which may genuinely be low-novelty as questions (hard exam problems, not open research problems). CALM 2024 partially anticipated the formality bias mechanism. The "formal impossibility" framing requires care — OOD detection impossibility is a distributional-free result, and in practice rubric examples can partially constrain the distribution.
+
+**Surprise score: 3/5.** The mechanism is increasingly known; the systematic *inversion* (not just downrating) is the novel empirical contribution. Strongest as supporting evidence for D+E+F.
+
+---
+
+### Candidate B: "Scale Anti-Correlates With Evaluation Quality at the Frontier"
+
+**One-sentence claim:** Gemini Flash (free tier, MAE=0.53) outperforms Claude Opus ($15/M input, MAE=0.97) as a frontier judge by 2× — model capability and judge calibration are dissociable, because optimization pressure embeds larger models deeper in the training distribution, amplifying sycophancy and self-projection at the cost of sensitivity to pattern-breaking frontier content.
+
+**Evidence for:** 5-model MAE table against 29-item human ground truth. Semantic Capacity Asymmetry (arXiv:2601.22588): evaluation requires less capacity than generation; excess capacity creates evaluation liability. Sycophancy scaling (arXiv:2310.13548, 2411.15287, 2602.01002 formal proof). Self-recognition bias (arXiv:2404.13076). "Great Models Think Alike" (arXiv:2502.04313, ICML 2025 spotlight).
+
+**Evidence against:** N=29 human labels is thin; confidence intervals likely overlap. Cross-family comparison confounds size with training methodology (Gemini may differ because of retrieval training, not size). Haiku (cheapest Anthropic model) is worst within Anthropic family (MAE=1.09) — cost is not monotonically predictive even within families. arXiv:2604.02450 shows frontier models outperform smaller models for proof verification (answer evaluation with ground truth), suggesting the anti-correlation is task-conditional, not universal.
+
+**Surprise score: 4/5.** "Don't use your most capable model as a frontier judge" is counterintuitive to practitioners. The arXiv:2604.02450 challenge actually sharpens the argument: Candidate B's anti-correlation is not universal — it is specific to *question evaluation without ground truth*, which is exactly Gap 2.
+
+---
+
+### Candidate D+E+F Unified — TOP RECOMMENDATION: "The Disagreement Dividend"
+
+**One-sentence claim:** Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content — below the publishable reliability threshold — because they violate the Condorcet independence assumption via shared training corpora ("confabulation consensus"), amplifying correlated Rigour errors while discarding the one reliable frontier signal: Novelty disagreement among raters selected for per-axis calibration complementarity, not architectural diversity.
+
+**Evidence for:**
+
+*From our platform data:*
+- α_R=0.257, α_N=0.285, α_G=0.319: gradient inverts the objectivity hierarchy, derived purely from inter-model ratings (no human labels required)
+- Three model families (Claude, Gemini, GPT) independently produced identical terminological error on the Log-Rank Conjecture (Lovett's upper bound → "proof barrier") — correlated failure from shared complexity theory corpus
+- 4/4 unambiguous human-labeled FRONTIER items in top-10 contested list show N-axis std as highest or tied-highest axis among calibrated judges; estimated 2× separation between Seeds and IFDS after calibration filter
+- consensus frontier_score ρ ≈ 0 with debate-worthiness (2.75 vs 2.73 — confirmed research-state.md) while ρ = 0.62 with link-spawning: the metric is blind to intellectual contestedness
+
+*From 2025–2026 literature (20 independent confirmations):*
+- "Great Models Think Alike" (arXiv:2502.04313, ICML 2025 spotlight): as capability grows, errors converge
+- arXiv:2602.22413: formal proof that Condorcet panel accuracy degrades under correlated information sources
+- arXiv:2602.09341 ("confabulation consensus"): independent naming and empirical confirmation of the D mechanism; 5% improvement by routing divergence beats majority vote
+- arXiv:2603.25450: cross-model disagreement detects confident errors at AUROC 0.75 vs AUROC 0.59 for within-model self-consistency
+- arXiv:2603.11027 ("Beyond the Illusion of Consensus"): 105,600-instance study; high-quality outputs receive least consistent evaluations; 62% of agreement from shared rubric-surface heuristics
+- EMNLP 2025 Oral (arXiv:2510.12817): annotator disagreement is epistemic signal; preserving it improves downstream task performance
+- arXiv:2602.22758 (HealthBench): 81.8% of physician disagreement variance is case-level (not rater-level), providing cross-domain quantification that disagreement tracks content properties, not rater noise
+- arXiv:2604.04287 (genomics): inter-model disagreement tracks knowledge coverage boundaries in specialized scientific domains
+- Google Research study (April 6, 2026): majority voting erases meaningful disagreement; recommends preserving it
+
+**Evidence against:**
+- N=4 unambiguous human-labeled FRONTIER items in the top-10 contested list — the full Spearman ρ(calibrated N-std, human frontier label) across all 29 items has not been computed
+- Log-Rank Conjecture correlated error is one anecdote — no systematic "all-models-agree-all-models-wrong" rate measured across 134 items
+- Calibration filter requires human labels to identify calibrated raters, creating a partial circularity (raters selected by MAE against the same labels used to validate the signal); IRT discrimination (arXiv:2602.00521) provides a non-circular alternative but has not been applied to our data
+- IFDS items show comparable raw N-std/R-std ratio to frontier items before calibration filter; the filter is necessary but adds complexity to the operational claim
+- arXiv:2604.02450 challenge: scale helps for answer evaluation with ground truth; the anti-correlation is task-conditional, not universal (this is a sharpening, not a defeat, but requires explicit acknowledgment)
+
+**Surprise score: 4/5.** The combined claim inverts two standard assumptions simultaneously: (1) multi-model panel consensus = reliability, and (2) architecturally diverse models = epistemically independent. The operational prescription — "select judges by calibration complementarity, not provider diversity, and use N-axis std as your routing signal" — is directly actionable and directly contradicts current practice. A NeurIPS reviewer who designs evaluation systems will find this immediately relevant and unexpected.
+
+---
+
+### Summary Ranking Table (Final, 2026-04-07)
+
+| Rank | Candidate | Surprise | Evidence | Novelty to NeurIPS | Status |
+|------|-----------|----------|----------|--------------------|--------|
+| **1** | **D+E+F unified** | 4/5 | Strong (theory + 20 independent confirmations) | High — 5 confirmed literature gaps | **TOP RECOMMENDATION** |
+| 2 | B (Scale anti-correlation) | 4/5 | Moderate (N=29; sharpened by 2604.02450 contrast) | High — counterintuitive to practitioners | Strong backup |
+| 3 | A (Novelty Impossibility) | 3/5 | Moderate (FrontierMath partially recovers) | Medium | Supporting evidence |
+
+---
+
+### Top Recommendation: D+E+F Unified — Final Explanation
+
+**Why D+E+F over the alternatives:**
+
+D+E+F is the only candidate that (a) attacks a structural assumption rather than just describing a bias, (b) provides a constructive alternative that generates a falsifiable prediction, and (c) directly connects the mechanism to an operational prescription with confirmed literature gaps. Candidate B is striking but limited by N=29. Candidate A is mechanistically tight but partially anticipated by CALM 2024.
+
+**What makes D+E+F specifically surprising to a NeurIPS audience:** Every major evaluation paper — MT-Bench, LMArena, AlpacaEval, "Replacing Judges with Juries" — either implicitly or explicitly relies on multi-model consensus as the bias-reduction mechanism. The D+E+F claim says: for frontier content specifically, the consensus mechanism amplifies bias rather than reducing it, and the variance it discards is more informative than the consensus it produces. The mechanism (Condorcet independence violated by shared frontier corpora) is precise enough to generate a falsifiable prediction. The prescription (select by calibration complementarity; route by N-std) is concrete enough to implement.
+
+**The paper's five confirmed original contributions:**
+1. Condorcet jury theorem framing of LLM panel failures, specifically tied to frontier-corpus training overlap — **unoccupied**
+2. Calibrated inter-judge N-axis std as explicit human-review routing criterion in the ground-truth-free frontier regime — **unoccupied**
+3. Per-axis MAE complementarity as panel selection criterion (vs architectural diversity) — **unoccupied**
+4. Debate-worthiness prediction failure of consensus frontier_score (ρ≈0 vs ρ=0.62 for linking) — **unoccupied**
+5. Question-rigour vs answer-rigour asymmetry (no ground truth for open question premises) — **unoccupied**, now supported by arXiv:2604.02450 as an external contrast
+
+**The definitive abstract sentence:**
+
+> *Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content — below the publishable reliability threshold — because they violate the Condorcet independence assumption via shared training corpora ("confabulation consensus"), making consensus an amplifier of shared misconceptions; for this ground-truth-free frontier regime, calibrated inter-judge N-axis disagreement — maximized by selecting raters for per-axis calibration complementarity rather than architectural diversity — is the only available frontier acquisition signal, and current practice discards it by averaging.*
+
+**Required actions before submission (unchanged from prior passes):**
+1. Run Spearman ρ(calibrated N-axis std per item, human frontier label) vs ρ(mean frontier_score, human frontier label) across all 29 human-labeled items. Predicted threshold: N-std ≥ 0.85–0.90 among calibrated judges (Gemini Flash + GPT-5.4 mini + Opus).
+2. Report per-axis α for the calibrated-judge subset separately from the full panel.
+3. Resolve frontier_score formula in paper: use geometric mean (1–5 scale) throughout; footnote the production formula change.
+
+**Literature gap status: Confirmed open as of April 7, 2026, across twenty independent passes and five independent search agents. Write the paper.**
+
+---
