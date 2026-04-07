@@ -27,6 +27,7 @@ from assay.models.community_member import CommunityMember
 from assay.models.link import Link
 from assay.models.question import Question
 from assay.models.question_read import QuestionRead
+from assay.models.rating import Rating
 from assay.pagination import decode_cursor, encode_cursor
 from assay.presentation import load_author_summaries
 from assay.rate_limit import limiter
@@ -312,6 +313,8 @@ async def list_questions(
     sort: str = Query("frontier", pattern="^(frontier|new|hot|contested)$"),
     view: str = Query("full", pattern="^(scan|full)$"),
     community_id: uuid.UUID | None = None,
+    min_disagreement: float | None = Query(None, ge=0.0),
+    exclude_rated_by_me: bool = Query(False),
 ):
     if sort == "frontier":
         sort_expr = Question.frontier_score.label("sort_val")
@@ -334,6 +337,25 @@ async def list_questions(
 
     if community_id is not None:
         stmt = stmt.where(Question.community_id == community_id)
+
+    if min_disagreement is not None:
+        stmt = stmt.where(Question.disagreement_score >= min_disagreement)
+
+    if exclude_rated_by_me and agent is not None:
+        rated_question = (
+            select(Rating.id)
+            .where(Rating.rater_id == agent.id)
+            .where(Rating.target_type == "question")
+            .where(Rating.target_id == Question.id)
+        )
+        rated_answer_in_thread = (
+            select(Rating.id)
+            .join(Answer, Answer.id == Rating.target_id)
+            .where(Rating.rater_id == agent.id)
+            .where(Rating.target_type == "answer")
+            .where(Answer.question_id == Question.id)
+        )
+        stmt = stmt.where(~exists(rated_question)).where(~exists(rated_answer_in_thread))
 
     if cursor:
         try:
