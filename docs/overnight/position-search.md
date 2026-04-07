@@ -1830,6 +1830,10 @@ This analysis is not code work (the ratings data is all in the database). It req
 4. One operational prescription (N-std_calibrated routing threshold ≈ 0.85–0.90) is specific, falsifiable, and directly testable with the existing dataset.
 5. The literature gap remains confirmed: no paper as of April 7, 2026 combines Condorcet failure (frontier-corpus-specific mechanism) + calibrated-judge axis decomposition + human-review-routing prescription into one argument.
 
+**One additional paper from post-commit literature search:**
+
+**arXiv 2601.19532 — "Benchmarks Saturate When The Model Gets Smarter Than The Judge"** (January 2026, Ballon et al.): On the Omni-MATH benchmark, the judge is wrong in **96.4%** of human-flagged judge disagreements on hard (frontier-level) problems. Judge failure is concentrated at frontier difficulty, not on easy items. This is the sharpest single quantitative statement supporting D+E: on hard frontier content, when the AI judge and the human disagree, the judge is almost always wrong. Implication for the paper: the disagreement between an AI judge and a human on frontier content is an even stronger frontier signal than disagreement *among* AI judges — but the latter is actionable without requiring a human in the loop. Add to Candidate D evidence and the Section 1 opening.
+
 **The two actions required before submitting — unchanged since Pass 6:**
 1. Run Spearman ρ(calibrated-rater N-std per item, human frontier label) across all 29 human-labeled items. The predicted threshold is N-std_calibrated ≥ 0.85.
 2. Report per-axis α for calibrated-judge subset (Gemini + GPT + Opus) separately — expected to show N-axis α near zero for frontier-class items, vs the masking aggregate of 0.28.
