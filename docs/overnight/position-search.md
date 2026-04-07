@@ -368,7 +368,9 @@ The strongest objection to claiming all three as "novel contributions" is that N
 
 ## CANDIDATE POSITIONS
 
-**Final assessment incorporating all five findings (updated 2026-04-06):**
+**Final assessment incorporating all five findings (updated 2026-04-07, Twenty-Second Pass):**
+
+*Key updates from this pass: (1) cross-axis α-MAE correspondence confirmed as within-dataset validation; (2) top-10 ranking contamination established as the concrete failure-mode narrative; (3) oracle-judge counterfactual identified as required paper section; (4) formula confirmed as geometric mean (primary source). Surprise scores and evidence-for/against assessments unchanged — no new challengers found.*
 
 ---
 
@@ -536,11 +538,13 @@ This is a single, sharp, falsifiable thesis:
 
 ---
 
-## FINAL TOP RECOMMENDATION (updated 2026-04-06)
+## FINAL TOP RECOMMENDATION (updated 2026-04-07, Twenty-Second Pass)
 
 **Standing recommendation: Candidates D + E + F unified, with F as the sharpest entry point — "Frontier Evaluation Requires a New Measurement Paradigm."**
 
 *Rationale for update (2026-04-06):* The previous recommendation (2026-04-05) correctly identified D+E+F as one coherent argument but gave F a 3/5 surprise score and treated it as the "mechanistic explanation" rather than the lead claim. The new "Mind the Blind Spots" evidence (EMNLP 2025) upgrades F to 4/5 surprise — matching D's score — and establishes a cross-context replication that makes F independently defensible. The revised recommendation: **lead with F** (the calibration gradient inversion, now independently confirmed), use D (correlated errors, Condorcet failure) as the structural explanation for *why* this matters for multi-model panels, and use E (disagreement as frontier signal) as the constructive implication. F is the most counterintuitive single finding; D explains why it can't be fixed by adding more judges; E shows what to do instead.
+
+*Additional sharpening (2026-04-07):* Three new paper-structure requirements identified from direct primary-data reading: (1) Present the six-number α/MAE table by axis as the paper's opening empirical result — it requires no human labels and directly demonstrates the gradient inversion. (2) Replace the "middle-50% contamination" narrative with the "7-of-top-10 are jargon" framing — this is the most viscerally compelling statement of the failure mode and is sourced directly from the primary ranking table. (3) Add an explicit "Why Not Just Use the Best Judge?" section addressing the Gemini Flash oracle-judge counterfactual — this is the question every practitioner will ask and no prior entry directly answers it.*
 
 **The paper's thesis: Candidates D + E + F unified — "Frontier Evaluation Requires a New Measurement Paradigm."**
 
@@ -5729,3 +5733,58 @@ Run Spearman ρ(calibrated N-axis std per item, human frontier label) vs ρ(mean
 A parallel search confirmed the document's coverage is comprehensive through April 7, 2026. The two strongest papers from the concurrent sweep (arXiv 2603.06612 "Consensus is Not Verification" and arXiv 2603.00039 CARE) were already in the document. One additional paper not yet cited:
 
 - **arXiv 2603.16244 — "More Rounds, More Noise: Why Multi-Turn Review Fails to Improve Cross-Context Verification" (March 17, 2026):** In a controlled artifact-review experiment, single-pass review (F1=0.376) outperforms all multi-turn variants; extra review rounds inflate false positives by 62% as reviewers fabricate findings once real errors are exhausted. Domain is code/artifact review — not scientific novelty evaluation — so applicability is indirect. The mechanism (additional rounds produce hallucinated consensus rather than genuine convergence) is consistent with the D mechanism but does not add new theoretical weight beyond what arXiv 2603.06612 and arXiv 2602.09341 already supply. Cite optionally as a supporting data point for the "more judges ≠ better" claim.
+
+---
+
+### Direct Primary-Data Synthesis: Three Observations Not Yet Explicit — 2026-04-07
+
+**Purpose of this entry:** All queue items were completed in prior runs. This pass returns directly to the primary source (`docs/analysis/2026-03-19-rating-analysis.md`) rather than the literature. All prior syntheses have been mediated by the overnight agent's summarizations of that data. Reading the raw tables yields three observations that have been implicit but never stated directly — each of which sharpens the D+E+F thesis or identifies a gap.
+
+---
+
+**Observation 1: The cross-axis α-MAE correspondence is a within-dataset validation of the disagreement-signal hypothesis.**
+
+Per-axis alpha from the primary source: α_G=0.319 > α_N=0.285 > α_R=0.257. Per-axis MAE from the primary source (most models): G_MAE < N_MAE < R_MAE. The orderings are *mirror images*: the axis where models agree most with each other (G) is the axis where their consensus best matches human judgment; the axis where they agree least (R) is the axis where they diverge most from human judgment. This monotone correspondence across all three axes is a clean within-dataset cross-validation of the core claim: inter-model disagreement predicts human-alignment failure. It does not require the 29-item human sample for inference — the correspondence is observable from the raw per-axis alpha breakdown alone. The paper's empirical section should present these six numbers in a 2×3 table (α and MAE by axis) and note the rank correlation is +1.0 (across three axes). This is a statistic that requires no additional data collection and directly confirms the disagreement→alignment-failure relationship.
+
+---
+
+**Observation 2: The top-10 frontier ranking is more contaminated than any prior entry states.**
+
+The primary data table ("Top 10 — Highest frontier_score") shows:
+- Rank 1 (4.22): Seed ✓
+- Rank 2 (3.74): Seed ✓  
+- Ranks 3–6, 8–10: IFDS/Tombstone ✗ (six entries)
+- Rank 7 (3.52): Seed ✓
+
+Only 3 of the top 10 frontier-ranked questions are genuine seeds. Seven are IFDS jargon. Prior entries describe the failure as "jargon incorrectly mixes with legitimate content in the middle 50%." The primary data shows the failure is concentrated at the **top of the ranking** — exactly where a `sort=frontier` query surfaces content to users and agents. A platform operator using the frontier score to find the most interesting questions would see IFDS jargon as 7 of their top 10 results. This is the starkest possible statement of the practical failure mode and it is sourced directly from the primary data, not from averaged category scores. It should replace the "middle 50%" framing in the paper's opening motivation.
+
+---
+
+**Observation 3: The oracle-judge counterfactual — the strongest adversarial challenge not yet addressed.**
+
+The D+E+F prescription is: "use calibrated inter-judge disagreement as the frontier signal." But the simplest alternative is never directly engaged: **use Gemini Flash alone** (MAE=0.53). If one judge outperforms the full panel consensus on human alignment, why build a complex disagreement-based routing system rather than simply selecting the best single judge?
+
+The answer — which must be explicit in the paper — is that Gemini Flash's MAE=0.53 reflects alignment on the 29 human-labeled items (which were sampled from the top-10, bottom-10, and controversial middle). On this specific sample, Gemini Flash happens to match human judgment well. But:
+1. We cannot know *which* single judge is best-calibrated *in advance* without human labels — and acquiring 29 human labels to identify the best judge defeats the purpose of automated evaluation.
+2. Single-judge evaluation has no uncertainty signal: when Gemini Flash gives frontier_score=3.57 to an IFDS item, there is no mechanism to flag this as potentially wrong. The panel's disagreement provides the uncertainty estimate that a single judge cannot.
+3. The IRT discrimination framing (from 2602.00521) provides a human-label-free way to select internally consistent judges — but even among internally consistent judges, individual judges have domain-specific blind spots. The Log-Rank error (three families, same mistake) was in the reasoning text of Claude, Gemini, and GPT, not Haiku or Qwen. If we had selected Gemini Flash as sole judge, it would have made the same Log-Rank error.
+
+This must be a named section in the paper: "Why Not Just Use the Best Judge?" The response is methodologically principled: disagreement provides an uncertainty estimate that single-judge consensus cannot; the best judge is unknowable without human labels; and the shared-training-corpora failure is not escapable by judge selection within a generation-optimized frontier model family.
+
+---
+
+**Formula confirmation for the paper:** The primary source (`docs/analysis/2026-03-19-rating-analysis.md`, line 100) definitively states: `frontier_score = (R x N x G)^(1/3)` — geometric mean, range 1–5. The numbers throughout this document (seeds=2.37, IFDS=3.21) are correct from this source. The production code has since been updated to signed Euclidean distance, but the experiment was conducted with geometric mean. The paper should use geometric mean throughout and footnote the formula change.
+
+---
+
+**Devil's Advocate on these three observations:**
+
+Observation 1 (cross-axis α-MAE): the rank correlation across three data points is mathematically trivial — any two monotone sequences of length 3 will have rank correlation ±1. The claim needs to be stated as "the ordering is consistent with the theoretical prediction" rather than "Spearman ρ=1.0 confirms the hypothesis." Three points cannot establish a correlation. The correct claim: "the per-axis data is consistent with, and does not falsify, the hypothesis that inter-model disagreement predicts human-alignment failure."
+
+Observation 2 (top-10 contamination): the top-10 listing is based on a single consensus metric (geometric mean across all 5 raters, including Qwen with its G=5 pathology). If we compute the top-10 using only calibrated raters (Gemini Flash + Opus), the IFDS contamination in the top-10 may be lower, because Opus is the harshest rater on IFDS (avg R/N/G = 3.30/2.30/2.41 for IFDS vs 3.11/1.44/1.42 for seeds). This is worth testing: if calibrated-rater-only rankings do better, it supports the prescription rather than just diagnosing the failure.
+
+Observation 3 (oracle-judge counterfactual): the three responses are sound but the second (uncertainty estimate) is the only one that's fully compelling. The first (can't know the best judge in advance) is addressed by IRT discrimination. The third (Log-Rank error in Gemini reasoning) shows shared-corpus errors exist but doesn't prove a single judge is worse than the panel in a systematic way. The paper needs to commit to the uncertainty-estimate argument as the primary response and acknowledge the others as secondary.
+
+---
+
+**Net effect on recommendation:** D+E+F unified is unchanged as the top recommendation. Observation 1 adds a concise within-dataset validation statistic. Observation 2 sharpens the motivating failure mode narrative. Observation 3 identifies the missing "why not single best judge?" section that every reviewer will ask about and that no prior entry has directly addressed.
