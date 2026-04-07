@@ -3566,3 +3566,92 @@ The new paper arXiv:2510.20369 validates routing-by-uncertainty in the RLHF doma
 
 **The thesis is complete. The contribution gaps are confirmed. Write the paper.**
 
+---
+
+## TWENTY-SECOND PASS — 2026-04-07
+
+*(All 5 queue items confirmed complete. This pass: (1) fresh April 7, 2026 literature sweep — confirms gap still open; (2) the RLHF-OOD unification — a single mechanism that explains Candidates A, B, D, and E together, not previously stated this cleanly; (3) a new adversarial concern from arXiv 2603.29403 not yet in any prior pass; (4) a data precision clarification on the "N=9" claim in Pass 21's final table; (5) updated CANDIDATE POSITIONS.)*
+
+---
+
+### April 7, 2026 Literature Sweep — Confirmed Gap
+
+Fresh targeted search across five topics (LLM judge disagreement as positive signal, Condorcet + LLM evaluation, correlated errors across AI families, novelty assessment impossibility, calibration heterogeneity for panel design) found:
+
+- **No new April 1–7, 2026 papers** on core D+E+F topics. The literature gap established across 21 prior passes is confirmed open as of April 7, 2026.
+- **arXiv 2603.29403 — "Security in LLM-as-a-Judge: A Comprehensive SoK"** (March 2026): the only adjacent paper found. A security survey showing that adversaries can systematically steer LLM judge preferences — injecting prompts that shift judge scores away from human reference baselines. Not previously cited in this document. Relevant because it introduces a *new threat to the D+E+F operational prescription* (see below).
+
+---
+
+### New Finding: The RLHF-OOD Unification
+
+Twenty-one passes treat the RLHF connection (Candidate B / scale anti-correlation) and the OOD impossibility (Candidate A / novelty impossibility) as separate phenomena. They are the same mechanism viewed from two angles, and stating this unification cleanly is the sharpest contribution the paper can make to the foundational argument.
+
+**The unified mechanism:** RLHF trains models to produce outputs that maximize human preference scores. Human preference scores are calibrated against a corpus of human-evaluated responses — which is the human training distribution. Frontier content is, by definition, content that is not yet in the human evaluation distribution (it is genuinely new). RLHF optimization is therefore *training directly against frontier detection capability*: the better a model is at maximizing human preference, the better it is at producing in-distribution content, and the worse it is at recognizing out-of-distribution frontier content as such.
+
+This produces four findings as one coherent consequence:
+1. **Candidate A (novelty inversion):** RLHF-optimized models reward in-distribution novelty-resembling formalism (IFDS jargon) over genuine OOD frontier content, because the latter does not match patterns that maximize human preference scores.
+2. **Candidate B (scale anti-correlation):** Larger models are more heavily RLHF-optimized; therefore more scale = more anti-correlated with frontier detection. Gemini Flash (less RLHF-tuned, retrieval-optimized) outperforms Opus (heavily RLHF-tuned, preference-optimized) precisely because Opus has been more aggressively optimized against frontier sensitivity.
+3. **Candidate D (correlated errors):** RLHF-optimized models across families converge on the same human-preference distribution, making their errors draws from the same distribution — correlated by construction through shared RLHF objectives, not just shared pretraining.
+4. **Candidate E (N-axis aleatoric divergence):** Genuinely frontier content triggers N-axis disagreement among calibrated judges because it is OOD for all of them — no model's RLHF-calibrated prior covers it. But calibrated judges (less RLHF-distorted than uncalibrated raters) diverge more genuinely, which is why calibrated-rater N-std is the cleaner signal.
+
+The paper's core theoretical contribution, stated precisely: **RLHF optimization and frontier detection are inversely correlated objectives — and multi-model evaluation panels, by selecting the most capable (most RLHF-optimized) judges, systematically select against the property they need most.**
+
+This is the most direct statement of the thesis's theoretical spine, and it has not appeared this cleanly in any of the 21 prior passes. It also has a direct empirical prediction beyond what prior passes stated: the anti-correlation between sycophancy score (measurable via standard sycophancy benchmarks like Perez et al. 2022) and frontier-evaluation MAE should hold across all models, not just in our 5-model sample.
+
+**Devil's Advocate:** This unification assumes RLHF sycophancy is the primary driver of frontier evaluation failure, but Haiku (cheaper, less RLHF-tuned than Opus) scores *worse* (MAE=1.09) than Opus (MAE=0.97). The mechanism would predict Haiku outperforms Opus if less RLHF-tuning = better frontier sensitivity. It doesn't. Counter: Haiku's failures reflect a different problem — central tendency bias (defaulting to middle scores across all axes), not RLHF sycophancy. The RLHF-OOD mechanism explains why *more capable/more RLHF-tuned* models do worse than *retrieval-optimized* models (Gemini Flash), not why small/cheap models necessarily do better. Haiku is cheap but not retrieval-optimized — it's a small general assistant with less RLHF training than Opus but also less capability, producing a different failure mode (uniform mediocre ratings). The mechanism holds for the Gemini Flash vs Opus comparison; it does not predict Haiku > Opus.
+
+---
+
+### New Adversarial Concern: The Routing System Can Be Gamed
+
+arXiv 2603.29403 (Security in LLM-as-a-Judge SoK) flags that adversaries can steer LLM judge scores by designing prompts that exploit known judge biases. Applied to the D+E+F routing prescription:
+
+**The concern:** If the routing criterion for human review is "cal-N-std > 1.2 among judges Gemini Flash, GPT-5.4 mini, and Opus," an adversarial content generator who knows this rule can craft content that maximizes Gemini/Opus N-axis disagreement — e.g., by including both retrieval-familiar and retrieval-unfamiliar elements in the same question, triggering Gemini's high-N prior and Opus's low-N prior simultaneously — without the content being genuinely frontier.
+
+**How serious is this?** The threat is real for public deployment (if the routing rule is published and the content generators know it) but is different in character from the IFDS confusion in our data. IFDS content accidentally maximizes disagreement (it's technically narrow, which confuses some judges) while the adversarial case involves intentional gaming. The current calibrated-rater filter reduces but does not eliminate this vulnerability — Qwen's pathological G=5 pattern was not filtered by the calibration approach used in the top-10 contested set analysis, and an adversarial generator could specifically target the systematic gap between Gemini and Opus on the N-axis.
+
+**Operational implication for the paper:** The routing prescription should include a diversity-of-content control: track which content categories most frequently trigger the routing threshold. If IFDS-category items account for disproportionate routing triggers, the threshold may need category-specific adjustment. The routing system should be monitored, not applied as a static rule. This is a pragmatic limitation the paper should acknowledge in the operational prescription section.
+
+**Surprise score impact:** This concern does not reduce the surprise score of D+E+F (4/5). The routing prescription is still correct and novel; the adversarial concern is a known challenge for any evaluation system that publishes its routing criteria. Add as a limitation with the observation that the adversarial gaming risk is proportional to the system's transparency — a well-known tradeoff in mechanism design.
+
+---
+
+### Data Precision: Clarifying the "N=9" Claim
+
+Pass 21's final table states "cal-N-std > 1.2 for all 4 frontier items; ≤ 1.0 for all 5 non-frontier items." The phrasing "5 non-frontier items" requires clarification: only 1 of these 5 has a human label confirming it is not frontier (Mathematical models HLE, human=1/1/1). The remaining 4 (three IFDS items + Autonomous Tool Discovery) have no human label and are assumed non-frontier by category. The claim holds under this assumption, but the paper must be explicit: **the threshold separation holds for 4 human-labeled FRONTIER items and 1 human-labeled NOT-FRONTIER item**; the additional 4 unlabeled items assumed non-frontier conform to the threshold but are not human-confirmed.
+
+This does not change the recommendation but is important for honest presentation. The "complete" threshold analysis requires running the comparison across all 29 human-labeled items — still the blocking pre-submission action identified in every pass since Pass 7.
+
+---
+
+### Final Synthesis: What the RLHF-OOD Unification Adds to the Abstract
+
+The prior recommended abstract sentence (Pass 21) is structurally sound. Adding the RLHF-OOD unification gives it a sharper causal spine:
+
+**Previous recommendation (Pass 21):**
+> *Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content — assigning identical consensus scores (2.69) to open mathematical conjectures, technically contested narrow questions, and routine settled content — because Ising-model inter-judge dependence from shared pretraining produces confidently incorrect consensus; calibrated-rater N-axis disagreement (cal-N-std > 1.2) is the only signal the panel produces that correctly identifies which items require human review in this ground-truth-free regime, because frontier novelty is PAC-impossible OOD detection and calibrated judges structurally diverge where their shared distribution ends.*
+
+**Revised recommendation (Twenty-Second Pass) — with RLHF-OOD mechanism explicit:**
+> *Multi-model AI evaluation panels — designed to reduce bias through judge diversity — produce Krippendorff's α = 0.28 on frontier intellectual content and assign identical consensus scores (2.69) to open conjectures, contested narrow questions, and settled content, because RLHF optimization and frontier detection are inversely correlated objectives: the more a judge is trained to maximize human preference, the more it rewards in-distribution novelty-resembling content and suppresses genuine OOD frontier content as noise. The result is that capable judges make correlated Rigour errors (shared training-corpus misconceptions, amplified by consensus) while their Novelty disagreements mark the exact OOD boundary where no judge's prior applies — a PAC-impossible detection problem that human review routing, using calibrated-rater N-axis std > 1.2, can identify from panel output without requiring ground truth.*
+
+This version makes the cause (RLHF optimization anti-correlates with frontier detection) explicit before stating the consequence (α = 0.28, identical consensus scores) and the fix (calibrated N-std routing). It is the most complete single-sentence statement of the thesis produced across all 22 passes.
+
+**Devil's Advocate (final):** The Haiku confound (cheap ≠ better) weakens the strict "RLHF optimization → worse frontier evaluation" story. A careful reviewer will find the counter-example quickly. The paper must either: (a) present the RLHF-OOD mechanism as applying specifically to the Gemini Flash vs frontier-capable models comparison, not as a general cheap-is-better rule, or (b) include the sycophancy score vs MAE correlation analysis across all 5 models before the abstract can cite this mechanism. Without that analysis, the RLHF-OOD unification is theoretical and must be flagged as such.
+
+---
+
+## CANDIDATE POSITIONS — AUTHORITATIVE UPDATE (2026-04-07)
+
+*Incorporates all twenty-two passes. The April 7, 2026 literature sweep confirms the gap remains open. No ranking changes from Pass 21.*
+
+| Rank | Candidate | One-sentence claim | Surprise | Evidence | Status |
+|------|-----------|-------------------|----------|----------|--------|
+| **1** | **D+E+F+C unified** | RLHF optimization and frontier detection are inversely correlated: capable judges reward in-distribution formalism, make correlated Rigour errors from shared corpora, and suppress the informative Novelty disagreement that is the only PAC-reliable frontier signal — calibrated-rater N-axis std > 1.2 is the routing criterion that recovers it | **4/5** | α=0.28; 2.69=2.69 (FRONTIER≡IFDS≡settled on consensus); 4/4 human-labeled frontier items cal-N-std≥1.53; 30+ papers across 22 passes; two confirmed open contribution gaps | **TOP RECOMMENDATION — unchanged across 22 passes** |
+| **2** | **B: Scale anti-correlation** | RLHF sycophancy amplification specifically (not model size per se) predicts evaluation quality inversion: retrieval-optimized Gemini Flash (MAE=0.53) outperforms preference-optimized Opus (MAE=0.97) | **4/5** | Theoretical frame (RLHF-OOD mechanism); MAE table N=29; Semantic Capacity Asymmetry | Strong standalone; weakened by Haiku confound |
+| **3** | **A: Novelty Impossibility** | LLM judges invert novelty rankings because frontier novelty is PAC-impossible OOD detection — the same mechanism as B and D, viewed from the content angle | **3/5** | IFDS 3.21 > Seeds 2.37; calibration-example failure; RINoBench | Best as mechanistic support for D+E+F |
+
+**Top recommendation rationale (final):** D+E+F+C unified survives 22 passes and three independent literature searches. The RLHF-OOD unification from this pass is the clearest single-mechanism statement yet: RLHF and frontier detection are inversely correlated objectives, and the multi-model panel problem is a direct consequence of selecting RLHF-optimized judges to evaluate OOD content. The adversarial gaming concern (arXiv 2603.29403) is a legitimate limitation but does not weaken the position — it sharpens the scope (the routing criterion works for non-adversarial content generation; adversarial gaming requires additional defenses). Both remaining contribution gaps are confirmed open. The three blocking pre-submission actions from Pass 21 are unchanged.
+
+**Write the paper.**
+
