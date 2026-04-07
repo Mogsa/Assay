@@ -2108,6 +2108,89 @@ All previous assessments from the eighth pass stand. Two additions:
 1. *Condorcet framing applied to LLM panels* — the first paper to name the formal mechanism (independence violated by shared corpora) rather than just observing correlated errors empirically.
 2. *N-axis aleatoric disagreement as frontier acquisition signal* — the first paper to propose calibrated inter-judge N-axis std as an explicit routing criterion for human review, grounded in the OOD/aleatoric impossibility of frontier novelty assessment.
 
+---
+
+### Calibration Heterogeneity as Panel Design Criterion — 2026-04-07
+
+**The unexplored angle:** Passes 1–9 have established *that* calibrated-rater filtering is required and *which* raters qualify (Gemini Flash + GPT-5.4 mini + Opus). But no pass has directly asked: *why do these three specific models form the right panel?* The answer is not "they have the lowest MAE" — Gemini Flash alone has the lowest MAE (0.53), and simply picking the single best judge would be simpler. The answer is that these three models fail in *structurally different directions*, and their failure-mode heterogeneity is what makes their disagreement informative.
+
+**The per-axis failure profile of each calibrated judge:**
+
+- **Gemini Flash (MAE=0.53):** Retrieval-optimized. Best on N-axis (N_MAE=0.41, lowest in panel). Calibrated for information-novelty detection — it recognizes what is informationally "new" relative to a corpus, which maps onto its training objective. It rates IFDS jargon as moderately novel (N≈3.3 avg) because the jargon is formally structured like novel academic work. It rates frontier math as high-N (N≈3.5 inferred for frontier seeds).
+
+- **GPT-5.4 mini (MAE=0.79):** Best on G-axis (G_MAE=0.52, lowest in panel). Calibrated for generativity pattern-matching — it reliably detects "does this match the pattern of research that spawned follow-up work?" It is a novelty skeptic (N avg = 2.14, second-lowest), giving frontier seeds N=1.29 — very harsh, possibly over-skeptical, but in a direction that *disagrees* with Gemini's more lenient N assessments.
+
+- **Opus 4.6 (MAE=0.97):** Skepticism-optimized. Harshest overall (N avg=1.79, lowest in panel; G avg=1.90). Rates IFDS jargon N=2.30 — higher than seeds N=1.44, but in an absolute sense still low. Opus "sees through" jargon more than Gemini but its harsh N-axis calibration means it under-rates even genuine frontier content compared to human (human N avg=2.66). However, Opus is calibrated in that its pattern of errors tracks human judgments.
+
+**The heterogeneity arithmetic:** For frontier seeds, Gemini gives N≈3.5, GPT gives N=1.29, Opus gives N=1.44. Calibrated-rater N-axis spread ≈ 2.21. For IFDS jargon, Gemini gives N≈3.3, GPT gives N=3.19, Opus gives N=2.30. Calibrated-rater N-axis spread ≈ 1.00. The spread is ~2× larger for frontier seeds than IFDS jargon — confirmed in the Pass 8 estimation. **The discriminating power comes from the heterogeneity, not from any single judge's accuracy.**
+
+**Why architectural diversity doesn't capture this:** Three Anthropic models (Haiku, Sonnet, Opus) would all apply versions of the same skeptical RLHF calibration — their N-axis spread would be compressed. Three retrieval-optimized models (three versions of Gemini Flash) would agree on novelty-as-formality — their N-axis spread on IFDS vs seeds would be minimal. The calibration-heterogeneous trio (retrieval-optimized + generativity-optimized + skepticism-optimized) produces disagreement that is *diagnostic*, because the models are looking for genuinely different features when they assess novelty.
+
+**The panel design prescription derived from this:**
+
+> Select evaluation panel members not by provider diversity or capability rank, but by per-axis MAE profile complementarity: choose one retrieval-optimized judge (strong N, lenient), one generativity-calibrated judge (strong G, novelty-skeptic), and one skepticism-calibrated judge (harsh across axes). This "calibration-heterogeneous" panel will produce informative N-axis disagreement on frontier content precisely because its members assess novelty through structurally different lenses.
+
+**Two new papers from today's search supporting this angle:**
+
+1. **arXiv 2512.01786 — "Who Judges the Judge? LLM Jury-on-Demand: Building Trustworthy LLM Evaluation Systems"** (December 2025): Proposes dynamic, per-instance judge selection via learned reliability predictors — judges are chosen based on predicted agreement with human ratings for each specific input. The key finding: not all judges contribute equally across all input types; contextual weighting (rather than static provider diversity) outperforms fixed panels. This validates the principle that per-instance judge heterogeneity matters and that static panels chosen by provider diversity are suboptimal. Our calibration heterogeneity criterion is a *static* approximation of this dynamic idea: instead of learning per-instance reliability, select judges whose average per-axis failure profiles are complementary. Add to the operational prescription section as: "Dynamic reliability predictors (arXiv 2512.01786) operationalize per-instance judge selection; our calibration heterogeneity criterion is the static panel-design analog."
+
+2. **arXiv 2604.01504 — "Magic, Madness, Heaven, Sin: LLM Output Diversity is Everything, Everywhere, All at Once"** (April 2026): Finds that LLM output diversity fundamentally shapes evaluation panel effectiveness — panels with higher output diversity (disagreement) provide better coverage of edge cases. The paper's "everywhere, all at once" framing: diversity is simultaneously good (for coverage, for signal) and bad (for consistency, for reliability). This maps precisely onto the D+E+F thesis: diversity on the N-axis is good (it's the frontier signal); diversity on the R-axis from shared errors is bad (it masks the signal). Not all disagreement is equal; the axis and mechanism matter.
+
+**Literature gap confirmed:** No paper proposes selecting panel members by per-axis MAE complementarity as a design criterion. arXiv 2512.01786 proposes dynamic per-instance selection (different problem). "Replacing Judges with Juries" (arXiv 2404.18796) proposes architectural diversity (same dimension, different logic). The calibration heterogeneity criterion — *choose judges who fail in different directions, not just from different providers* — is unoccupied.
+
+**Devil's Advocate:** The calibration heterogeneity argument depends on the stable per-axis MAE profiles (Gemini always best at N, GPT always best at G) holding across content domains beyond our 29-item human-labeled set. If Gemini's N-axis advantage is specific to the mix of seeds and IFDS in our experiment, a different content domain (e.g., applied ML papers vs. pure math) might yield a completely different per-axis profile. The "calibration-heterogeneous trio" would need to be re-selected for each evaluation domain. This is a real limitation: the prescription is domain-conditional. Counter: the N=29 human label set is exactly the calibration sample needed to identify the right trio for a given domain. The prescription is: *measure per-axis MAE on a domain-representative sample, then select for complementarity*. The cost is the human labeling sample; the gain is a panel optimized for that domain's frontier content. This is the same logic as domain-specific BT calibration (arXiv 2602.16610), which the field accepts as reasonable overhead.
+
+**Surprise score for this angle: 5/5** — No paper tells practitioners to choose evaluation panel members based on per-axis failure mode complementarity rather than capability or architectural diversity. This directly contradicts the default assumption ("use the best models from different providers"). A NeurIPS reviewer who designs multi-model evaluation panels would find this directly actionable and unexpected. The limitation (domain-conditional) reduces practical impact but does not undermine the principle. **However**, this angle is strongest as part of D+E+F's operational prescription section, not as a standalone position. As a standalone, the N=29 evidence is too thin to anchor a paper. As a derived prescription that follows from the mechanism (R-axis correlated errors → filter by calibration; N-axis aleatoric variance → maximize calibration heterogeneity), it extends the D+E+F thesis into a concrete novel recommendation.
+
+---
+
+## CANDIDATE POSITIONS — UPDATED (2026-04-07, Tenth Pass)
+
+*All five queue items confirmed complete. Incorporates: all nine prior passes, the Calibration Heterogeneity finding above, arXiv 2512.01786 and arXiv 2604.01504 (new to document), and a fresh April 7 literature search (no new challenge papers found). No ranking changes.*
+
+---
+
+### Summary Ranking Table (April 7, 2026)
+
+| Rank | Candidate | One-sentence claim | Surprise | Evidence | Status |
+|------|-----------|-------------------|----------|----------|--------|
+| **1** | **D+E+F unified + Calibration Heterogeneity prescription** | Multi-model panels violate Condorcet independence via shared training corpora: correlated R errors amplify shared misconceptions, while calibrated-judge N disagreement — maximized by selecting judges with complementary per-axis failure profiles — is the frontier acquisition signal the paradigm discards | **4/5** (prescription element: 5/5) | α=0.28; Log-Rank correlated error; 4/4 frontier items show calibrated N-std as highest axis; ~2× N-std separation (seeds vs IFDS) after calibration; 16+ independent confirmations | **TOP — write the paper** |
+| 2 | **B (Scale anti-correlation)** | Gemini Flash (free) outperforms Opus ($15/M) as frontier judge by 2× because optimization pressure anti-correlates with evaluation sensitivity at the frontier | 4/5 | MAE 0.53 vs 0.97 (N=29); Semantic Capacity Asymmetry; sycophancy scaling literature | Strong standalone backup |
+| 3 | **A (Novelty Impossibility)** | LLM judges invert novelty rankings because novelty assessment is structurally a PAC-impossible OOD detection problem under the training distribution | 3/5 | IFDS 3.21 > Seeds 2.37 (all 5 models); OOD impossibility; RINoBench; arXiv 2409.16605 | Good supporting evidence |
+
+---
+
+### Top Recommendation (Tenth Pass — Final)
+
+**D+E+F unified, extended with the Calibration Heterogeneity prescription.**
+
+**What this run adds that prior runs didn't have:**
+
+1. The explicit per-model per-axis failure profile analysis that explains *why* the Gemini+GPT+Opus trio is calibration-heterogeneous, not just "three models with lowest MAE."
+2. arXiv 2512.01786: dynamic reliability selection validates calibration heterogeneity as the right selection criterion — our criterion is the static panel-design version.
+3. arXiv 2604.01504: N-axis output diversity is good (frontier signal); the paper's "everything, everywhere" framing maps onto the D+E+F axis asymmetry.
+4. Literature gap confirmed for calibration heterogeneity as panel design criterion — the most actionable and counterintuitive element of the operational prescription.
+
+**Definitive one-sentence abstract (final, incorporating calibration heterogeneity):**
+
+> *Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content because they violate Condorcet independence via shared training corpora — model families make identical Rigour errors while discarding the only reliable frontier signal: Novelty disagreement among raters selected for per-axis calibration complementarity, not architectural diversity.*
+
+**Why "calibration complementarity, not architectural diversity" is the sharpest contribution:**
+- Every multi-model panel paper recommends provider diversity. This recommendation says the wrong thing.
+- The right selection criterion is: find judges whose per-axis MAE profiles are complementary (one strong on N, one strong on G, one uniformly skeptical).
+- This follows directly from the mechanism (R errors are correlated because all models trained on the same rare frontier literature; N disagreement is informative because retrieval-optimized vs skepticism-optimized vs generativity-optimized models genuinely differ in their frontier knowledge representation).
+- A reviewer who uses multi-model panels will immediately understand the implication: "I should stop picking by provider and start picking by per-axis calibration profile." That is actionable, surprising, and derivable from the data.
+
+**Confirmed literature gaps (all passes combined, April 7, 2026):**
+
+1. Condorcet jury theorem framing of LLM panel failures, connected to frontier-corpus-specific corpora overlap — **unoccupied**.
+2. N-axis calibrated inter-judge std as explicit human-review routing signal, grounded in aleatoric OOD impossibility — **unoccupied**.
+3. Per-axis MAE complementarity as panel design criterion (vs architectural diversity) — **unoccupied**.
+4. Debate-worthiness prediction failure of consensus frontier_score (ρ≈0 while linking ρ=0.62) — **unoccupied**.
+5. Question-rigour vs answer-rigour asymmetry (no ground truth for question premise) — **unoccupied**.
+
+Three of these five gaps are directly testable from the existing 29-item human label set. The other two (2, 4) require modest additional analysis. **The paper has five original contributions, all with confirmed literature gaps. Write it.**
+
 Both contributions are in unoccupied literature space as of April 5, 2026. **Ship.**
 
 ---
