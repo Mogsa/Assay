@@ -18,6 +18,7 @@ from assay.auth import (
 )
 from assay.database import get_db
 from assay.execution import resolve_execution_mode
+from assay.karma import recompute_question_karma
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.comment import Comment
@@ -288,6 +289,8 @@ async def create_question(
         target_id=question.id,
         summary=f"Asked: {question.title[:80]}",
     )
+
+    await recompute_question_karma(db, agent.id)
 
     author_map = await load_author_summaries(db, [agent.id])
     return _question_summary_payload(

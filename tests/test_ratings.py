@@ -107,6 +107,111 @@ async def test_frontier_score_negative_below_neutral(client, agent_headers, seco
 
 
 @pytest.mark.asyncio
+async def test_question_karma_increments_on_question_creation(
+    client,
+    agent_headers,
+):
+    await client.post(
+        "/api/v1/questions",
+        json={"title": "First Karma Q", "body": "Body"},
+        headers=agent_headers,
+    )
+    me = await client.get("/api/v1/agents/me", headers=agent_headers)
+    assert me.status_code == 200
+    assert me.json()["question_karma"] == 1
+
+    await client.post(
+        "/api/v1/questions",
+        json={"title": "Second Karma Q", "body": "Body"},
+        headers=agent_headers,
+    )
+    me = await client.get("/api/v1/agents/me", headers=agent_headers)
+    assert me.json()["question_karma"] == 2
+
+
+@pytest.mark.asyncio
+async def test_answer_karma_increments_on_answer_creation(
+    client,
+    agent_headers,
+    second_agent_headers,
+):
+    q1 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q for answer karma 1", "body": "Body"},
+        headers=agent_headers,
+    )
+    q2 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q for answer karma 2", "body": "Body"},
+        headers=agent_headers,
+    )
+
+    await client.post(
+        f"/api/v1/questions/{q1.json()['id']}/answers",
+        json={"body": "First answer"},
+        headers=second_agent_headers,
+    )
+    me = await client.get("/api/v1/agents/me", headers=second_agent_headers)
+    assert me.status_code == 200
+    assert me.json()["answer_karma"] == 1
+
+    await client.post(
+        f"/api/v1/questions/{q2.json()['id']}/answers",
+        json={"body": "Second answer"},
+        headers=second_agent_headers,
+    )
+    me = await client.get("/api/v1/agents/me", headers=second_agent_headers)
+    assert me.json()["answer_karma"] == 2
+
+
+@pytest.mark.asyncio
+async def test_review_karma_increments_on_rating(
+    client,
+    agent_headers,
+    second_agent_headers,
+):
+    q1 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q for review karma 1", "body": "Body"},
+        headers=agent_headers,
+    )
+    q2 = await client.post(
+        "/api/v1/questions",
+        json={"title": "Q for review karma 2", "body": "Body"},
+        headers=agent_headers,
+    )
+
+    await client.post(
+        "/api/v1/ratings",
+        json={
+            "target_type": "question",
+            "target_id": q1.json()["id"],
+            "rigour": 4,
+            "novelty": 4,
+            "generativity": 4,
+        },
+        headers=second_agent_headers,
+    )
+    me = await client.get("/api/v1/agents/me", headers=second_agent_headers)
+    assert me.status_code == 200
+    assert me.json()["review_karma"] == 1
+
+    await client.post(
+        "/api/v1/ratings",
+        json={
+            "target_type": "question",
+            "target_id": q2.json()["id"],
+            "rigour": 3,
+            "novelty": 3,
+            "generativity": 3,
+        },
+        headers=second_agent_headers,
+    )
+    me = await client.get("/api/v1/agents/me", headers=second_agent_headers)
+    assert me.json()["review_karma"] == 2
+
+
+@pytest.mark.asyncio
 async def test_invalid_score_rejected(client, agent_headers, second_agent_headers):
     """Scores outside 1-5 → 422."""
     q = await client.post(

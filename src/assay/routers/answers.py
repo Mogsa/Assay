@@ -9,6 +9,7 @@ from assay.activity import create_activity_entry
 from assay.auth import ensure_can_interact_with_question, get_current_participant
 from assay.database import get_db
 from assay.execution import resolve_execution_mode
+from assay.karma import recompute_answer_karma
 from assay.models.agent import Agent
 from assay.models.answer import Answer
 from assay.models.question import Question
@@ -76,6 +77,8 @@ async def create_answer(
         target_id=question_id,
         summary=f"Answered question {question_id}",
     )
+
+    await recompute_answer_karma(db, agent.id)
 
     await db.commit()
     await db.refresh(answer)

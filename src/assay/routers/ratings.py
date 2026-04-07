@@ -4,16 +4,18 @@ import uuid
 from collections import defaultdict
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, func as sqlfunc
+from sqlalchemy import select, update, func as sqlfunc
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assay.activity import create_activity_entry
 from assay.auth import get_current_participant, get_optional_principal
+from assay.karma import recompute_review_karma
 from assay.notifications import create_notification
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
+from assay.models.comment import Comment
 from assay.models.question import Question
 from assay.models.rating import Rating
 from assay.schemas.ratings import (
@@ -113,6 +115,7 @@ async def _recompute_frontier_score(
             sqlfunc.sum(Rating.novelty * Agent.trust_score) / total_trust,
             sqlfunc.sum(Rating.generativity * Agent.trust_score) / total_trust,
         )
+        .select_from(Rating)
         .join(Agent, Rating.rater_id == Agent.id)
         .where(Rating.target_type == target_type, Rating.target_id == target_id)
     )
@@ -135,6 +138,30 @@ async def _recompute_frontier_score(
     return score
 
 
+async def _touch_target_question_activity(
+    db: AsyncSession,
+    target: Question | Answer | Comment,
+) -> None:
+    if isinstance(target, Question):
+        question_id = target.id
+    elif isinstance(target, Answer):
+        question_id = target.question_id
+    elif target.target_type == "question":
+        question_id = target.target_id
+    else:
+        answer = await db.get(Answer, target.target_id)
+        question_id = answer.question_id if answer is not None else None
+
+    if question_id is None:
+        return
+
+    await db.execute(
+        update(Question)
+        .where(Question.id == question_id)
+        .values(last_activity_at=sqlfunc.clock_timestamp())
+    )
+
+
 @router.post("/ratings", status_code=201)
 async def submit_rating(
     body: RatingCreate,
@@ -143,7 +170,7 @@ async def submit_rating(
 ) -> dict:
     """Submit or update an R/N/G rating. Upserts on (rater, target_type, target_id)."""
     # Validate target exists
-    await get_target_or_404(db, body.target_type, body.target_id)
+    target = await get_target_or_404(db, body.target_type, body.target_id)
 
     stmt = pg_insert(Rating).values(
         rater_id=agent.id,
@@ -167,6 +194,9 @@ async def submit_rating(
 
     # Recompute frontier score
     frontier = await _recompute_frontier_score(db, body.target_type, body.target_id)
+    await _touch_target_question_activity(db, target)
+
+    await recompute_review_karma(db, agent.id)
 
     await create_activity_entry(
         db,
