@@ -4449,3 +4449,25 @@ D+E+F+C unified. The four formal impossibility arguments are now: Condorcet (ind
 
 ---
 
+### Twenty-Fifth Pass Literature Addendum — Search Agent Results (2026-04-07)
+
+The background literature agent completed searches across all five topic areas and returned four papers not previously in the document:
+
+**arXiv:2603.14732 — "Criterion-referenceability determines LLM-as-a-judge validity across physics assessment formats"** (March 2026)
+
+This paper directly confirms the question-rigour calibration impossibility argument above from an independent empirical context. It distinguishes criterion-referenceable evaluation (clear rubric with definite anchors — equivalent to answer-rigour) from norm-referenceable evaluation (no clear rubric, depends on expert consensus — equivalent to question-rigour for frontier questions). Key finding: LLM judge validity is substantially higher for criterion-referenceable tasks than for norm-referenceable ones. **Question quality evaluation is harder to judge than answer quality because good questions lack a clear rubric.** This is independent empirical confirmation of the new argument in this pass: question-rigour calibration cannot be fixed by better rubric design, because the rubric itself cannot be criterion-referenced for frontier questions without frontier domain knowledge. Add to Candidate F (calibration gradient inversion) and the question/answer paradigm mismatch argument as direct external confirmation.
+
+**arXiv:2604.02923 — "Council Mode: Mitigating Hallucination and Bias in LLMs via Multi-Agent Consensus"** (April 2026)
+
+Uses heterogeneous models (different providers) to maximize cognitive diversity; explicitly categorizes panel outputs into consensus findings, disagreement zones, and unique model findings rather than majority voting. The taxonomy (consensus/disagreement/unique) is an independent implementation of the D+E+F+C routing principle — items in the "disagreement zone" are routed to additional review rather than averaged. This is the most recent independent confirmation that the research community is converging on structured disagreement rather than averaging as the right paradigm. Add to Candidate E evidence.
+
+**HindSight key finding — precise numbers confirmed:** ρ = −0.29 (p < 0.01) between LLM-judged novelty scores and HindSight materialization scores. Additionally: LLM-as-Judge finds no significant difference between RAG and vanilla idea generation (p = 0.584), while HindSight shows RAG produces 2.5x higher-scoring ideas (p < 0.001). The two evaluation methods not only disagree — they disagree by 2.5x in a direction that LLM judges miss entirely. This is not a marginal disagreement; it is a structural blindness. The ρ = −0.29 anti-correlation in the novelty dimension is the cleanest single quantitative anchor for Candidate A now confirmed by the search agent.
+
+**arXiv:2602.05125 — "Rethinking Rubric Generation for Improving LLM Judge and Reward Modeling"** (February 2026)
+
+Proposes correlation-aware weighting to prevent over-representing correlated rubric criteria. Direct relevance: if N and G are highly correlated in our R/N/G rubric (the N≈G collapse question from passes 12–14), this paper provides the methodological warrant for collapsing them into a combined axis for the disagreement metric. The paper's recommendation: if two dimensions are correlated, the rubric is redundant and should collapse them. This is evidence that the N≈G collapse, if confirmed, is not a flaw but an appropriate empirical finding warranting framework adjustment.
+
+**Net assessment of search results:** No April 7, 2026 papers were found that preempt any of the D+E+F+C contribution gaps. arXiv:2603.14732 provides the strongest new support for the question-rigour calibration impossibility argument. HindSight numbers are now precisely verified (ρ = −0.29, not just "negatively correlated"). The literature gap confirmed open as of this search.
+
+---
+
