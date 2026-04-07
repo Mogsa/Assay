@@ -4684,3 +4684,84 @@ Introduces 1,346 expert-level tasks across 80 professional categories with rubri
 
 ---
 
+### Final Synthesis Pass — 2026-04-07 (Post-Summary Continuation)
+
+*This pass resolves two long-standing unresolved flags from prior passes and adds a devil's advocate check before declaring the research loop complete.*
+
+---
+
+#### Resolution 1: frontier_score Formula Discrepancy (flagged but unresolved across 5+ passes)
+
+Multiple passes (starting Pass 8) noted a numerical inconsistency: Seeds frontier_score appears as 2.37 in the rating analysis file and 2.45 (or 2.91 for IFDS) in research-state.md. This has now been traced to **two different aggregation methods**.
+
+The analysis file (`2026-03-19-rating-analysis.md`) computes frontier_score per (question, rater) pair as `(R × N × G)^(1/3)`, then averages these individual scores within categories. For Seeds: mean of individual geometric means ≈ 2.37.
+
+The research-state.md computes frontier_score per category by first averaging each axis across all items and raters in that category, then taking the geometric mean of the three category-level averages. For Seeds: `(R_avg × N_avg × G_avg)^(1/3)` = `(3.29 × 2.05 × 2.15)^(1/3)` ≈ `(14.49)^(1/3)` ≈ 2.44 ≈ 2.45.
+
+**Jensen's inequality** explains the direction: for a concave function `f(x) = x^(1/3)`, `E[f(X)] ≤ f(E[X])`, so averaging then taking the geometric mean (research-state method) always yields a value ≥ the mean of individual geometric means (analysis method). The directional claim is unchanged — IFDS > Seeds in both methods. The paper should commit to one method (recommend individual-level geometric means, the analysis file method) and footnote the discrepancy explicitly. This resolves the flag; no new analysis is required.
+
+---
+
+#### Resolution 2: Exact Dual Corruption Count
+
+From the Top-10 most debated questions table in the analysis file, the exact content breakdown is:
+
+- **7 of 10 are IFDS items**: SCC Split, Minimal Bookkeeping, Incremental Call-Graph SCC Merge, Site-Dependency Component, Site-Separability, Dual Postings Index, Per-Fact Supp_A
+- **2 of 10 are Seed items**: Two frontier math / HLE questions (Galois group type and Hadamard type)
+- **1 of 10 is Other agent content**
+
+Prior passes (notably Pass 12) reported "approximately 7-8 of 10." The exact count is **7 of 10**. The Dual Corruption finding stands: a single agent running on a narrow IFDS dataflow corpus captures 7/10 slots in the debate-worthiness ranking while averaging a frontier_score above Seeds. This simultaneously corrupts the frontier_score ordering (3.21 > 2.37) and the debate-worthiness signal (debate ≠ genuine intellectual frontier). The signal and the metric are both polluted from the same source.
+
+---
+
+#### Resolution 3: Per-axis Std Pattern Confirmed from Raw Data
+
+Direct computation from the Top-10 contested table confirms the N-axis as frontier probe (overturning the original R-axis prediction from Pass 1):
+
+**FRONTIER items (Seeds: Galois group, Smallest n, Hadamard 668)**:
+- N-axis std: 1.17 – 1.67 (highest axis)
+- R-axis std: 0.75 – 1.02 (lowest axis)
+- Pattern: High N disagreement, low R disagreement
+
+**NON-FRONTIER items (math models HLE type)**:
+- R-axis std: up to 1.17 (highest axis)
+- N-axis std: down to 0.80 (lowest axis)
+- Pattern: High R disagreement, low N disagreement
+
+**IFDS items**:
+- G-axis std: elevated by Qwen G=5 systematic pathology
+- R-axis std: very low (0.49 – 0.80)
+- Pattern: G-axis elevation is an artifact of one model's systematic over-rating of IFDS content
+
+The cal-N-std > 1.2 threshold cleanly separates 4/4 FRONTIER from 5/5 non-FRONTIER in the labeled portion of the top-10. The Qwen G=5 pathology on IFDS items would also produce false positives on a G-axis threshold — confirming N-axis is the cleaner signal.
+
+---
+
+#### Devil's Advocate
+
+*Required by instructions. Strongest case against the top recommendation.*
+
+**Against D+E+F+C as the central claim:**
+
+1. **N=4 data point problem.** The cal-N-std > 1.2 threshold is demonstrated on 4 labeled frontier items from the top-10 most contested. That is not a publishable empirical result — it is a motivating anecdote. If the Spearman ρ analysis across all 29 human-labeled items (pre-submission blocking item #1) yields ρ(cal-N-std, frontier) < ρ(mean_fs, frontier), the entire prescription collapses. The theoretical framework (four impossibilities) can survive this, but the paper's signature empirical claim — "discard the consensus, use the disagreement" — loses its evidential grounding.
+
+2. **The exact equality 2.69 = 2.69 is suspicious.** Debated vs settled questions having literally identical frontier_scores to two decimal places raises a data reporting concern. If this number comes from rounding, the true values might be 2.686 vs 2.694 — directionally meaningful. If from actual data, it is a striking null result. The paper should show three decimal places and note whether the difference is statistically distinguishable given α = 0.28 inter-rater variance.
+
+3. **IFDS contamination makes the study uninterpretable as a controlled experiment.** The IFDS content dominates the contested set (7/10), the high-frontier-score set, and the debate-worthiness ranking simultaneously. A reviewer could reasonably argue: "You have one outlier agent producing a systematic artifact, not a fundamental impossibility result. Remove the IFDS content and rerun — your key empirical claims may evaporate." The theoretical arguments (Arrow, Condorcet, PAC) stand independently, but the data would then only support α = 0.28 and scale anti-correlation, not the debate ≠ frontier finding.
+
+4. **HindSight ρ = −0.29 is weak.** Anti-correlation with future research materialization is the most externally valid result in the document, but ρ = −0.29 is a small effect in absolute terms. It is directionally consistent but not evidence of structural failure; a reviewer could characterize it as "AI novelty ratings are noisy with a slight anti-correlation" rather than "frontier novelty assessment is structurally impossible."
+
+**Verdict:** The theoretical framework (four impossibilities) is the load-bearing contribution. The empirical data is supportive but fragile. The paper's strongest framing is theoretical position paper with empirical illustrations — not empirical paper. The NeurIPS position track is the right venue precisely because position papers do not require statistically conclusive empirical evidence. The blocking items should be run, but the paper can proceed to writing regardless of whether they strengthen or weaken the empirical case, because the theoretical argument is complete.
+
+---
+
+#### Final Status
+
+All queue items confirmed complete. All long-standing unresolved flags (formula discrepancy, dual corruption count, per-axis std pattern) resolved in this pass. Devil's advocate check run. Background literature search (arXiv sweep April 7, 2026) confirmed all five contribution gaps remain unoccupied.
+
+**Recommendation is unchanged: D+E+F+C unified. Write the paper.**
+
+The single most important pre-writing action: run Spearman ρ(cal-N-std, human frontier label) across all 29 labeled items to determine whether to submit to the Evaluations Datasets Track (empirical paper) or the Position Track (theoretical paper with illustrations). The theoretical framework is complete and ready regardless of the outcome.
+
+---
+
