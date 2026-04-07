@@ -4184,3 +4184,135 @@ The stronger Candidate A (4/5 surprise with HindSight) actually strengthens D+E+
 
 **Literature gap: confirmed open by five independent searches across 23 passes. Write the paper.**
 
+---
+
+## CANDIDATE POSITIONS — AUTHORITATIVE FINAL UPDATE (2026-04-07, Twenty-Fourth Pass)
+
+*Supersedes all prior CANDIDATE POSITIONS tables. Incorporates all 23 prior passes, the Twenty-Fourth Pass distillation above, and the Pass 21–23 evidence additions (HindSight, SCO, question/answer mismatch mechanism, Ambiguity Decomposition).*
+
+---
+
+### Summary Ranking Table
+
+| Rank | Candidate | One-sentence claim | Surprise | Evidence strength | Novel gap confirmed |
+|------|-----------|-------------------|----------|-------------------|---------------------|
+| **1** | **D+E+F+C unified** | Multi-model panels violate Condorcet independence via shared training corpora — correlated R-axis errors amplify shared misconceptions while the only uncorrupted frontier signal (calibrated-rater N-axis disagreement, threshold > 1.2) is discarded by averaging — and calibration heterogeneity, not architectural diversity, is the correct panel design criterion | **4/5** | Strong: α=0.28; 2.69=2.69 (exact equality); 4/4 frontier threshold separation; Log-Rank anecdote; 30+ corroborating papers including ICML 2025 spotlight, EMNLP 2025 Oral, HealthBench physician study | Yes: five unoccupied gaps (Condorcet frame; N-axis routing; calibration heterogeneity criterion; debate-worthiness null; question-rigour asymmetry) |
+| **2** | **A: Novelty Impossibility** | AI judges invert novelty rankings because frontier novelty assessment is PAC-impossible OOD detection — IFDS jargon outscores genuine frontier math across all 5 families despite explicit calibration counter-examples, and (HindSight) LLM novelty scores anti-correlate with future research materialization | **4/5** (upgraded from 3/5 by HindSight) | Strong: IFDS 2.91 > Seeds 2.45; calibration example failure; HindSight external criterion; RINoBench; perplexity-preference mechanism | Yes: PAC-impossible OOD framing; external criterion via HindSight |
+| **3** | **B: Scale anti-correlation** | Retrieval-optimized Gemini Flash (MAE=0.53) outperforms RLHF-optimized Opus (MAE=0.97) because optimization pressure embeds larger models deeper in the training distribution | **4/5** | Moderate: MAE table N=29; Semantic Capacity Asymmetry arXiv 2601.22588; sycophancy scaling | Partial: explained by D+E+F mechanism; not a standalone gap |
+| **4** | **C: Calibration Heterogeneity** | Select panel members by maximum pairwise N-axis severity difference (Ambiguity Decomposition formal grounding), not architectural diversity | **5/5** | Moderate: Krogh-Vedelsby NeurIPS 1995; LLM-TOPLA; MFRM tooling; Gemini/Opus N-bias opposition confirmed | Yes: no paper derives panel composition from Ambiguity Decomposition for LLM evaluation |
+
+---
+
+### Candidate D+E+F+C Unified — Full Assessment
+
+**One-sentence position:**
+
+> *Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content — and an identical consensus score for debated and settled questions (2.69 = 2.69) — because shared training-distribution confounders create correlated errors that consensus aggregation amplifies rather than cancels ("confabulation consensus," arXiv:2602.09341); calibrated-rater Novelty-axis disagreement (cal-N-std > 1.2, identified via the Ambiguity Decomposition maximum-heterogeneity panel design rule) is the only signal the panel produces that cannot be simultaneously saturated by high-quality in-distribution jargon, and routing items above this threshold to human review is the only available intervention in the ground-truth-free frontier regime.*
+
+**What makes it NeurIPS-worthy:** It attacks an assumption (panel consensus = reliability) held by every major LLM-as-judge paper, with a formal impossibility argument (Condorcet + Arrow + OOD), empirical corroboration across five model families, and a concrete operational prescription falsifiable by a single Spearman ρ computation. The 2.69 = 2.69 finding (consensus cannot find contested questions) is the cleanest kill-shot: a frontier detection metric that is blind to intellectual contestedness has failed its primary purpose.
+
+**Strongest evidence (in priority order for the paper's opening):**
+1. α = 0.28 (incontrovertible; confirmed twice)
+2. 2.69 = 2.69 (exact equality; zero predictive power for debate-worthiness)
+3. IFDS 2.91 > Seeds 2.45 (novelty inversion despite explicit calibration example)
+4. Cal-N-std > 1.2 threshold separates 4/4 frontier from 5/5 non-frontier in contested set
+5. Log-Rank correlated error (three families, identical mistake — "confabulation consensus")
+
+**Remaining weaknesses (must be addressed in the paper):**
+- N=4 human-labeled data points for the cal-N-std threshold claim; full 29-item ρ analysis unrun
+- Calibration filter circularity: calibrated judges defined by MAE against the same human labels used to test the claim; no held-out validation
+- N≈G axis collapse (per-item r(N,G) uncomputed); if N and G collapse empirically, the claim should be "N+G combined axis"
+- Formula discrepancy (geometric mean 3.21/2.37 vs production signed Euclidean 2.91/2.45) must be resolved before submission
+
+**Why this is still the right recommendation despite the weaknesses:** NeurIPS position papers argue a position with sufficient evidence to make the community take the claim seriously. The theoretical framework (three formal impossibility arguments) + directional empirical evidence (five model families, 30+ independent papers) + confirmed literature gaps + a concrete falsifiable prediction meets this bar. The weaknesses are explicitly flagged; the prediction (cal-N-std outperforms mean frontier_score on held-out items) is the test that would move this to an empirical paper.
+
+---
+
+### Candidate A: Novelty Impossibility — Full Assessment
+
+**One-sentence position:**
+
+> *LLM judges invert novelty rankings because frontier novelty assessment is structurally impossible — it requires OOD detection relative to the training distribution, which is PAC-impossible without external anchors — and HindSight (arXiv:2603.15164) confirms this at scale: AI novelty scores are negatively correlated with future research materialization, the only available external criterion of genuine novelty.*
+
+**Why 4/5 surprise (upgraded):** Every practitioner assumes AI judges can at least approximate novelty assessment; HindSight shows they are systematically anti-correlated with the ground truth (future research impact). This is not "biased" — it is directionally wrong. The calibration example failure (the system was explicitly told to avoid this) is the in-house evidence that prompting cannot fix it; HindSight is the external evidence that the failure has real-world consequences.
+
+**Why not #1:** The novelty impossibility is a diagnostic (what's broken) without a prescription (what to do instead). D+E+F+C subsumes Candidate A — the OOD impossibility mechanism explains WHY calibrated N-axis disagreement is the only uncorrupted frontier signal. Candidate A is the strongest single finding; D+E+F+C is the most complete framework.
+
+---
+
+### TOP RECOMMENDATION — DEFINITIVE (Twenty-Fourth Pass)
+
+**D+E+F+C unified, with Candidate A as the mechanistic foundation.**
+
+The paper should be titled: **"Consensus as Confound: Why AI Evaluation Panels Fail at the Frontier and What Their Disagreement Reveals"**
+
+The argument in three sentences (simplest defensible form):
+1. The consensus frontier score assigns identical values to debated and settled questions (2.69 = 2.69), failing its primary purpose — and this failure is structural because shared training confounders prevent the panel from detecting intellectual contestedness.
+2. The signal the paradigm discards (calibrated-rater N-axis standard deviation, threshold > 1.2) correctly identifies frontier content where human review is most needed: content where models with opposing systematic N-biases are pushed to opposite extremes, marking the exact boundary where no model's training prior applies.
+3. The correct panel design criterion is calibration heterogeneity (select judges with opposing systematic N-biases, per the Ambiguity Decomposition), not architectural diversity — a direct inversion of the field's current practice.
+
+**Pre-submission blocking list (final, unchanged):**
+1. Run Spearman ρ(cal-N-std, human frontier label) vs ρ(mean frontier_score, human frontier label) across all 29 human-labeled items. Predicted: cal-N-std ≥ 0.80 > mean_fs.
+2. Compute per-item Pearson r(N,G) across all 134 items × 5 raters. If r > 0.80, change "N-axis" to "N+G combined axis" throughout.
+3. Resolve formula notation: use geometric mean (1–5 scale) throughout; footnote the production signed Euclidean change.
+
+**Literature gap: confirmed open by six independent searches across 24 passes, April 7, 2026. The thesis is complete. Write the paper.**
+
+---
+
+### Twenty-Fourth Pass: Distillation and Final Assessment — 2026-04-07
+
+**Purpose:** All 5 queue items complete across 23 prior passes. This pass performs a full cold re-read of the complete document and delivers the sharpest possible distillation: what the document says when you strip out the scaffolding.
+
+---
+
+**The Five Empirical Anchors (what we actually know, in order of certainty)**
+
+1. **α = 0.26–0.32** — The five-model panel disagrees at well below the publishable reliability threshold (0.67). Incontrovertible; confirmed twice against the primary data files.
+
+2. **Debated questions score identically to settled ones (2.69 = 2.69)** — The consensus frontier_score assigns the same mean value to questions that generated genuine intellectual disagreement and to questions that didn't. This is not "weak signal" — it is an exact null at the metric's primary use case: finding the questions most worth arguing about.
+
+3. **IFDS jargon outscores genuine frontier math (2.91 vs 2.45)** — Across all five model families, a looping agent's narrow technical jargon was rated more frontier than seeds drawn from FrontierMath and HLE. Calibration examples specifically designed to prevent this inversion did not prevent it. Direct evidence against "prompting can fix it."
+
+4. **Three model families made the identical Log-Rank error** — Claude, Gemini, GPT all independently called Lovett's upper bound a "proof barrier." Single anecdote with a precise mechanism (shared complexity theory corpora; "confabulation consensus" per arXiv 2602.09341).
+
+5. **Cal-N-std > 1.2 separates frontier from non-frontier (4/4 human-labeled items)** — Among calibrated judges (Gemini Flash + GPT-5.4 mini + Opus), N-axis standard deviation above 1.2 identified every human-labeled frontier item in the top-10 contested set, with zero false positives among labeled items. Clean threshold with N=9 total (4 frontier, 5 non-frontier). Directionally validated by Spearman ρ = 0.825 at N=5; underpowered for significance.
+
+---
+
+**The Single Most Undersold Finding**
+
+Twenty-three passes have been building the D+E+F+C framework, but the document buries its sharpest empirical claim: **The dual corruption**. IFDS content simultaneously (a) scores high on consensus frontier_score and (b) generates high debate activity (mixed agent verdicts). Both signals — the one that's supposed to find frontier content and the one that's supposed to find contested content — are corrupted by the same content type. This means the two failure modes (Finding 1/A: novelty inversion; Finding 4: debate-worthiness null) are not independent failures — they are co-produced by the same structural problem: shared training-distribution confounders (formality bias, perplexity preference) produce synchronized false positives across both detection criteria.
+
+The implication is cleaner than the D+E+F+C apparatus: **a signal that cannot be simultaneously saturated by high-quality in-distribution jargon is needed**. Calibrated-rater N-axis disagreement is proposed as this signal, because the calibrated raters (Gemini Flash vs. GPT mini/Opus) disagree about IFDS jargon far less than about genuine frontier seeds — the opposing systematic N-biases that make the pair informative are not triggered by jargon, only by content that genuinely falls between their knowledge representations.
+
+**Devil's Advocate:** After 23 passes of refinement, this position risks being unfalsifiable by design — every counterexample has been addressed by adding a qualification ("calibrated judges only," "N-axis not R-axis," "question eval not answer eval"). The test that would falsify it is simple and still unrun: Spearman ρ(cal-N-std, human frontier label) across all 29 human-labeled items. If ρ < 0.5, the routing prescription fails. If ρ > 0.7, the paper has an empirical result. The theoretical framework (Condorcet + Arrow + OOD impossibility) survives either ρ result — but the operational claim (cal-N-std > 1.2 as routing threshold) depends entirely on the full-dataset ρ holding.
+
+**What changed in passes 21–23 that is genuinely new:**
+- **HindSight (arXiv:2603.15164)** provides external criterion validation that AI novelty scores anti-correlate with future research materialization — upgrading Candidate A from 3/5 to 4/5 surprise.
+- **arXiv:2411.00119 (Soft Condorcet Optimization)** completes the three-stage pipeline: SCO for routine content, CyclicJudge for bias correction, D+E+F routing for frontier.
+- **The question/answer paradigm mismatch** (Pass 15) crystallized as the structural mechanism behind Candidate F: rubric calibration examples using answers cannot teach question-rigour assessment, explaining why R_error is highest despite appearing most objective.
+- **The Krogh-Vedelsby Ambiguity Decomposition** (Pass 14) provides formal theoretical grounding for Candidate C: maximum-ambiguity panel design = calibration heterogeneity, formally derivable from the NeurIPS 1995 theorem.
+
+---
+
+**Honest Assessment of Confidence by Tier**
+
+**High confidence (would write in the abstract):**
+- α = 0.28 is below publishable threshold
+- Consensus score fails to predict debate-worthiness (2.69 = 2.69)
+- IFDS jargon outscores genuine frontier math despite calibration example
+- Error independence fails for frontier content (Log-Rank anecdote + "Great Models Think Alike" ICML 2025)
+
+**Medium confidence (would argue in the body, with evidence):**
+- Cal-N-std > 1.2 achieves clean separation on 9 data points (not yet validated on full 29-item set)
+- Calibration heterogeneity (Gemini Flash + Opus pair) is the correct selection criterion
+- R-axis errors are correlated (shared misconception); N-axis errors are aleatoric (genuine knowledge divergence)
+
+**Low confidence (would flag as future work):**
+- The full Spearman ρ comparison favors cal-N-std over mean frontier_score
+- N and G are genuinely distinct axes (per-item r(N,G) may show collapse)
+- Question-rigour vs answer-rigour asymmetry predicts the gradient FLIPS for answer evaluation
+
+---
+
