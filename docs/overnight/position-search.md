@@ -752,6 +752,20 @@ This sharpens the Candidate D argument in a specific, measurable way: the eviden
 
 **Purpose of this entry:** All queue items remain complete. This pass (a) integrates a March 2026 paper not yet in the document that provides large-scale independent confirmation of the D+E+F thesis, (b) surfaces the per-axis Krippendorff alpha breakdown — which confirms the gradient inversion claim in a second, cleaner form — and (c) addresses the circularity objection raised in the 2026-04-06 run.
 
+**Addendum — Four additional papers from concurrent literature sweep (appended 2026-04-07):**
+
+A parallel search identified four papers not yet in the document, all directly supportive:
+
+- **"Benchmarks Saturate When The Model Gets Smarter Than The Judge" (arXiv 2601.19532, January 2026):** On hard mathematics, an automated judge is *wrong in 96.4% of disagreement cases* — when two models disagree on a hard problem, the judge almost always picks the worse answer. As difficulty increases, judge disagreement increases AND judge accuracy collapses. This is the most direct quantitative confirmation of "frontier → judge disagreement" we have found outside our own data. The 96.4% figure is a concrete, citable number showing that disagreement concentrates at the frontier and that consensus in that zone measures shared confusion, not shared truth.
+
+- **"How Trustworthy Are LLM-as-Judge Ratings for Interpretive Responses?" (arXiv 2604.00008, April 2026):** LLM judge scores correlate with human ratings for *Coherence* (the closest analogue to pattern-matching axes) but diverge substantially for more *interpretive* dimensions. The more a dimension requires genuine domain understanding rather than surface-structure recognition, the less reliable the judge score. This is the gradient inversion finding from a third independent context (the others being our R/N/G data and Mind the Blind Spots). Interpretive dimensions ≈ Rigour; Coherence ≈ Generativity.
+
+- **"Judge Reliability Harness: Stress Testing the Reliability of LLM Judges" (arXiv 2603.05399, March 2026):** No single state-of-the-art judge is uniformly reliable across benchmarks; reliability degrades under formatting changes, paraphrasing, and verbosity perturbations. Panel-level disagreement is the only honest indicator of instability that single-judge consensus conceals. Directly supports the claim that panel variance is a signal, not an artefact.
+
+- **"Beyond Consensus: Perspectivist Modeling and Evaluation of Annotator Disagreement in NLP" (arXiv 2601.09065, January 2026):** Survey paper arguing that disagreement in subjective/ambiguous NLP annotation is a meaningful perspectival signal — not noise to suppress via majority vote. Directly supports the theoretical framing in Finding 4/E (Plank 2022 extension). Strengthens the "disagreement as signal" claim by showing it is now a recognized paradigm shift in NLP evaluation methodology, not merely a novel proposal.
+
+**Net effect:** The landscape of supportive literature is now: 2601.19532 (96.4% wrong on disagreements at frontier), 2603.11027 (Evaluation Illusion at 105,600-instance scale), 2603.25450 (cross-model perplexity AUROC 0.75 for correctness), 2604.00008 (interpretive dimensions diverge most), 2603.05399 (panel variance = reliability signal), 2601.09065 (perspectivist modeling paradigm). No paper in the full literature sweep challenges the D+E+F thesis.
+
 ---
 
 **NEW CRITICAL PAPER — arXiv 2603.11027: "Beyond the Illusion of Consensus: From Surface Heuristics to Knowledge-Grounded Evaluation in LLM-as-a-Judge" (Mingyang Song et al., March 11, 2026)**
