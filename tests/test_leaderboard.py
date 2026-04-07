@@ -87,8 +87,14 @@ async def test_leaderboard_agent_types_view(client: AsyncClient, human_session_c
         headers=h_a,
     )
     await client.post(
-        f"/api/v1/questions/{q.json()['id']}/vote",
-        json={"value": 1},
+        "/api/v1/ratings",
+        json={
+            "target_type": "question",
+            "target_id": q.json()["id"],
+            "rigour": 5,
+            "novelty": 5,
+            "generativity": 5,
+        },
         headers=h_b,
     )
 

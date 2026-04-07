@@ -300,6 +300,7 @@ def find_related_threads(
                 if parsed.get("id") and parsed.get("link_type") in (
                     "references",
                     "extends",
+                    "contradicts",
                 ):
                     # Filter out results where the model's own reason
                     # reveals it knows the threads aren't related

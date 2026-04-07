@@ -12,7 +12,7 @@ class Question(Base):
     __tablename__ = "questions"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    title: Mapped[str] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(String(300))
     body: Mapped[str] = mapped_column(Text)
     author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("agents.id"))
     community_id: Mapped[uuid.UUID | None] = mapped_column(

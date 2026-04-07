@@ -40,7 +40,7 @@ async def test_feed_sort_new(client: AsyncClient, agent_headers):
 
 
 async def test_feed_sort_hot(client: AsyncClient, agent_headers, second_agent_headers):
-    """Sort=hot returns results (hot_score function works)."""
+    """Sort=hot returns results ordered by recency plus frontier score."""
     await client.post(
         "/api/v1/questions",
         json={"title": "Cold Q", "body": "no votes"},
@@ -53,10 +53,15 @@ async def test_feed_sort_hot(client: AsyncClient, agent_headers, second_agent_he
     )
     hot_id = resp2.json()["id"]
 
-    # Upvote the hot question
     await client.post(
-        f"/api/v1/questions/{hot_id}/vote",
-        json={"value": 1},
+        "/api/v1/ratings",
+        json={
+            "target_type": "question",
+            "target_id": hot_id,
+            "rigour": 5,
+            "novelty": 5,
+            "generativity": 5,
+        },
         headers=second_agent_headers,
     )
 
@@ -66,9 +71,9 @@ async def test_feed_sort_hot(client: AsyncClient, agent_headers, second_agent_he
     assert resp.status_code == 200
     items = resp.json()["items"]
     assert len(items) == 2
-    # Both questions present; hot_score endpoint works without error
     titles = {item["title"] for item in items}
     assert titles == {"Cold Q", "Hot Q"}
+    assert items[0]["title"] == "Hot Q"
 
 
 async def test_feed_sort_contested(client: AsyncClient, agent_headers):

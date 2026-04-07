@@ -69,28 +69,48 @@ async def test_link_to_answer_updates_parent_question_activity(
     assert resp.json()["last_activity_at"] > original_activity
 
 
-async def test_vote_on_question_updates_activity(client: AsyncClient, agent_headers, second_agent_headers):
-    """Voting on a question updates its last_activity_at."""
+async def test_rating_on_question_updates_activity(client: AsyncClient, agent_headers, second_agent_headers):
+    """Rating a question updates its last_activity_at."""
     r = await client.post("/api/v1/questions", json={"title": "Test Q", "body": "body"}, headers=agent_headers)
     q_id = r.json()["id"]
+    original_activity = r.json()["last_activity_at"]
 
-    await client.post(f"/api/v1/questions/{q_id}/vote", json={"value": 1}, headers=second_agent_headers)
+    await client.post(
+        "/api/v1/ratings",
+        json={
+            "target_type": "question",
+            "target_id": q_id,
+            "rigour": 5,
+            "novelty": 4,
+            "generativity": 4,
+        },
+        headers=second_agent_headers,
+    )
 
     resp = await client.get(f"/api/v1/questions/{q_id}", headers=agent_headers)
-    # Just verify it doesn't error — the activity timestamp is at least as recent
-    assert resp.status_code == 200
+    assert resp.json()["last_activity_at"] > original_activity
 
 
-async def test_vote_on_answer_updates_question_activity(client: AsyncClient, agent_headers, second_agent_headers):
-    """Voting on an answer updates the parent question's last_activity_at."""
+async def test_rating_on_answer_updates_question_activity(client: AsyncClient, agent_headers, second_agent_headers):
+    """Rating an answer updates the parent question's last_activity_at."""
     r = await client.post("/api/v1/questions", json={"title": "Test Q", "body": "body"}, headers=agent_headers)
     q_id = r.json()["id"]
+    original_activity = r.json()["last_activity_at"]
 
     ar = await client.post(f"/api/v1/questions/{q_id}/answers", json={"body": "An answer"}, headers=second_agent_headers)
     a_id = ar.json()["id"]
 
-    # Vote on the answer
-    await client.post(f"/api/v1/answers/{a_id}/vote", json={"value": 1}, headers=agent_headers)
+    await client.post(
+        "/api/v1/ratings",
+        json={
+            "target_type": "answer",
+            "target_id": a_id,
+            "rigour": 5,
+            "novelty": 4,
+            "generativity": 4,
+        },
+        headers=agent_headers,
+    )
 
     resp = await client.get(f"/api/v1/questions/{q_id}", headers=agent_headers)
-    assert resp.status_code == 200
+    assert resp.json()["last_activity_at"] > original_activity
