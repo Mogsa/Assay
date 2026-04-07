@@ -5138,3 +5138,83 @@ HindSight ρ = −0.29 with future research materialization is now the primary e
 **Write the paper. The thesis is complete, the gaps are confirmed, the evidence is consistent. Five contribution gaps, triple formal impossibility grounding, 30+ independent literature threads, and one concrete falsifiable prediction. This is a NeurIPS 2026 position paper.**
 
 ---
+
+## NINETEENTH PASS — 2026-04-07
+
+*(Background literature agent, independent of all prior searches, completed April 7, 2026. This pass processes its output: four new papers not in prior passes, one domain-conditional challenge that sharpens the thesis, and a stress-test summary.)*
+
+---
+
+### New Papers — April 2026 (2604.xxxxx)
+
+**arXiv:2604.00477 — "Logarithmic Scores, Power-Law Discoveries: Disentangling Measurement from Coverage in Agent-Based Evaluation"** (April 1, 2026, HyunJoon Jung, William Na)
+
+Runs 960 sessions across 15 tasks with two model pairs. Key result: a *score–coverage dissociation* — quality scores improve logarithmically with panel size while unique issue discoveries follow a sublinear power law. Scores saturate roughly twice as fast as discoveries.
+
+**Relevance:** This is the clearest empirical quantification of what "adding more judges" buys you. Score saturation in this framing is exactly what the Condorcet-correlated-errors model predicts: the panel re-traverses the same correlated blind spots, producing the same score without uncovering new failures. The discovery curve doesn't saturate because coverage (finding new failure modes) still requires human judgment, not more AI passes. The paper doesn't attribute saturation to training-corpus correlation specifically — it treats it as a generic diminishing-returns property — but the mechanism is consistent.
+
+**Add to Section 2:** "arXiv:2604.00477 empirically quantifies the saturation: quality scores plateau logarithmically (doubling the panel adds less than one point) while new failure-mode discovery follows a sublinear power law. Under the Condorcet correlated-error model, score saturation is expected — re-running the same correlated errors adds no new information — while discovery saturation reflects the fundamental limits of in-distribution knowledge, not panel size."
+
+**Challenge angle:** The paper treats saturation as a generic diminishing-returns property; it does not rule out that diverse-enough panels (different architecture families, training sets) would continue improving. The thesis must be explicit that "diverse enough" is unachievable for frontier content because all frontier-adjacent training corpora share the same knowledge boundary.
+
+---
+
+**arXiv:2604.02359 — "Using LLM-as-a-Judge/Jury to Advance Scalable, Clinically-Validated Safety Evaluations"** (March/April 2026)
+
+Panel of LLM judges aligns closely with human clinician consensus for psychosis-related safety evaluation. Ground truth is expert-defined and stable; the domain is narrow and well-characterized.
+
+**Relevance (sharpening, not undermining):** This is an existence proof that LLM judge panels *work* — in a domain where ground truth is stable, expert-defined, and where in-distribution training data is plentiful. It does not challenge the thesis; it delineates the regime where the thesis does not apply. The paper is the best single reference for making the thesis domain-conditional. The paper should include an explicit "scope of claim" paragraph: "Our impossibility arguments apply to frontier intellectual content — defined as content where human ground truth is absent or contested and where the training distribution does not contain resolution examples. In stable, expert-defined domains (clinical safety criteria, mathematical proof checking), panels function as designed; the Condorcet independence assumption holds approximately because the content is in-distribution for multiple model families."
+
+**Add to the paper's Introduction:** Cite 2604.02359 as the positive case that motivates the frontier-specific framing. "Panels work in narrow, stable domains [arXiv:2604.02359]; our claim is that they fail specifically in the frontier regime where neither ground truth nor evaluation precedent is available."
+
+---
+
+### New Paper — Late March 2026
+
+**arXiv:2603.25450 — "Cross-Model Disagreement as a Label-Free Correctness Signal"** (March 26, 2026, Matt Gorbett, Suman Jana, Columbia University)
+
+Introduces Cross-Model Perplexity (CMP) and Cross-Model Entropy (CME) — a verifying model's surprise at a generating model's answer tokens — as a correctness signal requiring no generation from the verifier. CMP/CME outperform within-model uncertainty baselines: mean AUROC 0.75 vs 0.59 on MMLU. The signal is strongest when the generating model is wrong.
+
+**Relevance (strong supporting evidence for Candidate E):** This is the most direct recent empirical support for the "disagreement-as-signal" claim. The AUROC result operationalizes exactly what the cal-N-std routing signal does in multi-axis evaluation: cross-judge divergence detects errors that within-judge uncertainty cannot. The paper is label-free (no ground truth needed for the signal itself), which maps directly to our ground-truth-free frontier regime. CMP/CME is a token-level signal; cal-N-std is a rating-level signal — the two are complementary implementations of the same principle.
+
+**This paper closes the "why is disagreement signal rather than noise" explanatory gap.** Prior passes had the theoretical argument (OOD detection impossibility → aleatoric divergence) and the empirical threshold (≥ 1.00 for clean separation), but no published work explicitly measuring disagreement's AUROC as a correctness/difficulty signal in a label-free setting. arXiv:2603.25450 provides that.
+
+**Add to Candidate E evidence as point 18 (the strongest new citation in this pass):** "arXiv:2603.25450 measures the label-free correctness-detection AUROC of cross-model disagreement (CMP/CME) at 0.75 vs 0.59 for within-model uncertainty — confirming that inter-judge divergence is a superior detection signal on hard items, without requiring ground-truth labels. Our cal-N-std routing signal is the multi-axis evaluation instantiation of the same principle, specialized to the N-axis where OOD impossibility makes aleatoric disagreement the dominant signal."
+
+---
+
+### Stress-Test Summary (Background Agent's Assessment)
+
+The agent identified the following hierarchy:
+
+**Papers that challenge the thesis most sharply:**
+1. arXiv:2604.02359 — panels work in stable domains → thesis must be explicitly domain-conditional
+2. arXiv:2602.16610 (BT-sigma) — panels can be repaired by per-judge calibration → thesis must attack *naive* panels, not panels in principle
+3. arXiv:2604.02668 (sycophancy) — second repairable failure mode → training-corpus correlation must be distinguished as the *structural*, non-repairable version
+
+**Papers that most strongly support the thesis:**
+1. arXiv:2602.09341 (confabulation consensus / AgentAuditor) — formalizes the exact Condorcet-violation mechanism (already in prior passes)
+2. arXiv:2603.20975 (DiscoUQ) — structured disagreement AUROC 0.802 in 5-agent ensembles, gains largest in "weak disagreement" cases (already in prior passes)
+3. arXiv:2603.25450 (Cross-Model Disagreement) — NEW in this pass; AUROC 0.75 for disagreement-as-detection, label-free, strongest new Candidate E citation
+4. arXiv:2604.00477 (Log Scores, Power-Law Discoveries) — NEW in this pass; empirical score saturation from panel scaling
+
+**The agent's bottom-line assessment (consistent with all 18 prior passes):** The thesis is domain-conditional, applies to naive consensus panels, and targets the structural (non-repairable) training-corpus correlation failure mode. All four objections above have direct rebuttals; none are fatal.
+
+---
+
+### CANDIDATE POSITIONS — Nineteenth Pass Update
+
+No ranking changes. Two additions:
+
+**Candidate E (cal-N-std routing signal):**
+- arXiv:2603.25450 is the strongest new empirical citation: cross-model disagreement AUROC 0.75 vs 0.59 in label-free setting, strongest on hard/wrong items. The D+E framework now has three-layer empirical support: (a) our 4/4 clean separation (this dataset), (b) DiscoUQ AUROC 0.802 in 5-agent ensembles (general), (c) CMP/CME AUROC 0.75 in token-level label-free correctness detection (mechanistic).
+
+**D (Condorcet independence violation):**
+- arXiv:2604.00477 provides the most direct empirical signature of correlated-error saturation: scores plateau logarithmically, discoveries continue sub-linearly. The saturation curve shape is the empirical fingerprint the thesis predicts.
+- arXiv:2604.02359 sharpens the scope: the thesis must declare itself domain-conditional (frontier/contested, not routine/expert-defined).
+
+**Final one-sentence claim — unchanged. Domain-conditioning is already implicit in "frontier intellectual content"; the paper should add one sentence in the Introduction making it explicit with the clinical safety domain as the positive control.**
+
+**Literature gaps confirmed open by fifth independent search (April 7, 2026 background agent).** No new preempting paper found. **Write the paper.**
+
+---
