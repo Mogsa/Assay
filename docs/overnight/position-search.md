@@ -4591,3 +4591,27 @@ Multi-model evaluation panels are the field's standard bias-reduction practice, 
 
 ---
 
+### Literature Search Agent Results — 2026-04-07 (appended post-commit)
+
+The background literature search agent completed a targeted sweep of March–April 2026 arXiv papers not already in this document. Four new papers confirmed relevant:
+
+**arXiv:2603.04417 — "Same Input, Different Scores: A Multi Model Study on the Inconsistency of LLM Judge"** (March 2026)
+
+Tests GPT-4o, GPT-4o-mini, Gemini-2.5-Flash, Claude-Haiku-4.5, and Claude-Sonnet-4.5 on real RAG enterprise QA pairs. Despite temperature=0, substantial cross-model variability persists; completeness scoring shows the largest fluctuations. Key finding: systematic strictness and interpretive differences across models produce divergent scores for identical inputs — not sampling noise, but model-level systematic variance. Add to Candidate D evidence: directly quantifies the inter-model inconsistency the D+E+F+C thesis argues is structural. Notably, the model set overlaps with our panel (Haiku, Gemini Flash), providing an independent replication of our α=0.28 finding in a different domain.
+
+**arXiv:2603.17588 — "From Isolated Scoring to Collaborative Ranking: A Comparison-Native Framework for LLM-Based Paper Evaluation"** (March 2026)
+
+Argues absolute score assignment by LLMs is unreliable across conferences and criteria because models fit narrow context-specific rules rather than robust scholarly judgment. Proposes CNPE (Comparison-Native Paper Evaluation) using graph-based similarity ranking with comparison-based RL rewards. Explicitly shows novelty, significance, and clarity are better captured through relative comparison than absolute scoring. Relevant to D+E+F+C: the absolute scoring failure the paper diagnoses is our α=0.28 in the scholarly evaluation domain. The novelty dimension requires relative comparison (is this novel compared to what?), which is structurally equivalent to our "frontier content requires OOD detection" argument. The CNPE approach (rank by comparison rather than score absolutely) is an independent engineering response to the same problem, in the peer review domain.
+
+**arXiv:2604.02450 — "Do We Need Frontier Models to Verify Mathematical Proofs?"** (April 2026)
+
+Evaluates open-source and frontier LLMs on verifying human-graded competition proofs. Key nuance for Candidate B: smaller open-source models are only ~10% behind frontier models in accuracy but up to ~25% more inconsistent in repeated runs (self-consistency). The scale advantage narrows to near-zero on accuracy while self-consistency degrades with smaller models. This adds a crucial nuance to the B claim: Candidate B should not be "smaller models are better judges" but rather "optimization trajectory (RLHF vs retrieval vs general pretraining) predicts frontier evaluation quality better than scale does." The accuracy gap is small; the training-methodology differences are what drive MAE differences in our data.
+
+**arXiv:2604.02368 — "Xpertbench: Expert Level Tasks with Rubrics-Based Evaluation"** (March 2026)
+
+Introduces 1,346 expert-level tasks across 80 professional categories with rubrics using 15–40 weighted checkpoints per task. Even top models cap at ~66% success (mean ~55%) on expert-level open-ended tasks. Proposes ShotJudge — an LLM judge paradigm calibrated with expert few-shot exemplars. Directly relevant: the pronounced frontier ceiling on expert tasks confirms that AI judges operating on frontier intellectual content are themselves working near or below their competence ceiling, which is exactly the arXiv:2601.19532 scenario (96.4% wrong on disagreements). Xpertbench provides the benchmark context for our 134-question corpus: our seed questions (HLE, FrontierMath) sit in the same expert-level regime where frontier models hit the 55–66% success ceiling.
+
+**Literature gap status: confirmed open.** None of these four papers proposes calibrated-rater N-axis standard deviation as a frontier routing signal, or connects Condorcet failure to frontier-corpus overlap, or unifies all four impossibility arguments. The D+E+F+C contribution gaps remain unoccupied as of the search agent's April 7, 2026 sweep.
+
+---
+
