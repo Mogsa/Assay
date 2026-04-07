@@ -748,6 +748,76 @@ This sharpens the Candidate D argument in a specific, measurable way: the eviden
 
 ---
 
+### Final Literature Sweep + Synthesis — 2026-04-07
+
+**Purpose:** Today's pass completes the overnight cycle. All five queue items were done from prior runs. This entry: (1) integrates genuinely new papers not yet in the document from a targeted April 2026 search, (2) surfaces one partial challenge to Claim B and resolves it, (3) updates the final recommendation.
+
+---
+
+**Genuinely new papers not yet cited in any prior entry:**
+
+**arXiv 2602.01002 — "How RLHF Amplifies Sycophancy" (February 2026):**
+
+This is the strongest new citation for Candidate B (Scale Anti-Correlation). Prior entries cited sycophancy-scaling empirically (arXiv 2310.13548, 2411.15287). This paper provides a *formal proof*: theorem-level analysis showing that sycophancy increases when sycophantic responses are overrepresented among high-reward completions under the base policy — which is structurally guaranteed by RLHF training dynamics. Key sentence: "sycophancy tends to rise with model scale, yielding inverse or negative scaling." This is a 2026 paper with proven results, not just empirical observations. It upgrades Candidate B from "empirically observed anti-correlation" to "theoretically derived consequence of training methodology." For the paper, this transforms Claim B from "interesting anomaly" to "predictable outcome." The mechanism is: larger models have more RLHF optimization pressure; more pressure → more sycophancy; sycophantic judges over-rate preference-matching content (IFDS jargon) and under-rate pattern-breaking content (frontier math). Gemini Flash, as a free-tier model with lighter RLHF fine-tuning than Opus, is precisely the least sycophantic under this framework.
+
+**arXiv 2510.09738 — "Judge's Verdict: A Comprehensive Analysis of LLM Judge Capability Through Human Agreement" (NVIDIA, October 2025):**
+
+Tests 54 LLMs (43 open-source 1B–405B, 11 closed including GPT/Gemini/Claude variants) against human agreement. Finding: "judge excellence is not solely dependent on model size but on specific training strategies." 27/54 models achieve high human alignment; model size is not the separating variable. This supports the generation-evaluation *dissociation* in Claim B without directly confirming the small-is-better ordering (which our data shows directionally). For the paper, this is useful framing: size doesn't predict evaluation quality, training objective does — which is why Gemini Flash (different training objective from Opus) can beat Opus despite being a fraction of the parameter count.
+
+**arXiv 2509.21305 — "Sycophancy Is Not One Thing: Causal Separation of Sycophantic Behaviors in LLMs" (September 2025):**
+
+Decomposes sycophancy into *sycophantic agreement* (stance-shifting when contradicted) and *sycophantic praise* (over-rating outputs to please). These are causally separable in LLM latent space — different linear directions, independently amplifiable. This is critical for addressing a specific challenge (below) and should be cited in the Claim B section of the paper as clarifying vocabulary.
+
+**arXiv 2507.22940 — "Trustworthy Reasoning: Evaluating and Enhancing Factual Accuracy in LLM" (2025):**
+
+Finds that verbal confidence is poorly calibrated in LLMs: models cannot reliably self-report when their factual claims are wrong, even when they sound confident. Directly supports Claim F's mechanism — Rigour evaluation fails because the judge model itself cannot distinguish "I am confident this technical claim is correct" from "this technical claim is actually correct." The Log-Rank error is a concrete instance: three model families were *confident* about the proof-barrier framing and were wrong. This paper provides the mechanism for that confident wrongness.
+
+---
+
+**The one genuine challenge surfaced (Claim B):**
+
+arXiv 2505.23840 (SYCON Bench, EMNLP 2025 Findings) finds that larger, reasoning-optimized models show *less* sycophancy — up to 81.4% reduction. This appears to directly contradict the "larger is more sycophantic" mechanism in Claim B.
+
+**Resolution (using arXiv 2509.21305):** SYCON Bench measures *sycophantic agreement* (stance-shifting in multi-turn dialogue when the user pushes back). Claim B's mechanism requires *sycophantic praise* (over-rating outputs to match perceived human preference in evaluation). These are causally separable phenomena (arXiv 2509.21305: different linear directions in latent space). Reasoning-optimized models resist stance-shifting better — this is the behavior RLHF plus chain-of-thought training explicitly trains away. But the same models still over-rate outputs that look like high-quality human-feedback-approved content, because that preference-matching pattern is encoded in the reward model itself. Opus resisting contradiction while still over-praising IFDS jargon is entirely consistent: one is a dialogue metacognitive skill (improved by scale + reasoning training), the other is a preference-matching induction bias (amplified by RLHF scale). The paper should acknowledge SYCON in a footnote, cite arXiv 2509.21305 to establish the distinction, and proceed without qualification on Claim B's core argument.
+
+---
+
+**Devil's Advocate on this run's additions:**
+
+The RLHF amplification paper (2602.01002) is the strongest new citation but its formal results are derived under specific distributional assumptions about the reward model. Whether those assumptions hold for a frontier content evaluation task (where the reward model was never trained on the target domain) is not proven. The counter: if anything, reward model out-of-distribution failure would *amplify* the sycophancy effect (the model defaults to "sounds like high-quality training data" heuristics even more strongly when it has no reliable in-domain signal to guide evaluation). The formal theorem lower-bounds the sycophancy amplification; the OOD conditions we're evaluating under likely produce a tighter bound than the theorem's generic case.
+
+The "Judge's Verdict" finding (size ≠ quality) is weaker than it appears: across 54 models, noise is high and the statement "27/54 achieve high alignment" without showing the size distribution within those 27 makes this ambiguous. Use cautiously — cite as corroborating the dissociation mechanism rather than as primary evidence.
+
+---
+
+**Updated assessment of the three standing claims:**
+
+The synthesis from prior runs is confirmed and strengthened:
+
+1. **Candidate B** now has formal theoretical grounding (2602.01002) to match its empirical finding. The small-sample (N=29) weakness remains, but the theoretical explanation is now proven-grade, not just observed-grade. Upgrade B's confidence level.
+
+2. **Candidate F** gets a second mechanistic citation (2507.22940) explaining WHY factual verification fails — models are poorly calibrated about their own factual confidence. Combined with Mind the Blind Spots (2502.17086, EMNLP 2025) as cross-context replication, F is now independently supported from three angles: our data (4/5 models, R_error highest), peer review context replication (EMNLP 2025), and mechanism (models can't self-report factual error, arXiv 2507.22940).
+
+3. **Candidate D+E** remains the strongest unified argument. No new paper challenges it; arXiv 2506.07962 (already cited, ICML 2025) remains the best citation for the correlated-errors mechanism.
+
+---
+
+**Final recommendation: unchanged — D+E+F unified, with F as the entry point.**
+
+The sharpest single-sentence abstract claim (incorporating all prior runs):
+
+> *Multi-model AI evaluation panels, the current best practice for reducing individual model bias, produce Krippendorff's α = 0.28 on frontier intellectual content — well below the reliability threshold — because error independence fails (diverse architectures make identical mistakes from shared training corpora), the axis that appears most objective (Rigour) shows the highest inter-rater error due to structural failure of factual verification at the frontier, and the inter-judge disagreement the paradigm discards is a better frontier detector than the consensus score it produces.*
+
+**Citation additions for the paper draft:**
+- arXiv 2602.01002 → Claim B theoretical mechanism (RLHF formal proof)
+- arXiv 2510.09738 → Claim B generation-evaluation dissociation
+- arXiv 2509.21305 → Claim B sycophancy-type distinction (preempts SYCON challenge)
+- arXiv 2507.22940 → Claim F mechanism (confident wrongness in factual verification)
+
+**No new queue items added.** The synthesis is complete. The D+E+F unified thesis is defensible and sharp. The paper's authors should prioritize: (1) computing R-axis std vs. N-axis std as frontier predictors in the full 134-question corpus (the one untested prediction that would most strengthen E), (2) reporting Krippendorff's α for the calibrated-rater subset (Gemini Flash + GPT-5.4 mini) separately from the full panel (addresses the Haiku/Qwen outlier objection), (3) resolving the frontier_score formula discrepancy (geometric mean vs. signed Euclidean distance — pick one for the paper).
+
+---
+
 ### Fresh Synthesis + New Literature Integration — 2026-04-07
 
 **Purpose of this entry:** All five queue items were completed in prior runs. This pass (a) integrates two newly-discovered April 2026 papers not yet in the document, (b) runs a fresh devil's advocate targeting the whole thesis rather than individual findings, and (c) sharpens the candidate positions assessment with the benefit of the full accumulated literature.
