@@ -3655,3 +3655,59 @@ This version makes the cause (RLHF optimization anti-correlates with frontier de
 
 **Write the paper.**
 
+
+---
+
+## LITERATURE ADDENDUM — 2026-04-07 (Background Search Results)
+
+*(Five targeted searches run in parallel across all core topic areas. Ten papers found not previously cited. Two are critical enough to materially strengthen the thesis; the rest are supporting confirmations. Appended here rather than as a new numbered pass since no queue items remain.)*
+
+---
+
+### Critical Find 1: arXiv 2603.15164 — "HindSight: Evaluating LLM-Generated Research Ideas via Future Impact"
+
+**This is the strongest external confirmation of Candidate A (Novelty Impossibility) found across all 22 passes.**
+
+HindSight is a time-split evaluation framework: it generates research ideas from a model, then matches them against *actual future publications* to score genuine novelty. On the same ideas, it also computes LLM-as-Judge novelty scores. Central finding: **LLM-judged novelty scores are negatively correlated with HindSight future-impact scores.** LLMs systematically overvalue novel-sounding ideas that never materialize in real research. A RAG-augmented system produces ideas that are 2.5× more impactful by future-materialization, but LLM judges find no significant difference between RAG and vanilla generation.
+
+This is not "LLMs underrate novelty" — it is a *rank reversal*: the ideas LLMs call most novel are least novel by ground truth. This directly mirrors the IFDS inversion (jargon outscores frontier math) but at scale with objective future-publication ground truth.
+
+**What this adds:**
+- **Candidate A:** Elevates from our N=134 pilot to large-scale empirical demonstration with objective ground truth. The negative correlation is the primary evidence for the Novelty Impossibility claim. **Surprise score for A: 3/5 → 4/5.**
+- **Candidate D:** LLM judges finding "no difference" between RAG and vanilla (while future impact shows 2.5× gap) = correlated errors in the same direction at scale. Same mechanism as the Log-Rank anecdote, now quantified.
+- **Abstract:** Consider leading with HindSight as the hook ("LLM judges assign highest novelty to research ideas that fail to materialize in future publications") before stating our α=0.28.
+
+---
+
+### Critical Find 2: arXiv 2603.14732 — "Criterion-referenceability determines LLM-as-a-judge validity"
+
+Introduces **criterion-referenceability (CR)**: how explicitly the criteria justifying a judgment can be stated and applied. High-CR tasks (structured problems) yield reliable LLM judgment; low-CR tasks (holistic novelty assessment) fail.
+
+This is the cleanest theoretical frame for Finding 5/F: Rigour of research questions is low-CR (no ground truth for the question's premise); Novelty is very low-CR (no criterion for "what doesn't exist yet"); Generativity is low-CR but higher than Novelty (generative-seeming language has detectable surface patterns). The CR framework directly predicts R_error > N_error > G_error for question evaluation — the observed ordering — without appealing to "factual checking vs. pattern matching." The CR framing is more precise and more reviewer-friendly.
+
+**The RLHF-OOD mechanism restated via CR:** RLHF trains on human preferences, which are grounded in high-CR criteria (humans can articulate preferences for clarity, reasoning structure). RLHF cannot calibrate on low-CR dimensions (nobody can articulate "why this research direction is more novel"). RLHF optimization improves high-CR evaluation while leaving low-CR dimensions (novelty, question rigour) systematically uncalibrated. The MAE gradient (R > N > G for question evaluation) is the fingerprint of this RLHF-CR mismatch.
+
+---
+
+### Additional Supporting Papers
+
+**arXiv 2603.01865 — CyclicJudge (March 2026):** Variance decomposition shows judge bias magnitude is often comparable to the model differences benchmarks are designed to detect — the panel is measuring judge heterogeneity more than content quality. Add to Candidate D.
+
+**arXiv 2602.13243 — Judging the Judges, K-12 (Jan 2026):** GPT-4o, Claude, and Gemini have different *epistemic stances*, not just different error rates. Validates the "calibration direction matters more than threshold" insight (Pass 11 / Undersell #2) with an independent domain study.
+
+**arXiv 2603.21404 — Multi-Perspective LLM Annotations (March 2026):** In subjective tasks, disagreement is signal to preserve, not error to suppress. Add to Candidate E as point 20.
+
+**arXiv 2604.02319 — No Single Best Model for Diversity (April 2026):** Model diversity does not guarantee epistemic diversity — it is task-conditioned. Independent confirmation of Candidate D's correlated-errors mechanism.
+
+**arXiv 2603.06865 — Counting on Consensus (March 2026):** Label imbalance distorts Krippendorff's alpha. Our α=0.28 may be further degraded by the non-frontier-heavy distribution of our 134 items. Provides methodological warrant for reporting per-axis alpha separately.
+
+**arXiv 2604.00022 — Criterion Validity of LLM-as-Judge (April 2026):** Quality dimensions differ dramatically in predictive validity; composite scores mask differential validity. Supports blocking pre-submission action 3 (commit to per-axis reporting before compositing).
+
+---
+
+### Literature Gap: Still Confirmed Open
+
+None of the ten new papers proposes calibrated-rater N-axis std as a frontier routing signal, applies the Ambiguity Decomposition to panel design, or connects Condorcet independence failure to frontier corpus-overlap. The D+E+F+C contribution gaps remain unoccupied.
+
+**HindSight (2603.15164) is the single most important new citation from this entire overnight session.** It provides the external large-scale empirical anchor that every prior pass identified as missing: a direct demonstration, using objective ground truth, that LLM novelty rankings are negatively correlated with actual novelty. Add as primary evidence for Candidate A; cite in the abstract.
+
