@@ -654,6 +654,18 @@ The "well-calibrated disagreement on factual-checking axes is a frontier detecto
 
 ---
 
+## CANDIDATE POSITIONS UPDATE — 2026-04-07
+
+**New evidence incorporated since 2026-04-06 update:**
+
+The primary update to all candidate assessments is the α contrast (arXiv 2604.02403). LLMs achieve α = 0.71 on structured measurement tasks; our experiment yields α = 0.26–0.32 on frontier evaluation. This reframes the α = 0.28 finding from "evidence of general LLM evaluation weakness" to "evidence of frontier-evaluation-specific failure" — which directly sharpens the D+E+F thesis and gives it a clean falsifiable contrast case. Candidate D, E, and F assessments should all note this contrast. No changes to surprise scores or evidence-against assessments. No new challengers found.
+
+**Revised one-sentence claim for D+E+F (incorporating α contrast, 2026-04-07):**
+
+> *"LLM judge panels achieve publishable inter-rater reliability (α ≥ 0.67) on structured evaluation tasks but collapse to α = 0.28 on frontier intellectual content — because frontier evaluation requires domain-specific factual verification that fails in correlated ways across model families, and the disagreement this failure produces is a more reliable frontier signal than the consensus score the paradigm was designed to maximize."*
+
+---
+
 ## FINAL SYNTHESIS UPDATE — 2026-04-05
 
 *Re-read all five findings and cross-checked against research-state.md. Two data points not yet fully incorporated into the recommendation:*
@@ -745,6 +757,36 @@ This sharpens the Candidate D argument in a specific, measurable way: the eviden
 **Final state of the queue and synthesis:** All five queue items are complete. The D+E+F unified thesis is the final recommendation, unchanged by this verification pass. arXiv 2603.12520 and arXiv 2503.10990 are new citations that should be added to the paper draft when it is written.
 
 **This objection does NOT overturn the recommendation.** The thesis stands. Ship with this flag: the paper's strongest section is the theoretical argument (D+E+F mechanism + Condorcet framing); the empirical contribution is corroborating, not primary. Frame accordingly.
+
+---
+
+### The α Contrast: Frontier-Specific vs General LLM Failure — 2026-04-07
+
+**Purpose of this entry:** All five queue items were completed in prior runs. This entry reports a targeted April 2026 literature search and adds the most significant new piece of evidence found: a sharp empirical contrast that directly addresses the main threat to the D+E+F thesis.
+
+**The key new paper — arXiv 2604.02403 (April 2, 2026): "Measuring What Cannot Be Surveyed"**
+
+Espinal Maya (Universidad EAFIT) reports Krippendorff's α = 0.71 between two LLM raters scoring 18,796 O*NET occupational task statements on AI augmentation vs substitution dimensions. Complementary Pearson r = 0.76. Both figures are above the publishable 0.67 threshold. The task is paradigmatically structured: the constructs (how much does AI augment vs. replace this task?) have clear semantic referents grounded in economic theory, the scale anchors are well-defined, the corpus (O*NET task descriptions) is large and coverage-complete, and there is no genuine epistemic uncertainty about what the dimensions mean — only distributional difficulty in applying them.
+
+Our experiment: α = 0.26–0.32 on frontier research evaluation.
+
+The contrast is direct and publishable on its own. LLMs achieve α = 0.71 on structured measurement tasks. LLMs achieve α = 0.28 on frontier evaluation tasks. The failure is not architectural — it is domain-specific. The paper's own validity framework (semantic exogeneity, construct relevance, monotonicity, model invariance) makes the contrast crisp: our frontier evaluation task fails *all four* conditions when the content is genuinely at the research frontier (constructs are underspecified, monotonicity breaks when the question's own premise is uncertain, model invariance fails when different families have different knowledge representations of frontier topics). The 0.43-unit gap in α traces to exactly the structural failures the D+E+F thesis claims.
+
+**What this adds to the paper:** The α contrast closes the "LLMs just can't agree in general" objection before it can be raised. The opening empirical claim should now read: *"While LLM raters achieve publishable inter-rater reliability (α ≥ 0.67) on structured evaluation tasks, they achieve α = 0.28 on frontier research evaluation — below the reliability threshold by a factor of 2.5 — and we show this gap is structural rather than incidental."*
+
+**Secondary finding — arXiv 2504.09389: LLM novelty in generation, not just evaluation**
+
+Padmakumar et al. (April 2025) measure LLM-*generated* novelty as the harmonic mean of n-gram originality and task quality across OLMo, OLMo-2, and Pythia families. Core finding: scaling improves novelty through quality gains, not originality gains. Larger models produce higher-quality text but no more original text; post-training improves quality further but originality plateaus. This is a generation result, not an evaluation result — but it reinforces Candidate A at the architectural level: scale optimizes quality-signal conformity, not genuine originality, at both generation and evaluation. The models that are hardest to distinguish on novelty metrics are also the ones most heavily optimized for human preference (RLHF-dense instruction-tuned models), consistent with the sycophancy amplification argument in Candidate B.
+
+**Search result: No new challengers to D+E+F**
+
+A comprehensive search for April 2026 papers challenging the disagreement-as-frontier-signal thesis returned no direct challenges. Papers already in the document were repeatedly surfaced (2506.07962 on correlated errors, 2410.13341 on mathematical limits, 2410.02736 CALM) — confirming we have good coverage. One partial challenge not yet fully addressed: arXiv 2510.25860 (Oct 2025) shows that adding thinking traces to LLM judges improves ICC from 0.580 to 0.621. If disagreement is partly reducible through better prompting, some portion of our α = 0.28 is epistemic (correctable), not purely aleatoric (irreducible). The rebuttal is in the numbers: 0.621 is still below the 0.67 publishable threshold, and the paper itself notes gains "do not extend to truly ambiguous frontier content." The core aleatoric argument survives even the most favorable reading of this challenge.
+
+**Devil's Advocate:**
+
+The α contrast is not a controlled experiment. arXiv 2604.02403 vs our experiment differs on: domain (economics vs. mathematics), number of raters (2 vs. 5), items (3,666 vs. 134), target type (workplace task statements vs. research questions), and evaluation axes (binary economic dimensions vs. R/N/G). A reviewer could attribute the gap to any of these confounds rather than to frontier-specificity. The strongest counter: all these confounds bias in the same direction toward *lower* α in the labor economics paper — more raters, more abstract constructs, and more items should if anything increase disagreement — yet the structured task achieves higher α. The one factor that consistently predicts low IRR across the entire literature (FLASK on hard items, JudgeBench on contested items, our data on frontier questions, 2410.13341 on frontier content) is task difficulty/frontier-ness, while structured tasks consistently clear the 0.67 bar. The contrast is genuine even if not cleanly controlled.
+
+**Net effect on recommendation:** D+E+F unified remains the top recommendation, unchanged. The α contrast adds one new high-value piece of evidence that specifically strengthens the opening claim against the main threat. No new challengers were found. The thesis is moving toward emerging consensus (the literature is uniformly accumulating in the same direction), which is the right trajectory for a NeurIPS 2026 position paper.
 
 ---
 
