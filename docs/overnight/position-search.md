@@ -4765,3 +4765,49 @@ The single most important pre-writing action: run Spearman ρ(cal-N-std, human f
 
 ---
 
+### Background Literature Search Agent Results — 2026-04-07 (Second Pass, Calibration Heterogeneity Focus)
+
+*Agent af6cb699ba000ff9d completed a targeted search on four topics: calibration heterogeneity as panel design criterion, BT models for heterogeneous raters, IRT-based judge selection, and IFDS debate as noise vs. signal. New papers found that were not in prior passes:*
+
+---
+
+**NEW: arXiv:2506.07962 — "Correlated Errors in Large Language Models" (ICML 2025)**
+
+Across 350+ LLMs, models agree ~60% of the time when both err. **Critically: larger, more accurate models have highly correlated errors even across distinct architectures and providers.** Architectural/family diversity (the PoLL criterion) does not guarantee error decorrelation. This is the single most important new citation for the D+E+F+C thesis. It provides the empirical backbone for the argument that PoLL-style panel design (family orthogonality) fails to address Condorcet independence on frontier content. The paper does not propose calibration-diversity as an alternative — it diagnoses the problem without prescribing the fix. Gap confirmed: your prescription (select for calibration heterogeneity, not family diversity) is the unoccupied next step this paper implicitly motivates.
+
+**NEW: arXiv:2505.20854 — "SE-Jury: An LLM-as-Ensemble-Judge Metric for Narrowing the Gap with Human Evaluation"** (May 2025)
+
+Introduces team selection using Kendall's τ and Spearman's ρ against human judgments to find the jury team with highest human-correlation. Closest existing paper to calibration-driven selection — but selects for best *aggregate* calibration, not for *diverse* calibration profiles whose errors cancel. The distinction matters: SE-Jury maximizes convergence on the human mean; your proposal maximizes heterogeneity in calibration error profiles to surface items where no model's training prior applies. Different design objectives.
+
+**NEW: arXiv:2412.09569 — "JuStRank: Benchmarking LLM Judges for System Ranking"** (December 2024, ACL 2025)
+
+48-judge study. Judge system-ranking ability is **not tied to model size or overall LLM capability** — discriminability is a separable dimension from capability. Directly supports the argument that dedicated panel design criteria are needed (scale alone does not fix evaluation reliability). Also supports Candidate B's qualification: the optimization trajectory finding (Gemini Flash outperforms Opus) is consistent with JuStRank's decoupling of capability and discriminability.
+
+**Previously cited, confirmed again: arXiv:2404.18796 — PoLL** — family-diversity criterion, not calibration-diversity. Remains the anchor for the architectural-diversity-is-insufficient argument.
+
+**Previously cited, confirmed again: arXiv:2602.16610 — BT-sigma** — per-judge discriminator parameter for post-hoc weighting. Cannot guide a priori panel composition because parameters are inferred jointly from the panel's data. The logical extension (use discriminator parameters from prior evaluations to pre-select panels with diverse discriminability) is not made.
+
+**Previously cited, confirmed again: arXiv:2602.00521 — IRT-GRM** — Discrimination Breadth Ratio (θ_ratio) and Wasserstein distance (D_W) as single-judge diagnostics. Current framing is "screen out bad judges"; the step to "select panels with complementary θ-distributions" is not made.
+
+---
+
+**NEW — Debate as Noise vs. Signal:**
+
+**arXiv:2505.23820 — "Arbiters of Ambivalence: Challenges of Using LLMs in No-Consensus Tasks"** (ACL Findings 2025)
+
+LLMs are fairly neutral when generating open-ended answers, but **collapse to strong stances when acting as judges or debaters** — exactly on no-consensus questions. Provides a taxonomy of no-consensus scenarios (subjectivity, linguistic ambiguity, value conflict, missing information), but the taxonomy is drawn from NLP disagreement literature and does not distinguish *confusion about resolvable facts* from *genuine frontier epistemic contestedness*. This is the vocabulary paper for the noise/signal distinction, but the frontier-specific taxonomy is absent.
+
+**arXiv:2601.09065 — "Beyond Consensus: Perspectivist Modeling and Evaluation of Annotator Disagreement in NLP"** (January 2026 survey)
+
+Synthesizes the community shift from treating disagreement as noise to treating it as signal. Taxonomy: sloppy annotations, linguistic ambiguity, missing information, subjectivity. Gap confirmed: the aleatoric/epistemic uncertainty distinction (arXiv:2511.03166, 2503.15850) is applied to *model* uncertainty but not to *evaluator disagreement* on *frontier research questions* specifically.
+
+---
+
+**Updated gap confirmation:**
+
+The calibration heterogeneity panel design criterion — selecting judges whose MAE error profiles against human ground truth are *orthogonal* across question subtypes, not merely architecturally distinct — **remains unoccupied**. The five papers above collectively demonstrate: (1) architectural diversity is insufficient (2506.07962), (2) the best existing calibration-driven approach optimizes for aggregate, not heterogeneous, calibration (2505.20854), (3) IRT and BT tools exist to operationalize the criterion but have not been applied to panel composition (2602.00521, 2602.16610), and (4) the debate-as-signal distinction for frontier questions has no dedicated paper (2505.23820, 2601.09065). All five D+E+F+C contribution gaps remain unoccupied.
+
+**New citation to add to the paper: arXiv:2506.07962 (Correlated Errors, ICML 2025)** — this replaces the weaker "by design" Condorcet argument with direct empirical evidence that error correlation persists even with architectural diversity. Upgrade this to a primary citation in the Condorcet section.
+
+---
+
