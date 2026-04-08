@@ -6836,3 +6836,130 @@ A NeurIPS position paper at the appropriate level of empirical grounding: the di
 
 **The paper has everything it needs. Ship.**
 
+---
+
+## TWENTY-EIGHTH PASS — 2026-04-08
+
+*(All 5 queue items confirmed complete across 27 prior passes. This pass: (1) fresh April 8, 2026 literature sweep — three new papers not in any prior pass; (2) the closest structural analog to the D+E+F+C routing prescription ever found in the literature (arXiv:2604.00085, CAMP), with a detailed comparison that clarifies exactly what our paper must say to maintain novelty; (3) fourth domain confirmation of the disagreement-as-signal principle; (4) devil's advocate on the CAMP near-preemption; (5) updated CANDIDATE POSITIONS.)*
+
+---
+
+### New Papers — April 8, 2026 Fresh Search
+
+Three papers not in any prior pass across all 27 overnight runs, confirmed new by independent search:
+
+---
+
+**arXiv:2604.00085 — "One Panel Does Not Fit All: Case-Adaptive Multi-Agent Deliberation for Clinical Prediction"** (April 1, 2026)
+
+Proposes CAMP (Case-Adaptive Multi-agent Panel): an attending-physician agent dynamically assembles a specialist panel tailored to each clinical case's diagnostic uncertainty. Each specialist votes via three-valued judgment — KEEP/REFUSE/NEUTRAL — enabling principled abstention outside domain expertise. A hybrid router then directs each diagnosis through one of three pathways: (1) strong consensus → immediate output, (2) high uncertainty → fallback to attending judgment, (3) contested → evidence-weighted arbitration by argument quality rather than vote count. Evaluated on clinical multi-step prediction tasks.
+
+**Why this is the most structurally similar paper to D+E+F+C found across all 28 passes:**
+
+The CAMP architecture independently instantiates every structural element of the D+E+F+C routing prescription:
+
+| CAMP component | D+E+F+C analog |
+|----------------|----------------|
+| Attending-physician orchestrator assembles specialist panel | Select panel by calibration heterogeneity (Ambiguity Decomposition) |
+| Three-valued vote: KEEP/REFUSE/NEUTRAL | Cal-N-std threshold: route / discard / require human review |
+| Strong-consensus → immediate output | Cal-N-std < 0.5 → consensus score valid |
+| High uncertainty → attend. fallback or evidence arbitration | Cal-N-std > 1.2 → human review |
+| Specialist abstention "outside my expertise" | OOD detection impossibility: no judge reliable at the frontier |
+
+**The critical distinction that preserves the D+E+F+C novelty claim:**
+
+CAMP assembles panels by *diagnostic relevance* (which specialists know this case's domain?), not by *calibration heterogeneity* (which judges have opposite systematic N-axis biases that maximize Ambiguity-Decomposition improvement?). CAMP's abstention criterion is "this case is outside my domain expertise," operationalized via three-valued voting from role-assigned specialists. D+E+F+C's routing criterion is "this item's N-axis inter-judge std exceeds a calibration-derived threshold," operationalized via MFRM residual variance from judges selected for opposite systematic biases.
+
+The two approaches share the routing architecture but differ fundamentally in what triggers routing:
+- CAMP triggers routing by domain mismatch (structured-role-based)
+- D+E+F+C triggers routing by calibrated aleatoric uncertainty (calibration-bias-based)
+
+More importantly: CAMP operates in a domain with stable ground truth (clinical diagnoses have eventual answers) where specialist abstention is verifiable ("outside my expertise" = this diagnosis involves a domain with known resolution). D+E+F+C operates in the ground-truth-free frontier regime where even the most appropriate specialists structurally cannot converge because the aleatoric uncertainty is irreducible. CAMP routes uncertain cases to a stronger oracle (evidence-weighted arbitration); D+E+F+C routes to human review because no stronger oracle exists for genuinely frontier content.
+
+**Add to paper's Section 4 as a parallel independent development:** "A concurrent independent development (CAMP, arXiv:2604.00085) confirms that case-adaptive specialist panel composition with principled abstention outperforms fixed-panel consensus in clinical prediction — independently validating the routing architecture. CAMP triggers routing by domain mismatch (structured-role abstention); D+E+F triggers routing by calibrated aleatoric uncertainty (MFRM residual N-std), applicable specifically in regimes where no domain-expert oracle resolves the uncertainty, only human judgment does."
+
+**Literature gap impact:** CAMP is the closest paper found in 28 passes to the D+E+F+C routing architecture. It does NOT preempt the contribution because: (a) CAMP uses role-based abstention, not calibration-heterogeneity-derived N-axis variance; (b) CAMP assumes ground-truth-resolvable cases; (c) CAMP does not connect to Condorcet/Arrow/OOD impossibility theory; (d) CAMP does not propose selecting panel members by opposite systematic evaluation biases rather than by specialty role. The two papers are complementary: CAMP is the clinical engineering implementation; D+E+F+C is the theoretical framework that explains WHY the routing architecture is necessary for frontier content specifically.
+
+---
+
+**arXiv:2601.12618 — "Disagreement as Data: Reasoning Trace Analytics in Multi-Agent Systems"** (January 18, 2026, LAK 2026)
+
+Proposes cosine similarity of LLM reasoning traces as an operationalization of inter-agent disagreement in learning analytics. Analyzes ~10,000 instances of agent-pair coding of human tutoring dialogue. Central finding: semantic disagreement in reasoning traces robustly distinguishes consensus from genuine disagreement — and disagreement correlates with human coding accuracy (items where agents disagree more are items where human annotations are also harder to reach consensus on).
+
+**Why this matters for D+E+F+C:** This paper is the fourth independent domain confirmation that inter-agent disagreement is informative signal rather than noise:
+
+| Domain | Signal | Ground truth | Paper |
+|--------|--------|-------------|-------|
+| Factual QA | Cross-model perplexity/entropy | Label accuracy | arXiv:2603.25450 |
+| 5-agent LLM evaluation | DiscoUQ structured disagreement | AUROC vs task difficulty | arXiv:2603.20975 |
+| Genomics frontier | Inter-model entropy | Knowledge coverage boundary | arXiv:2604.04287 |
+| Education analytics (qualitative coding) | Reasoning trace cosine divergence | Human coding difficulty | arXiv:2601.12618 |
+| **Frontier research questions (our work)** | **Cal-N-std among calibrated judges** | **Human frontier labels** | **This paper** |
+
+The education analytics domain is significant because, like our frontier evaluation task, it involves *qualitative assessment with no single correct answer* — the correct coding of a tutoring exchange is a matter of interpretive judgment, not factual verification. The disagreement-as-signal principle has now been confirmed in both factual (genomics, QA) and interpretive (education, frontier research) regimes.
+
+The reasoning trace method (cosine similarity of full reasoning texts) is information-richer than rating-level variance (cal-N-std), providing a potential methodological upgrade: rather than measuring only the variance in N-scores, compute cosine similarity of the judges' reasoning traces for each item. Items where judges reason differently about novelty (low cosine similarity) are the frontier signal. This is the same signal at higher resolution.
+
+**Add to Candidate E evidence:** "arXiv:2601.12618 confirms in education analytics that reasoning trace cosine divergence among LLM agents distinguishes human-hard from human-easy qualitative coding tasks — a fourth domain confirmation that inter-agent disagreement is frontier/difficulty signal in interpretive (ground-truth-free) regimes. The reasoning trace method provides a potential high-resolution implementation of the cal-N-std principle using semantic divergence rather than rating variance."
+
+---
+
+**arXiv:2604.04295 — "ACE: Adaptive Cost-Efficient Evaluation for Reliable Patent Claim Validation"** (April 5, 2026)
+
+Uses predictive entropy of a fine-tuned PatentBERT encoder as an uncertainty-aware gatekeeper: claims with high entropy are escalated to an expert LLM for Chain-of-Patent-Thought reasoning grounded in 35 U.S.C. standards. Achieves F1 = 94.95% with 78% cost reduction versus full-LLM evaluation. Benchmark: ACE-40k (40,000 patent claims with hierarchical labels).
+
+**Relevance (supporting, not preempting):** ACE confirms the cost-efficiency of routing-by-uncertainty in another high-stakes specialized domain (patent law). The key structural difference from D+E+F+C: ACE uses *intra-model* predictive entropy (one encoder's uncertainty about its own classification) as the routing signal, while D+E+F+C uses *inter-judge* N-axis variance among calibrated raters. More importantly, patent claim validation has external ground truth (claims are valid or invalid under law), while frontier research question evaluation does not. ACE is therefore a Ground-Truth-Available routing system; D+E+F+C is a Ground-Truth-Free routing system — the harder problem.
+
+**Add to Section 4 as a domain confirmation:** "In patent law, predictive entropy routing reduces evaluation cost by 78% while preserving 94.95% F1 (ACE, arXiv:2604.04295) — confirming that routing-by-uncertainty is cost-efficient in specialized high-stakes domains. D+E+F+C applies the same routing architecture to the harder regime where ground truth is unavailable and inter-judge calibrated variance, not intra-model entropy, is the only available uncertainty signal."
+
+---
+
+### Literature Gap Confirmation — April 8, 2026
+
+Fresh search across all core D+E+F+C topic areas (calibrated inter-judge N-axis variance as frontier routing signal; Condorcet independence + shared training corpus; calibration heterogeneity as panel design criterion; debate-worthiness null; question-rigour impossibility) found no April 7–8, 2026 arXiv papers (IDs 2604.04xxx–2604.07xxx range) preempting any of the five confirmed contribution gaps.
+
+CAMP (arXiv:2604.00085) is the closest structural neighbor found in the entire 28-pass search — and it does not preempt the gap. The distinction between role-based abstention (CAMP) and calibration-heterogeneity-derived aleatoric routing (D+E+F+C) is the precise boundary of our contribution.
+
+**Five contribution gaps: confirmed open for the seventh independent search, April 8, 2026.**
+
+---
+
+### Devil's Advocate — Twenty-Eighth Pass
+
+**The CAMP near-preemption requires a clear statement in the Introduction:**
+
+A well-prepared reviewer will find CAMP (arXiv:2604.00085) and note the structural similarity. The paper must proactively acknowledge it: "Concurrent work (CAMP, arXiv:2604.00085) proposes case-adaptive specialist panel assembly with three-valued principled abstention in clinical prediction. CAMP confirms the routing architecture works in ground-truth-resolvable domains; our work addresses the complementary regime where even the most appropriate panel cannot converge because the aleatoric uncertainty is frontier-specific and irreducible. Our contribution is the theoretical framing (Condorcet/Arrow/OOD/Calibration impossibilities) that explains WHY the routing architecture is necessary for frontier content, and the panel selection criterion (calibration heterogeneity, not specialty role) that makes the routing signal calibrated rather than role-assigned."
+
+**The strongest remaining objection after 28 passes:** A reader who has seen both CAMP and D+E+F+C could argue that the difference between "role-based abstention" and "calibration-heterogeneity routing" is a methodological detail, not a conceptual contribution. Both papers say "don't average uncertain cases; route them." The D+E+F+C answer: the conceptual contribution is precisely the *theoretical grounding* for why averaging fails (the triple impossibility argument) and the *formal optimality criterion* for panel selection (Ambiguity Decomposition). CAMP makes the pragmatic observation that case-adaptive panels work; D+E+F+C explains why they must work (theoretically) and how to design them formally (Ambiguity Decomposition criterion) rather than by intuitive specialist role.
+
+**Verdict:** The CAMP paper strengthens D+E+F+C by showing the routing architecture has been independently validated in another domain. It does not preempt the contribution. The paper should acknowledge CAMP explicitly as concurrent work confirming the routing principle in a domain with available ground truth.
+
+---
+
+### CANDIDATE POSITIONS — FINAL UPDATE (2026-04-08, Twenty-Eighth Pass)
+
+*One addition and one framing refinement. Rankings unchanged.*
+
+**D+E+F+C unified (TOP RECOMMENDATION — unchanged):**
+- CAMP (arXiv:2604.00085): closest structural analog found in 28 passes; confirms routing architecture independently in clinical domain; strengthens the paper by showing the principle generalizes; does not preempt the contribution because it uses role-based abstention (not calibration-heterogeneity N-std) and assumes ground-truth-resolvable cases.
+- Disagreement as Data (arXiv:2601.12618): fourth domain confirmation of disagreement-as-signal in interpretive (non-factual) qualitative coding — directly analogous to frontier research question evaluation. Education analytics joins genomics, clinical safety, radiology as independent confirmations.
+- ACE (arXiv:2604.04295): routing-by-uncertainty in patent law (78% cost reduction, F1=94.95%) confirms cost-efficiency of the routing paradigm in high-stakes specialized domain with ground truth.
+
+**Framing refinement required (CAMP discovery):** The paper's Section 4 must add one paragraph acknowledging CAMP as concurrent clinical work and drawing the precise boundary: role-based abstention (CAMP, ground-truth-available) vs. calibration-heterogeneity routing (D+E+F+C, ground-truth-free).
+
+| Rank | Candidate | Surprise | Evidence | Status |
+|------|-----------|----------|----------|--------|
+| **1** | **D+E+F+C unified** | **4/5** | Very strong — three impossibilities (fully cited); four domain confirmations of disagreement-routing principle; CAMP confirms routing architecture independently; 30+ papers | **TOP — write the paper; acknowledge CAMP as concurrent work** |
+| 2 | B (Scale anti-correlation) | 4/5 | Moderate (N=29) | Strong standalone backup |
+| 3 | A (Novelty Impossibility) | 3/5 | Moderate; HindSight ρ=−0.29 | Supporting evidence for D+E+F |
+| 4 | C (Calibration heterogeneity) | 5/5 | Weak (not independently validated) | Novel prescription; Section 4 |
+
+**Three mandatory pre-submission actions (unchanged):**
+1. Run Spearman ρ(cal-N-std, human frontier label) across all 29 human-labeled items
+2. Run IRT GRM on 134-item × 5-rater matrix to provide human-label-free calibration alternative
+3. Resolve frontier_score formula (commit to geometric mean, 1–5 scale; footnote production change)
+
+**CAMP (arXiv:2604.00085) must be added to Section 4 as concurrent independent work. This is now required — the paper's reviewers will find it.**
+
+**Literature gap confirmed open by seventh independent search, April 8, 2026. Write the paper.**
+
