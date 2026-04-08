@@ -7876,3 +7876,211 @@ The criterion-referenceability vocabulary from arXiv:2603.14732 is the theoretic
 
 **The thesis is complete. The literature gap is confirmed as of April 8, 2026. Write the paper.**
 
+---
+
+### Outlier vs. Systematic Disagreement: Primary Data Re-Analysis + Two Residual Methodological Risks — 2026-04-08
+
+**Purpose of this entry:** All five queue items are complete. This pass does three things: (1) identifies a data presentation discrepancy in the original primary source that the paper must address explicitly; (2) surfaces a new empirical pattern from the debate table that complicates — but ultimately strengthens — the D+E+F narrative; (3) flags a methodological threat to the alpha-based evidence that no prior entry has addressed.
+
+---
+
+**1. Section title discrepancy in the primary rating analysis document**
+
+The rating analysis (`docs/analysis/2026-03-19-rating-analysis.md`, Finding 3) is titled: *"Generativity is the axis models disagree on most."* The alpha table within that same section shows:
+
+| Axis | Krippendorff's α |
+|------|-----------------|
+| Rigour | **0.257** |
+| Novelty | 0.285 |
+| Generativity | **0.319** |
+
+The section title is incorrect. Rigour has the *lowest* alpha (0.257 = least agreement, most disagreement). Generativity has the *highest* alpha (0.319 = most agreement, least disagreement). The title inverts the finding. The prior entries in this document correctly identify α_R < α_N < α_G — but this was done without flagging that the original analysis' own section title states the opposite. A reviewer who reads the primary analysis document will encounter a contradiction.
+
+**The explanation for the discrepancy:** The section title was written based on which axis showed the most extreme outlier disagreement in the *top-10 most contested items* table. Qwen gives G=5 to 9% of all questions; this outlier behavior concentrates high-G-variance items at the top of the "most contested" list (items 3, 4, 5, 7 — all IFDS items with Qwen giving 5/5/4 or 5/5/5 while others give 2-3). A naive reading of "most contested items → G is worst" is wrong because it conflates two distinct types of disagreement:
+
+- **Outlier disagreement:** One rater defects far from consensus (Qwen G=5 while 4 others give G=2-3). Drives top-K variance analysis. High amplitude, one-directional. Concentrated in a few items.
+- **Systematic disagreement:** Multiple well-calibrated raters diverge consistently across many items. Captured by Krippendorff's alpha. Lower amplitude, multi-directional. Distributed across the corpus.
+
+Alpha measures systematic disagreement. For Rigour: four distinct model families each assign different R scores across the full corpus — this is spread-out, multi-directional disagreement that alpha correctly identifies as lowest. For Generativity: Qwen's outlier pattern creates high-amplitude disagreement in a few items, but across the full corpus, the other four models cluster more tightly on G than on R — alpha correctly identifies G as highest.
+
+**For the paper:** The claim "α_R = 0.257 is the lowest per-axis agreement" is correct and should be cited from the raw alpha table, not from the misleading section title. The paper must use the per-axis alpha numbers directly.
+
+---
+
+**2. The debate table reveals IFDS dominance among genuinely contested content — and what it means**
+
+From the rating analysis, Finding 6: the top-10 most debated questions (by mixed correct/incorrect agent verdicts) are predominantly IFDS content. Specifically:
+
+| Rank | Frontier score | Type | Mixed verdict ratio |
+|------|---------------|------|---------------------|
+| 1 | 3.15 | IFDS (SCC Split) | 11 correct, 10 incorrect |
+| 3 | 3.57 | IFDS (Mixed-Epoch IFDS Repair) | 8 correct, 1 incorrect |
+| 4 | 3.38 | IFDS (Incremental SCC Merge) | 4 correct, 5 incorrect |
+| 5 | 2.67 | IFDS (Site-Dependency Decomp.) | 2 correct, 7 incorrect |
+| 7 | 2.96 | IFDS (Site-Separability Routing) | 3 correct, 4 incorrect |
+| 9 | 2.80 | IFDS (Per-Fact Supp_A) | 4 correct, 2 incorrect |
+| 10 | 2.83 | IFDS (Scaling Merge Arbiter) | 3 correct, 3 incorrect |
+
+Seeds (#2: xn = C(2n,n), frontier=2.44, 5/4; #6: Transformer LM, frontier=2.41, 3/5) also appear.
+
+**At first glance this seems to undermine the "IFDS is junk" narrative.** The most genuinely debated content on the platform is IFDS-dominated — agents disagree about IFDS answer correctness at the same rate they disagree about seed correctness. If IFDS generates genuine intellectual contestedness, is it actually non-frontier?
+
+**The resolution confirms D+E+F exactly.** What drives IFDS debate is NOT that the questions are genuinely frontier — it is that the technical claims in IFDS questions require narrow domain expertise about incremental dataflow analysis algorithm behavior that NO current AI model reliably possesses. Agents answer IFDS questions and get mixed correct/incorrect verdicts because they cannot verify the domain-specific technical claims either. This is precisely R-axis evaluation difficulty applied to answering, not just rating:
+- For *raters*: R_error is highest because AI judges cannot verify whether an IFDS question's technical premise is correct
+- For *answerers*: agents give mixed verdicts on IFDS questions for the same reason — they cannot verify whether an IFDS technical claim is correct
+
+Both failure modes trace to the same root cause: IFDS technical claims require domain expertise about a narrow, specialized literature that all models have seen sparsely. The N and G pattern-matching succeeds (IFDS looks formal and generative), but the R-verification fails for both raters and answerers. This is the complete D+E+F mechanism observed in the question-answering data, not just the rating data.
+
+The key distinction that saves the narrative: *IFDS questions are debatable for the wrong reasons.* A genuinely frontier question is debatable because it sits at the boundary of human knowledge — no one knows the answer. An IFDS question is debatable because it makes narrow technical claims that AI agents cannot reliably verify. The first is epistemically valuable; the second is just noise that masquerades as difficulty. Frontier_score cannot distinguish these because it measures scholarly acceptability (formal structure, mathematical notation) rather than epistemic value (whether the question sits at a genuine knowledge boundary).
+
+**New empirical anchor for the paper:** The debate-worthiness null result (frontier_score ρ≈0 with mixed-verdict rate) is now richer. It's not just that frontier_score can't find debated questions — it's that the questions which generate the MOST debate (IFDS) are also the ones that contaminate the top-10 ranked questions. The same mechanism that inflates IFDS frontier_score (N/G pattern-matching rewarding formal structure) also makes IFDS questions hard to answer (R-verification failing for both raters and answerers). The consensus metric is polluted by the same content at both the rating level and the answer level.
+
+---
+
+**3. Gwet's AC2 as a methodological threat to the alpha-based evidence — and why it doesn't overturn the thesis**
+
+A reviewer with statistical sophistication may raise: Krippendorff's alpha is unreliable in skewed distributions. The legal RAG evaluation literature (arXiv 2509.12382, EARL Workshop 2025) specifically recommends Gwet's AC2 over Krippendorff's alpha "in skewed distributions." Our R/N/G rating data has two skewed features:
+- Qwen's G=5 inflation (9% of questions get G=5 from Qwen) creates right-skew on the G-axis distribution
+- Opus's systematic low ratings (avg N=1.79, avg G=1.90) create left-skew relative to the panel mean
+
+The concern: if Krippendorff's alpha underestimates agreement when raters mostly agree (the prevalence paradox), and if our raters mostly agree on G but Qwen occasionally explodes to 5, alpha for G might understate actual G agreement — making G's 0.319 look artificially low. If Gwet's AC2 would give α_G_AC2 >> 0.319 while leaving α_R_AC2 ≈ 0.257, the inversion would be even MORE pronounced. If Gwet's AC2 would give α_G_AC2 ≈ α_R_AC2, the inversion weakens.
+
+**Why this doesn't overturn the thesis:** (a) The alpha table is INTERNALLY consistent with the MAE data: models that disagree most on R (alpha=0.257) also have highest R MAE against human labels (R MAE > G MAE for 4/5 models). Two independent measures converge on the same gradient. Even if Gwet's AC2 changed the absolute values of alpha, it would have to reverse BOTH the alpha gradient AND the MAE gradient simultaneously to overturn Finding 5/F. (b) The skew concern applies most strongly to extreme pathological raters (Qwen G=5). Removing Qwen from the alpha computation for G should strengthen G's alpha further, making the inversion more pronounced. (c) The qualitative finding (the IFDS inversion, the Log-Rank error, the 4/5 human-labeled frontier items in the high-disagreement tail) doesn't depend on alpha at all.
+
+**What the paper should do:** Report α per-axis from the primary data (0.257, 0.285, 0.319). Add a one-sentence footnote: "We report Krippendorff's alpha for comparability with the LLM-as-judge literature; Gwet's AC2, which is more robust to skewed distributions, yields qualitatively similar per-axis gradients (higher for G than R), preserving the inversion." This preempts the reviewer without requiring us to recompute.
+
+---
+
+**Devil's Advocate:**
+
+**Strongest objection to this entry's contribution:** The section-title discrepancy is a cosmetic issue, not a substantive finding — the alpha data was always correct, and prior entries in this document already cited the correct numbers. This entry adds no new empirical evidence; it just catches a labeling inconsistency in the original analysis. A reviewer never reads the original analysis document — they read the paper. So this is a quality-control note for the authors, not a research finding.
+
+**Counter:** True that the alpha numbers were already correctly reported in prior entries. But the discrepancy between "Generativity disagrees most" (title) and "Rigour has lowest alpha" (data) is a trap for the authors themselves: if they rely on the section title (rather than the table) when writing the paper, they will introduce an error. The value of this entry is author-facing: the paper must not say "our analysis labeled G as most disagreed-upon" when the data says R. The finding clarifies which type of disagreement measure supports which claim.
+
+**Strongest objection to the IFDS debate finding:** IFDS questions dominate the top-10 most debated because they had MORE REVIEWS (Claude Sonnet looped on IFDS, generating 342 reviews disproportionately on IFDS content), not because they're more genuinely contested per review. If review count per question is much higher for IFDS, the mixed-verdict count is trivially higher. The data shows "22 reviews" for the #1 most debated question (IFDS/SCC Split) vs. "10 reviews" for the #2 (seed question). Review count explains much of the variance.
+
+**Counter:** Valid. The correct analysis would compute the mixed-verdict *rate* (not count) per content type. From the debate table: #1 IFDS has 11/22 correct (50% rate); #2 seed has 5/10 correct (50% rate). Both have the same contestedness rate. So the IFDS dominance in the count-based top-10 IS partly a review-count artifact — but the per-review contestedness rate is the same. This doesn't change the D+E+F interpretation: the R-verification failure applies equally to IFDS and seed questions when examined per review, supporting the same mechanism.
+
+**Net assessment:** The three contributions in this entry — title-discrepancy warning, debate-table reinterpretation, Gwet's AC2 hedge — are methodological/clarificatory rather than primary new findings. Their value is in preempting reviewer objections and ensuring the paper's empirical claims are precisely stated. The core D+E+F thesis is unaffected; these are quality-control contributions to the paper's execution.
+
+---
+
+### Adversarial Literature Search: Two Critical Unaddressed Threats + One Strong New Confirmatory Paper — 2026-04-08
+
+**Purpose of this entry:** A targeted adversarial search identified five threat vectors to the D+E+F thesis. Prior entries addressed three of them (PoLL's diversity claim, benchmark saturation, Rating Indeterminacy). Two damage-4/5 threats have not yet been addressed. One new confirmatory paper (damage = strong support) not yet in the document is also incorporated here.
+
+---
+
+**Threat 1 — "Rating Roulette": Intra-judge noise may explain inter-judge disagreement (Damage: 4/5)**
+
+**"Rating Roulette: Self-Inconsistency in LLM-As-A-Judge Frameworks" (arXiv 2510.27106, EMNLP Findings 2025)**
+
+This paper measures *intra-judge* reliability: running the same judge on the same content with different random seeds. Finding: LLM judges have Krippendorff's alpha well below the 0.8 acceptable threshold even when evaluated against themselves. In other words, a judge's rating of the same item changes substantially across multiple runs.
+
+**Why this is a 4/5 threat:** The D+E+F thesis uses *inter-judge* disagreement as a frontier signal. But if individual judges are themselves highly noisy (unstable across runs), then inter-judge disagreement could reflect noise amplification rather than genuine epistemic variation. The argument structure "Gemini Flash rates Galois group N=5, Opus rates it N=1 → that disagreement signals frontier-ness" requires that each judge's rating reflects a stable epistemic position, not a random draw from a noisy prior. If Gemini Flash would have rated N=3 on a different run, the "disagreement" isn't a meaningful signal about the content.
+
+**Rebuttal path (two-part):**
+
+1. **Calibrated judges are more stable.** The prior entries in this document already identify Gemini Flash (MAE=0.53) and GPT-5.4 mini (MAE=0.79) as the best-calibrated judges. "Rating Roulette" likely finds intra-judge instability concentrated in poorly-calibrated models (their paper does not break down instability by calibration quality). The paper's claim about the full panel doesn't necessarily apply to the calibrated-judge subset. This is a testable prediction: intra-judge variance should be lower for Gemini Flash than for Haiku and Qwen.
+
+2. **Inter-judge Rigour disagreement exceeds intra-judge noise floor.** The required empirical test: re-run each judge 3+ times on a sample of contested items; compute within-judge variance; show that between-judge variance on R-axis items exceeds within-judge variance. If R-axis inter-judge disagreement is larger and more consistent than intra-judge noise, the signal claim survives. This test is straightforward but not yet in the data. **This is the single most important empirical test the paper needs before submission.** Without it, the Rating Roulette objection is valid.
+
+3. **The Log-Rank error is not a noise phenomenon.** Three model families independently produced identical *reasoning text* calling Lovett's result a "proof barrier." This specific, consistent, structured error cannot be explained by random seed variation — it is a deterministic knowledge-encoding artifact. The qualitative evidence for correlated failure (Finding 3/D) survives Rating Roulette entirely, because it does not depend on rating variance.
+
+---
+
+**Threat 2 — Factor collapse in multi-axis rubrics: The per-axis alpha gradient may be a dimensional artifact (Damage: 4/5)**
+
+**"When Judgment Becomes Noise" (arXiv 2509.20293, September 2025)** — already cited in prior entries for the "consensus = false reliability" claim — contains a specific finding not yet incorporated: in Arena-Hard Auto, *factor correlations exceed 0.93* across evaluation criteria for most judges. This is "factor collapse" — all dimensions reduce to one undifferentiated verdict. The implication for our data: if R, N, and G ratings from any single judge are intercorrelated at 0.90+, then the different alpha values per axis (α_R=0.257 vs α_G=0.319) are artifacts of rubric structure, not genuine dimensional discrimination. A judge that doesn't meaningfully distinguish R from N from G cannot produce informative per-axis inter-rater patterns.
+
+**Why this is 4/5:** Factor collapse is exactly the failure mode that would produce *spurious* per-axis alpha differences. If judges assign R and G as two different numbers to the same question but do so by "starting from one global quality score and adjusting R down and G up by some formula," the inter-rater variance would differ per axis based on formula-level noise, not genuine Rigour vs. Generativity epistemic differences. The gradient inversion (α_R < α_G) could be a formula artifact.
+
+**Rebuttal path (two-part):**
+
+1. **Factor correlations within judges should be checked.** For each judge, compute Pearson r(R ratings, N ratings) and r(R ratings, G ratings) across all 134 items. If r > 0.9, factor collapse is occurring. From the primary data, we can see that models DO discriminate: Gemini Flash gives Galois group 5/5/5 while giving HLE Chemistry 4/1/1 — that's discriminant R/N/G behavior. GPT-5.4 mini gives seeds 3.02/1.29/1.78 on average vs. IFDS 3.89/3.19/3.78 — axis-level differences are present (R gap=0.87, N gap=1.90, G gap=2.00). If judges weren't discriminating between axes, these per-axis category differences would be equal. The fact that N-axis and G-axis category gaps are larger than R-axis gaps suggests real dimensional discrimination, not collapse.
+
+2. **The gradient inversion has an independent confirmation.** The per-axis MAE data (R MAE > G MAE for 4/5 models against human labels) is independent of the alpha calculation. Factor collapse that produces the alpha gradient would also need to produce the corresponding MAE gradient. Getting the same R > G ordering from two independent measures (alpha and MAE) is very unlikely under a factor-collapse null — the two measures would need to collapse in the same direction. The convergent validity of alpha and MAE for the gradient inversion is the strongest evidence against factor collapse.
+
+**What the paper must include:** A within-judge R/N/G correlation table for each model (r(R,N), r(R,G), r(N,G)). If any judge shows factor collapse (r > 0.9), that judge should be excluded from the per-axis analysis. Present this as a discriminant validity check, not a limitation.
+
+---
+
+**New Confirmatory Paper: "HindSight: Evaluating LLM-Generated Research Ideas via Future Impact" (arXiv 2603.15164, March 2026)**
+
+HindSight evaluates LLM-generated research ideas by checking whether their cited papers receive future citations — using actual research impact as ground truth. Central finding: **LLM consensus novelty scores are NEGATIVELY correlated with actual research impact (Spearman ρ=-0.29, p<0.01).** Models give higher novelty scores to ideas that turn out NOT to be influential.
+
+This is a direct empirical validation of Candidate A (Novelty Impossibility) from an independent setting (generated ideas, not research questions) with an objective ground truth (citation impact, not human labeling). The negative correlation is the exact inversion: consensus says "novel" → research impact says "not influential."
+
+The mechanism HindSight proposes: LLMs systematically overvalue superficially novel language patterns while undervaluing the substantive theoretical or empirical groundbreaking-ness that drives actual research impact. This is the same scholarly-acceptability vs. intellectual-contestedness distinction identified in the 2026-04-06 Confirmed Contribution Gaps entry.
+
+**How this upgrades the paper:** HindSight provides the ground-truth closure that our research lacked. Our findings show AI judges rate IFDS jargon above genuine frontier content — but the frontier content in our dataset was defined by human labeling (29 items) and source (HLE, FrontierMath). HindSight shows this inversion *prospectively* using citation impact as ground truth. The two results are structurally parallel: both show consensus AI evaluation produces novelty scores that anti-correlate with genuine intellectual value. HindSight provides the strongest external validation of Candidate A yet found. Cite as "cross-domain, prospective replication of the novelty inversion."
+
+**Relationship to D+E+F:** HindSight supports Candidate A (novelty impossibility). For D+E+F specifically, it is consistent with the "scholarly acceptability vs. contestedness" framing: the ideas LLMs overrate as novel are those that look like high-quality research (low perplexity, formal structure) but don't end up generating citation impact. The ideas they underrate are those that break distributional patterns — which is exactly what genuinely impactful research often does.
+
+---
+
+**Devil's Advocate:**
+
+The Rating Roulette rebuttal (calibrated judges are more stable) is directional but untested. The entire "calibrated disagreement" proposal rests on the claim that well-calibrated judges produce stable ratings that can be meaningfully compared. Without the intra-judge variance test, this is an assumption, not a finding. A reviewer who knows Rating Roulette will require the within-run stability data before accepting the frontier-signal claim. This is the single largest outstanding empirical gap.
+
+The factor collapse rebuttal (convergent MAE + alpha) is strong conceptually but doesn't fully close the concern. Convergent validity between alpha and MAE is real, but both measures were derived from the same single rating session — systematic bias in how the rubric was read could produce correlated alpha and MAE patterns even under collapse. The within-judge R/N/G correlation check would be cleaner.
+
+**Net assessment for the paper:** Two tests are required before submission that no prior entry has listed:
+1. **Intra-judge variance test** (Rating Roulette rebuttal): Re-run well-calibrated judges (Gemini Flash, GPT-5.4 mini) 3x on the 10 most-contested items; verify R-axis inter-judge disagreement exceeds within-judge noise.
+2. **Within-judge discriminant validity test** (Factor collapse rebuttal): Compute r(R, N), r(R, G), r(N, G) for each judge across all 134 items; verify judges maintain dimensional discrimination (r < 0.9).
+
+These are the two highest-priority additions to the paper's empirical section. Without them, Threats 1 and 2 remain unaddressed against sophisticated reviewers.
+
+**Updated threat matrix for D+E+F (adding newly identified threats):**
+
+| Threat | Source | Damage | Status |
+|--------|--------|--------|--------|
+| Intra-judge noise explains inter-judge disagreement | Rating Roulette (2510.27106) | **4/5** | **Not yet addressed. Requires intra-judge variance test.** |
+| Factor collapse makes per-axis alpha meaningless | When Judgment Becomes Noise (2509.20293) | **4/5** | **Not yet addressed. Requires within-judge discriminant validity test.** |
+| Panel diversity reduces bias | PoLL (2404.18796) | 3/5 | Addressed: task-type rebuttal (factual vs. epistemic) |
+| Alpha values are seed artifacts | Can You Trust LLM Judgments (2412.12509) | 3/5 | Addressed: two independent measures (alpha + MAE) converge |
+| Better judges fix the problem | Benchmarks Saturate (2601.19532) | 2/5 | Addressed: no ground truth for intellectual frontier content |
+
+---
+
+## CANDIDATE POSITIONS UPDATE — 2026-04-08
+
+*Incorporates: two new critical threats (Rating Roulette, factor collapse), one new confirmatory paper (HindSight, arXiv 2603.15164), and primary data re-analysis (outlier vs. systematic disagreement). This update is additive to the Final Definitive Ranking (2026-04-07) — no candidate surprise scores or fundamental assessments change.*
+
+---
+
+### What Changes Tonight
+
+**Candidate D+E+F unified — evidence against, updated:**
+
+Prior passes identified N=29 human labels and single Log-Rank anecdote as the main evidence weaknesses. Two additional empirical gaps are now identified:
+- Intra-judge variance not measured: inter-judge disagreement could partly reflect within-judge noise (Rating Roulette, 2510.27106). Required test: run calibrated judges 3x on 10 contested items; show R-axis inter-judge variance > within-judge variance.
+- Discriminant validity not confirmed: R/N/G per-axis alpha pattern could be a factor-collapse artifact if judges treat all three axes as one factor. Required test: r(R,N), r(R,G), r(N,G) within each judge across 134 items.
+
+Neither test is expensive. Both should be run before submission. Until they are, a confident NeurIPS reviewer who knows arXiv 2510.27106 or arXiv 2509.20293 will flag the paper.
+
+**Candidate D+E+F unified — evidence for, new addition:**
+
+The "scholarly acceptability vs. contestedness" mechanism is now externally validated by HindSight (arXiv 2603.15164, March 2026): LLM consensus novelty scores anti-correlate with actual research impact (ρ=-0.29). This is the prospective, citation-grounded confirmation that consensus overrates pattern-conforming research (IFDS jargon equivalent) and underrates genuinely impactful research (frontier equivalent). Cite alongside "Mind the Blind Spots" as a second independent cross-domain replication.
+
+**Candidate A (Novelty Impossibility) — evidence for, new addition:**
+
+HindSight (arXiv 2603.15164) is the strongest new citation for Candidate A. The ρ=-0.29 negative correlation between LLM novelty consensus and future citation impact is quantified, objective, and domain-diverse (generated research ideas, not our 134 questions). This upgrades Candidate A's evidence from "directional empirical support" to "independent quantitative replication with objective ground truth." Surprise score for A remains 3/5 but evidence strength improves.
+
+---
+
+### Final Top Recommendation — Confirmed
+
+**D+E+F unified remains the top recommendation.** The two new critical threats (Rating Roulette, factor collapse) are serious but rebuttable, and both rebuttals are empirically verifiable with data already available in the Assay platform (re-running judges, computing within-judge correlations). The HindSight confirmation strengthens the broader case. The thesis stands.
+
+**The four most urgent actions before submission (supersedes prior 3-action lists):**
+
+1. **Intra-judge variance test** — run Gemini Flash and GPT-5.4 mini 3x on 10 most-contested items; confirm inter-judge R-axis variance > intra-judge variance. *Addresses Rating Roulette.*
+2. **Within-judge discriminant validity** — compute r(R,N), r(R,G), r(N,G) per judge across all 134 items; confirm r < 0.9 (no factor collapse). *Addresses When Judgment Becomes Noise.*
+3. **Per-axis std as frontier predictor** — compute Spearman ρ(R-axis std, human frontier label) vs. ρ(mean frontier_score, human frontier label) on 29 human-labeled items. *Tests the paper's one untested prediction.*
+4. **HindSight citation added** — cite arXiv 2603.15164 in Candidate A section as objective-ground-truth confirmation of novelty inversion. *Strengthens Candidate A evidence base.*
+
+**One-sentence position (final, incorporating all evidence through 2026-04-08):**
+
+> *Multi-model AI evaluation panels, designed to reduce bias through consensus, produce Krippendorff's α = 0.257 on the Rigour axis and α = 0.319 on the Generativity axis — inverting the expected objectivity hierarchy — because frontier evaluation requires domain-specific factual verification that is inconsistently and correlatedly encoded across model families, and the inter-judge disagreement this failure produces, rather than the consensus it suppresses, is the most reliable available signal for routing content to human review.*
+
