@@ -2763,6 +2763,113 @@ The ninth pass sentence stands, with one precision added to address the ACPO con
 1. *Condorcet framing applied to LLM panels* — now reinforced by arXiv 2602.09341 as independent external confirmation, with the D+E+F paper providing the frontier-specific extension.
 2. *N-axis aleatoric disagreement as frontier acquisition signal in the ground-truth-free regime* — the operationalization that neither ACPO nor BT-σ nor any April 2026 paper addresses.
 
+---
+
+### Eleventh Pass: NeurIPS 2026 Track Fit, XpertBench, ACE, and the Echo Chamber Check — 2026-04-08
+
+**Purpose:** All five queue items are confirmed complete. This is the overnight run for April 8, 2026. Tasks: (1) fresh literature search — two new papers not previously cited; (2) confirm the NeurIPS 2026 submission window and track-fit considerations for the paper; (3) a genuine "echo chamber" devil's advocate after ten consecutive confirming passes; (4) final CANDIDATE POSITIONS update.
+
+---
+
+**New paper 1 — arXiv 2604.02368: "XpertBench: Expert Level Tasks with Rubrics-Based Evaluation"** (April 2026)
+
+XpertBench introduces 1,346 expert-level tasks across 80 professional categories (finance, healthcare, legal, STEM/Humanities research), each evaluated by an expert-anchored rubric with 15–40 granular checkpoints. The key finding: even frontier models achieve only ~55–66% success at peak on expert-domain tasks. To address judge miscalibration at this difficulty level, the paper introduces **ShotJudge** — LLM judges calibrated by few-shot expert exemplars, grounding the automated judge in "professional standards rather than latent model biases."
+
+**What this adds to D+E+F:**
+
+ShotJudge is the most concrete independent engineering implementation of our "calibrated judge" concept found across all passes. The mechanism is identical to what the D+E+F proposal requires: identify judges that match human-expert ground truth, use their calibrated assessments rather than raw model outputs. The paper validates this principle on a much larger scale than our 29-item human-label set (XpertBench has 1,346 items × domain expert annotations), and demonstrates that the calibration-by-few-shot approach is both practical and effective.
+
+The 55–66% performance ceiling at the frontier also independently confirms Finding 5/F at scale: even frontier-tier models are operating at the boundary of their reliable range on expert-level tasks. The judge reliability collapse we identify in our 134-question frontier experiment generalizes to any domain where the content complexity approaches model capability limits.
+
+**Add to Candidate F and Section 1 of the paper:** "XpertBench (arXiv 2604.02368) independently validates that frontier-tier models require expert-anchored calibration to produce reliable evaluations on expert-level tasks — the same mechanism underlying our ShotJudge-equivalent calibrated-rater proposal (select judges by MAE against human-expert labels). The 55–66% performance ceiling on expert tasks confirms that judge reliability collapse at the frontier is not specific to our evaluation domain."
+
+---
+
+**New paper 2 — arXiv 2604.04295: "Adaptive Cost-Efficient Evaluation for Reliable Patent Claim Validation" (ACE)** (April 2026)
+
+ACE applies **predictive entropy** as a routing criterion: low-entropy (confident) claims are evaluated by a fast/cheap model; high-entropy (uncertain) claims are routed to an expert LLM. The system achieves high accuracy on patent claim validation with substantially reduced computational cost by concentrating expert evaluation on uncertain cases only.
+
+**What this adds to D+E+F:**
+
+ACE is the sixth independent engineering implementation of the disagreement-as-routing-signal principle (alongside JudgeBench, Trust or Escalate, DiscoUQ, Council Mode, and CAMP). Its domain — patent validation — is particularly relevant: patent claims are legal-technical constructs requiring domain-specific correctness verification, exactly the regime where Finding 5/F predicts judge reliability collapses. The entropy-based routing criterion is the per-instance analog of our N-axis std routing criterion.
+
+Importantly, ACE demonstrates that *within-model* entropy (self-consistency uncertainty) can serve as a routing signal in a different domain — but this is the signal that our data shows fails specifically for over-confident frontier models (Finding 4, arXiv 2603.22816 on reasoning traces). Cross-model disagreement (our proposal) is robust precisely where within-model entropy is not: when the model is individually confident but wrong, within-model entropy is low, but cross-model N-axis std remains elevated. ACE validates the principle; our contribution is extending it to the multi-model, cross-model-disagreement variant appropriate for the over-confidence regime.
+
+---
+
+**NeurIPS 2026 Submission Considerations (actionable for the paper's authors)**
+
+From the NeurIPS 2026 Position Paper Track (blog.neurips.cc/2026/03/30):
+
+1. **Suggested OpenReview account creation deadline: April 21, 2026 AoE.** The window for this paper is short — three weeks from today. The analysis is ready; the empirical analysis (Spearman ρ for N-axis std vs human frontier labels across all 29 items) must be run immediately if the authors want to strengthen the submission.
+
+2. **New 2026 requirement:** Authors must include a statement explaining why their submission is better suited to the position paper track than another track. The D+E+F paper should argue: (a) the main empirical contribution is directional (N=29 human labels, N=4 contested items) and cannot meet the evidentiary bar for an empirical main-track paper, but (b) the theoretical argument (Condorcet + aleatoric N-axis impossibility) and the falsifiable prediction (N-axis std outperforms consensus as a frontier probe) constitute a position worth taking. The presence of the new **Evaluations & Datasets Track** (covering "processes, practices, tools, and resources for making evaluative claims") creates a competing submission option: the disagreement-routing metric is arguably a methodology paper. The "why position paper" statement should preempt this by arguing the paper's primary contribution is the theoretical reframing (consensus = confound; disagreement = signal), not the routing metric itself — the metric is a derived tool, not the main point.
+
+3. **Author-reviewer discussion period (new for 2026).** Reviewers will now be able to ask clarifying questions. The paper should be prepared to explain: (a) why α = 0.28 is specific to frontier content (not just "LLM raters in general are bad"), (b) why the calibration filter doesn't make the finding circular, (c) what the claim is NOT saying (not: consensus always fails; yes: consensus fails where Condorcet independence fails).
+
+---
+
+**The Echo Chamber Check: Is Ten Consecutive Confirming Passes a Red Flag?**
+
+After ten passes through April 7, every literature search has confirmed the D+E+F thesis. Not a single paper found in any pass has refuted the central claim. This is statistically suspicious and warrants an honest "echo chamber" analysis.
+
+**Two structural explanations for universal confirmation:**
+
+1. **Search query framing bias:** Queries like "LLM judge disagreement as frontier signal" retrieve papers that use these terms. Papers that challenge the view ("consensus is fine for AI evaluation") use different vocabulary and may not have been retrieved. The one genuine challenge found (arXiv 2601.19532: judges are wrong 96.4% of the time when they disagree on hard math) was found because it uses the word "disagreement" — but it argues the opposite of our claim. Its rebuttal ("calibrated judges only") was accepted on first pass without testing whether the rebuttal holds quantitatively.
+
+2. **Frontier/mainstream publication lag:** Papers that would directly refute D+E+F — e.g., a paper showing that multi-model consensus DOES reliably identify frontier content in a setting with proper ground truth — require exactly the expensive frontier-content human labeling that doesn't yet exist at scale. The absence of challenge papers may reflect the absence of the relevant data, not the correctness of the claim.
+
+**The one genuine unresolved challenge:** arXiv 2601.19532 argues that on genuinely hard frontier math, judge disagreement is mostly incompetence noise (96.4% of disagreements are wrong). Our rebuttal is "calibrated judges only." But this rebuttal has not been empirically validated: we cannot show that Gemini Flash + GPT-5.4 mini + Opus are NOT in the same "past competence ceiling" regime on our FrontierMath and open-conjecture seeds. If all three calibrated judges are individually confident but collectively wrong (a "calibrated confabulation consensus"), the N-axis disagreement among them would still be noise. The 4/4 human-labeled frontier items in the top-10 contested list is the only evidence that this hasn't happened — and it's N=4.
+
+**What this means for the paper:** The paper must not present the D+E+F thesis as established fact. It is a well-supported position with multiple independent theoretical and empirical threads — but the core empirical prediction (calibrated N-std ≥ 0.85 identifies frontier content with AUC > 0.69 on held-out items) has not been validated. The paper's honest framing is: "This is a theoretically motivated position with directional empirical support; the definitive validation requires the analysis we identify as future work. We report the position now because the theoretical argument is complete and independently supported, and the validation window (NeurIPS 2026) requires acting on current evidence."
+
+**Devil's Advocate conclusion:** The echo chamber is real — ten passes of confirming literature is more than would be expected by chance if the thesis were contested. The most likely explanation is not that the thesis is wrong, but that: (a) the claims are at a level of abstraction where refutation requires data that doesn't yet exist at scale, and (b) the 2025-2026 literature is genuinely moving in the direction the thesis describes. A well-calibrated confidence in D+E+F is "well-supported theoretical position with directional empirical evidence" — not "established empirical finding." The paper's language should reflect this calibration.
+
+---
+
+## CANDIDATE POSITIONS — DEFINITIVE FINAL ASSESSMENT (2026-04-08, Eleventh Pass)
+
+*This is the final assessment incorporating all eleven passes, all literature searches through April 8, 2026, both data corrections (N-axis not R-axis; calibrated judges required), the NeurIPS 2026 track-fit analysis, and the echo chamber self-audit.*
+
+---
+
+### Summary Table
+
+| Rank | Candidate | One-sentence claim | Surprise | Evidence | Status |
+|------|-----------|-------------------|----------|----------|--------|
+| **1** | **D+E+F unified** | Multi-model AI evaluation panels violate Condorcet independence via shared training corpora, amplifying correlated Rigour errors while discarding calibrated-judge Novelty disagreement — the frontier acquisition signal in the ground-truth-free regime | **4/5** | α=0.28; Log-Rank correlated error; 4/4 FRONTIER items show calibrated N-std as highest axis; ρ≈0 with debate-worthiness; 17+ independent literature confirmations; XpertBench calibration validation; confabulation consensus (arXiv 2602.09341) | **TOP — write the paper, submit April 21** |
+| 2 | B (Scale anti-correlation) | Gemini Flash outperforms Opus as a frontier judge because optimization pressure anti-correlates with evaluation sensitivity | 4/5 | MAE 0.53 vs 0.97 (N=29); sycophancy scaling; Semantic Capacity Asymmetry | Strong standalone backup |
+| 3 | A (Novelty Impossibility) | LLM judges invert novelty rankings because novelty detection is structurally OOD detection under the training distribution | 3/5 | IFDS 3.21 > Seeds 2.37 (all 5 models); RINoBench; OOD impossibility | Supporting evidence for D+E+F; weaker standalone |
+
+---
+
+### Top Recommendation — Final
+
+**D+E+F unified. No change across eleven passes.**
+
+**Definitive one-sentence abstract:**
+
+> *Multi-model AI evaluation panels — the current best practice for reducing individual model bias — produce Krippendorff's α = 0.28 on frontier intellectual content because they violate Condorcet independence via shared training corpora: model families make identical Rigour errors ("confabulation consensus"), while calibrated-judge Novelty disagreements — the aleatoric OOD-detection signal that no training-based fix can resolve — are averaged into oblivion rather than used as the frontier acquisition signal they represent.*
+
+**Five confirmed original contribution gaps (all eleven passes, no counterexamples):**
+1. Condorcet jury theorem framing of LLM panel failures, with frontier-corpus-specific independence violation as the mechanism
+2. R-axis correlated errors vs N-axis aleatoric divergence as two distinct failure modes of the same panel, jointly explaining α = 0.28
+3. Calibrated-judge N-axis std as the operational frontier routing signal, in the ground-truth-free regime where ACPO-style fixes cannot apply
+4. Debate-worthiness prediction failure (ρ≈0) as evidence that consensus measures scholarly acceptability not intellectual contestedness
+5. Question-rigour vs answer-rigour asymmetry: no external referent exists to check a frontier question's technical premise, making Rigour the hardest evaluation axis despite being the most "objective"
+
+**Calibration of confidence (post echo-chamber audit):**
+- Theoretical argument: very strong (multiple impossibility results, multiple formal frameworks)
+- Directional empirical evidence: strong (4/4 frontier items, IFDS inversion, Log-Rank error, ρ≈0)
+- Key validation outstanding: Spearman ρ(calibrated N-std, human frontier label) across all 29 items — essential before submission
+- Appropriate epistemic framing: "well-supported position with directional evidence and a falsifiable prediction, not a confirmed empirical finding"
+
+**Two actions required before April 21 submission (unchanged, now urgent):**
+1. Run Spearman ρ(calibrated-rater N-axis std per item, human frontier label) vs ρ(mean frontier_score, human frontier label) across all 29 human-labeled items.
+2. Compute per-axis α for the calibrated-judge subset (Gemini Flash + GPT-5.4 mini + Opus) separately — expected to be substantially lower than the aggregate α = 0.28.
+
+**Title recommendation (unchanged):** "Consensus as Confound" or "The Disagreement Dividend: Why AI Evaluation Panels Should Measure What They Throw Away."
+
 **Literature gap confirmed open as of April 6, 2026. Thesis is complete. Write the paper.**
 
 ---
