@@ -7514,3 +7514,27 @@ The question-type confound resolution (Section 1 above) is the most practically 
 2. Reframe Candidate A evidence around FrontierMath comparison (not HLE) to avoid the question-type confound objection.
 3. Compute per-axis α for each content category separately (seeds only, IFDS only, other-agent only) to rule out the question-format-homogeneity alternative explanation for the α gradient.
 
+---
+
+### Literature Addendum — 2026-04-08 (from overnight search agent)
+
+Two new papers identified from fresh search (not in prior passes) with direct relevance to the thesis:
+
+**arXiv 2601.07506 — "Judging Against the Reference: Uncovering Knowledge-Driven Failures in LLM-Judges on QA Evaluation" (January 2026):**
+
+Introduces a "swapped-reference" framework that forces conflicts between the provided reference answer and the judge model's parametric knowledge (training priors). Finding: when reference contradicts the judge's parametric knowledge, grading reliability drops sharply — judges systematically default to their training-data belief over the provided ground truth. This is a mechanism-level explanation for why R_error is highest in our data.
+
+For frontier research questions, the judge's parametric knowledge IS the potentially-wrong training corpus prior. When a model believes Lovett's bound is a "proof barrier" (from co-occurrence in training data), no rubric instruction overrides that parametric belief — the model will evaluate the question's Rigour *through* its incorrect prior. This paper formalizes exactly this failure: R-axis evaluation collapses when training priors are wrong, regardless of rubric quality. This is a stronger mechanistic account than any previously cited for the R-axis failure mode.
+
+**How it sharpens Candidate F:** The 32nd pass proposed that R errors correlate because frontier topics live in small high-citation corpora all models read equally. arXiv 2601.07506 adds the mechanism: the error propagates not just because models read the same papers, but because their parametric knowledge overrides rubric instructions — making the error immune to prompt engineering fixes. "Provide a better rubric" cannot fix a judge whose parametric prior says the wrong thing.
+
+**arXiv 2602.09341 — "Auditing Multi-Agent LLM Reasoning Trees Outperforms Majority Vote and LLM-as-Judge" (February 2026):**
+
+Introduces AgentAuditor, which replaces majority voting with a path search over divergence points in multi-agent reasoning trees. Central argument: majority voting is brittle under "confabulation consensus" — agents trained on overlapping corpora converge on the same wrong rationale, and majority vote amplifies the shared confabulation rather than cancelling it. Directly supports Candidate D's Condorcet-failure claim with a second independent empirical demonstration of correlated-error amplification under consensus aggregation.
+
+The paper's prescriptive alternative (search for divergence points in reasoning, not consensus points) is structurally parallel to our D+E proposal (use disagreement, not consensus, as the signal). This provides independent validation that the field is converging toward disagreement-based detection, not consensus-based detection.
+
+**One confirmed gap (from search agent, 2026-04-08):** No 2025-2026 paper studies *research question quality* (as opposed to research answer quality) using LLM judges. The question-rigour asymmetry remains unoccupied.
+
+**Note on arXiv 2603.05399 and 2602.00521:** Both were already cited in prior passes (lines ~1012 and ~1072 respectively). Not duplicated here.
+
