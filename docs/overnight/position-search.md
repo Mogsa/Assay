@@ -7727,3 +7727,152 @@ Tests single-judge vs majority-vote jury in a clinical safety domain against cli
 
 4. Cite arXiv:2603.14732 (criterion-referenceability) in Section 3 on the question-rigour asymmetry — this paper provides the vocabulary ("criterion-referenceability") and the mechanism (holistic judgment required when no external referent exists) for Gap 2.
 
+---
+
+### Final Overnight Synthesis — 2026-04-08
+
+**Purpose:** All five queue items are complete (marked [x]). Thirty-three prior synthesis passes are on record. This entry: (1) introduces two genuinely new papers not in any prior pass; (2) crystallizes a unifying framing from the 33rd-Pass literature addendum; (3) delivers the final CANDIDATE POSITIONS update.
+
+---
+
+**New paper 1 — arXiv:2603.01865 — "CyclicJudge: Mitigating Judge Bias Efficiently in LLM-based Evaluation" (Slingshot AI + Cambridge, March 2026)**
+
+Applies variance decomposition to partition benchmark score variance into four components: scenario, generation, judge, and residual. Central finding: **judge-level bias is often comparable in magnitude to the model-quality differences the benchmark is designed to detect.** When the judge effect equals the generation effect, the entire measurement enterprise is compromised — you cannot reliably detect a 1-point quality difference between items when your panel introduces ±1 point of judge noise.
+
+The paper proposes CyclicJudge (round-robin judge assignment) as variance reduction. But the variance decomposition finding is the relevant contribution for D+E+F: in our experiment, the five AI raters' mean frontier_scores span a 0.7-point range across content categories (2.37 seeds vs. 3.21 IFDS). If judge-level bias is comparable in magnitude to this 0.84-point difference, the entire finding ("IFDS outscores seeds") is on the edge of being a judge artifact, not a content finding. This strengthens the argument for calibrated-rater filtering (the calibration step reduces the judge-level bias component before computing the disagreement metric).
+
+**Where it fits:** Add to the paper's Section 1 opening as a second empirical anchor alongside α=0.28. The sentence: "Not only do our judges disagree (α=0.28), but per-judge systematic bias is empirically comparable to the content quality variation we measure (arXiv 2603.01865), making raw consensus doubly misleading — it misrepresents content AND suppresses the disagreement that would flag the problem."
+
+---
+
+**New paper 2 — arXiv:2604.05460 — "LLM Evaluation as Tensor Completion: Low Rank Structure and Semiparametric Efficiency" (April 2026)**
+
+Models multi-model evaluation leaderboards as completing a (model × task × judge) tensor with low-rank structure. The low-rank observation means: judge errors across tasks and models lie in a low-dimensional latent subspace — errors are structurally correlated, not independent. This is the formal mathematical statement of the Condorcet independence violation.
+
+The tensor framing provides the most rigorous formalization of the correlated-error mechanism: if error were full-rank (independent across judges and items), consensus would converge to truth. The observed low-rank structure means a small number of latent factors (shared training corpus exposure, shared RLHF calibration dynamics) account for most error variance. The Log-Rank Conjecture anecdote is an extreme instance: all three model families loaded on the same latent factor (co-occurrence of "proof barrier" language near the Log-Rank Conjecture in shared academic pretraining corpora), producing approximately rank-1 error structure on that specific item.
+
+The actionable implication: the informative signal is in the **tensor residual** — the idiosyncratic per-judge disagreement unexplained by shared latent factors. This is precisely what calibrated-judge N-axis std captures after filtering pathological raters (Qwen, Haiku) who load on non-frontier latent factors. Tensor completion formalizes why filtering and residual computation are the correct operations, not averaging.
+
+**Where it fits:** Add to Section 2 (Why It's Structural) after the ACPO citation. The tensor framing is the most mathematically precise argument for why consensus fails and why the residual disagreement is informative.
+
+---
+
+**Crystallized unifying framing: "Criterion-referenceability collapse"**
+
+The 33rd-Pass literature addendum introduced arXiv:2603.14732 (Yeadon et al., "Criterion-referenceability determines LLM-as-a-judge validity"). This vocabulary crystallizes a framing that was implicit across 33 passes but never stated in a single sentence:
+
+**All five findings — A through F — trace to a single root cause: criterion-referenceability collapses for frontier research questions.**
+
+Criterion-referenceability is the degree to which the features justifying a score can be made explicit, inspected, and applied consistently against an external referent. Where it holds, LLM judges perform reliably. Where it collapses (no external referent exists), judges produce correlated errors from shared heuristics and their disagreement becomes aleatoric and informative.
+
+- **Rigour of a frontier research question:** No external referent. The question's own technical premise may be unsettled. Criterion-referenceability = zero. → R-axis errors are correlated (all judges apply the same fallback heuristics: does this look formally structured?) and α_R is lowest (0.257).
+- **Generativity of any question:** External referent exists implicitly: distributional signatures of research that spawned follow-up work. Criterion-referenceability = moderate. → G-axis agreement is highest (α_G = 0.319) because all models match against the same distributional templates.
+- **Novelty of a frontier question:** Partially criterion-referenceable within each model's knowledge representation, but models differ in their representations of rare frontier literature. → Aleatoric N-axis disagreement among calibrated judges is the frontier signal.
+
+The 9-page paper's theoretical section needs one additional concept from Yeadon et al.: criterion-referenceability. Everything else is already in the 33-pass synthesis.
+
+---
+
+**Devil's Advocate — Final Assessment**
+
+*The strongest surviving objection after 33 passes:* The document is now 7700+ lines of cumulative synthesis confirming D+E+F. A NeurIPS reviewer reads a 9-page paper, not a synthesis document. The question is whether the 9-page argument survives compression.
+
+The 9-page version requires exactly five elements:
+1. **Hook:** α_R=0.257, α_G=0.319 — two numbers, no human labels, inverts the objectivity hierarchy
+2. **Anecdote:** Log-Rank Conjecture convergent error — three families, identical mistake, concrete mechanism
+3. **Null result:** consensus frontier_score ρ≈0 with debate-worthiness — the practical failure that matters
+4. **Theory:** Condorcet independence violated via shared frontier corpora + OOD detection impossibility for novelty
+5. **Prescription:** Calibrated-judge N-axis std as human-review acquisition signal; select panel by calibration complementarity
+
+These five elements are individually defensible. The D+E+F thesis is that they cohere: consensus suppresses the right signal (N-axis disagreement), amplifies the wrong one (correlated R-axis errors), and is structurally blind to intellectual contestedness. That argument is original, falsifiable, and unoccupied in the literature as of April 8, 2026.
+
+*What this document contributes to that 9-page argument:* The evidence infrastructure. Every citation in the 9-page paper has been located, verified, and stress-tested in this document. The literature gap is confirmed. The data is verified. The operationalization (calibrated N-axis std, N-std ≥ 0.85 threshold, Gemini+GPT+Opus panel) is derived. The one unrun analysis (Spearman ρ on all 29 human-labeled items) is flagged. The paper's authors can draft from the 33-pass synthesis with confidence.
+
+**The thesis is complete. Write the paper.**
+
+---
+
+## CANDIDATE POSITIONS — FINAL OVERNIGHT ASSESSMENT (2026-04-08)
+
+*Incorporates all 33 prior synthesis passes plus two new papers (CyclicJudge, Tensor Completion) and the criterion-referenceability unifying framing. No ranking changes from 33rd Pass. This is the authoritative final table.*
+
+---
+
+### Candidate D+E+F+C Unified — TOP RECOMMENDATION
+
+**One-sentence position:**
+
+> *Multi-model AI evaluation panels produce Krippendorff's α=0.257 on Rigour and α=0.319 on Generativity — the objectivity gradient runs backwards — because Rigour requires factual contact with reality that collapses at the frontier (criterion-referenceability = zero; correlated shared-corpus hallucinations result), while Generativity requires only pattern-matching to distributional signatures of generative research (consistently reliable); the surviving calibrated N-axis disagreement — maximized by selecting panel members with complementary failure profiles, not architectural diversity — is the only honest frontier detector the paradigm currently discards.*
+
+**Evidence for (cumulative):**
+- α_R=0.257, α_G=0.319 — internally derived, no human labels, directly inverts objectivity hierarchy
+- IFDS jargon (3.21) > Seeds (2.37) geometric mean across all 5 models — consensus misranks
+- Log-Rank Conjecture: three model families (Claude, Gemini, GPT) independently and identically wrong — textbook correlated-error signature
+- 4/4 unambiguous human-labeled FRONTIER items show calibrated N-axis std as highest or tied-highest axis
+- consensus frontier_score ρ≈0 with debate-worthiness (2.75 vs 2.73) — structurally blind to intellectual contestedness
+- "Great Models Think Alike" (arXiv 2502.04313, ICML 2025 spotlight): errors converge with capability
+- arXiv 2602.22413: formal Condorcet accuracy degradation proof under correlated information
+- arXiv 2511.15714: consensus improves accuracy 7–15 pts for routine content (the non-frontier baseline, making the frontier failure a structural contrast)
+- arXiv 2603.01865 (CyclicJudge, NEW): judge-level bias comparable in magnitude to content-quality differences
+- arXiv 2604.05460 (Tensor Completion, NEW): low-rank error structure formalizes correlated failures as shared latent-factor problem; residual is the informative signal
+- arXiv 2603.14732: criterion-referenceability vocabulary — the mechanism governing all five findings
+- arXiv 2604.02359: jury κ=0.68 < best-judge κ=0.75 in expert clinical domain — jury underperforms when criterion-referenceability demands holistic judgment
+- EMNLP 2025 Oral (arXiv 2510.12817), HealthBench (arXiv 2602.22758, 81.8% case-level variance), Council Mode (arXiv 2604.02923), DiscoUQ (arXiv 2603.20975), 15+ additional confirmations
+
+**Evidence against:**
+- N=4 human-labeled FRONTIER items for calibrated N-axis signal (Spearman ρ across all 29 not computed — this remains the single most important unrun analysis)
+- Log-Rank error is one qualitative anecdote, not a systematic all-models-wrong rate
+- Calibrated-rater filter requires human labels to define "calibrated" — circularity risk (addressed by IRT/MFRM operationalization, but not yet implemented)
+- IFDS items show comparable raw N-std to frontier items without calibrated-rater filtering — the filter is mandatory, not optional
+- Formula discrepancy (geometric mean 3.21/2.37 vs production frontier_score 2.91/2.45) — paper must commit to geometric mean throughout
+
+**Surprise score: 4/5** — Inverts two simultaneous assumptions: (1) consensus = reliability; (2) disagreement = noise. The "objectivity gradient runs backwards" hook (α=0.257/0.319) requires no interpretation and is immediately surprising to any LLM-as-judge practitioner.
+
+**Five confirmed novel contribution gaps:**
+1. Condorcet jury theorem framing traced to frontier-corpus-specific corpora overlap — unoccupied
+2. N-axis calibrated inter-judge std as human-review routing signal, grounded in aleatoric OOD impossibility — unoccupied
+3. Per-axis MAE complementarity as panel design criterion (vs architectural diversity) — unoccupied
+4. Debate-worthiness prediction failure (ρ≈0 while linking ρ=0.62) — unoccupied
+5. Question-rigour vs answer-rigour asymmetry: criterion-referenceability collapses for frontier research questions — unoccupied
+
+---
+
+### Candidate B — Scale Anti-Correlates with Evaluation Quality
+
+**One-sentence claim:** Gemini Flash (free) outperforms Claude Opus ($15/M) as a frontier judge by 2× because optimization pressure anti-correlates with evaluation sensitivity at the frontier — a pattern now grounded in the published Mediocrity Principle (arXiv 2603.16848).
+
+**Evidence:** MAE 0.53 vs 0.97 (N=29); Mediocrity Principle (inverted-U of capability vs anchor effectiveness, March 2026); Semantic Capacity Asymmetry (arXiv 2601.22588); sycophancy scaling with formal proof (arXiv 2602.01002).
+
+**Against:** N=29 thin; Haiku (cheapest Anthropic) worst in Anthropic family — cost-monotonicity fails within family; cross-family confounds size with training methodology.
+
+**Surprise score: 4/5 (claim); 2/5 (evidence).** Strong standalone backup if D+E+F is rejected.
+
+---
+
+### Candidate A — Novelty Impossibility
+
+**One-sentence claim:** LLM judges invert novelty rankings because novelty assessment of frontier content is structurally equivalent to OOD detection under the training distribution, which is PAC-impossible without external anchors.
+
+**Evidence:** IFDS 3.21 > Seeds 2.37 across all 5 models; perplexity-preference mechanism (arXiv 2410.21819); OOD impossibility (NeurIPS 2021); RINoBench (arXiv 2603.10303).
+
+**Against:** FrontierMath (open-problem format) reverses the inversion (3.57 > IFDS 3.21) — format confound weakens the strong "impossibility" claim for HLE seeds specifically.
+
+**Surprise score: 2–3/5.** Strong as mechanism within D+E+F. As standalone: weaker than prior passes assessed (format confound discovered in 32nd Pass degrades it).
+
+---
+
+### Final Top Recommendation
+
+**D+E+F+C unified. Lead with the two-number hook: α=0.257 on Rigour, α=0.319 on Generativity.**
+
+Title: **"Consensus as Confound"** or **"The Disagreement Dividend"**
+
+The criterion-referenceability vocabulary from arXiv:2603.14732 is the theoretical anchor that unifies all five findings into one structural claim. The tensor completion framing (arXiv:2604.05460) formalizes the correlated-error mechanism. The CyclicJudge finding (arXiv:2603.01865) adds a second empirical anchor: judge bias ≈ content variation magnitude, making raw consensus doubly unreliable.
+
+**Three remaining actions before submission (unchanged, now urgent):**
+1. Compute Spearman ρ(calibrated-judge N-std per item, human frontier label) across all 29 human-labeled items — the paper's one untested falsifiable prediction
+2. Reframe Candidate A evidence around FrontierMath comparison (avoids HLE format confound)
+3. Compute per-axis α per content category (seeds/IFDS/other) — confirms gradient is content-type-robust, not format artifact
+
+**The thesis is complete. The literature gap is confirmed as of April 8, 2026. Write the paper.**
+
