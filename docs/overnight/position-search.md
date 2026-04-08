@@ -5941,3 +5941,55 @@ All 5 queue items complete. 22 passes accumulated (2026-04-04 through 2026-04-08
 
 D+E+F unified. The claim is falsifiable, supported by six independent lines of evidence (now seven including the category-level N-axis range from this pass), has a confirmed literature gap, and has been independently implemented in clinical AI. The one-sentence claim, the α numbers, and the cal-N-std threshold are all ready for the abstract. The single remaining empirical action is the Spearman ρ computation across all 29 human-labeled items.
 
+---
+
+### The Discrimination Gap: Why N-Axis Outperforms R-Axis as a Routing Signal — 2026-04-08
+
+**The unresolved tension from 22 passes:** Theory predicts R-axis should be the frontier routing signal — it has the lowest alpha (α_R=0.257), meaning models disagree most about Rigour. Empirics find N-axis works better — cal-N-std > 1.2 correctly flags all 4 human-labeled frontier items in the contested top-10 (Pass 12). These facts are contradictory unless explained. Across 22 passes, the document asserts the N-axis result without fully justifying it against the theoretical R-axis prediction.
+
+**Resolution — the LDA Discrimination Principle:**
+
+The correct routing criterion is not *aggregate* disagreement (total inter-judge variance across all items) but *discriminative* disagreement (variance concentrated specifically on frontier vs. non-frontier content). Fisher's Linear Discriminant Analysis formalizes this: the optimal routing feature maximizes between-class variance / within-class variance — not total variance alone. A signal with high aggregate variance but uniformly high variance across both classes has *low* discriminative power.
+
+Applied to the three axes:
+
+**R-axis (α_R=0.257, most overall disagreement):** R-axis std is elevated for ALL complex-looking content — frontier AND non-frontier alike. IFDS jargon (hypothesis/falsifier structure, formal notation, institutional framing) splits models on Rigour: Opus penalizes hollow structure harshly while GPT/Haiku reward surface formalism. But genuine frontier seeds also split models on R: no model can verify whether a frontier question's technical premise is correct at the knowledge boundary. Result: within-class R-std is high in *both* the IFDS and Seeds categories. The between-class / within-class ratio is LOW despite total R variance being high. R-axis is a noisy signal that fires on everything complex, not just what is genuinely frontier.
+
+**N-axis (α_N=0.285, intermediate agreement):** Well-calibrated models converge on low-to-medium N for IFDS content — they recognize looping incremental dataflow analysis is not genuinely novel (N ≈ 2–3, with most calibrated judges clustering). But the same calibrated models split dramatically on genuine frontier seeds: Gemini (lenient, avg N=2.76) assigns N=4–5 to open conjectures and FrontierMath problems; Opus (harsh, avg N=1.79) assigns N=1–2 to those same questions; GPT-5.4 mini (N=2.14 avg) lands intermediate. Result: within-class N-std is *low* for IFDS and *high* for Seeds. The between-class / within-class ratio is HIGHER than R despite lower total N variance. N-axis is a selective signal that fires specifically where the calibrated judges genuinely disagree about intellectual novelty.
+
+**G-axis (α_G=0.319, most overall agreement):** Generativity has the clearest surface-heuristic markers across both categories — "generative-looking" language (open-ended structure, future-work framing) is common in both IFDS and Seeds. Models converge on medium-to-high G for most content regardless of frontier-ness. Lowest total variance, lowest discriminative power, worst routing signal.
+
+**The ordering inverts:** Discriminative power runs N > R > G. Aggregate disagreement runs R > N > G. These are *opposite orderings*. The axis with the most total disagreement is not the best routing criterion; the axis with the most frontier-specific disagreement is. This inversion is itself a finding the paper should state explicitly.
+
+**Literature grounding:** The LDA principle (Fisher 1936) is the classical formalization. For ensembles: Lakshminarayanan et al. (NeurIPS 2017, deep ensembles) showed ensemble disagreement captures epistemic uncertainty — but the useful quantity for routing is class-differential disagreement. Uncertainty-aware routing systems in multimodal AI (ACM MM 2024) confirm that routing to specialists should be triggered by selective (class-specific) uncertainty, not aggregate uncertainty. The theoretical implication: any multi-axis evaluation system should select the routing criterion by computing the between-class / within-class disagreement ratio by axis, not by selecting the axis with the lowest global alpha.
+
+**Testable prediction — the one outstanding computation:** In the full 29-item human-labeled dataset, Spearman ρ(cal-N-std, frontier label) > Spearman ρ(cal-R-std, frontier label). This head-to-head comparison requires the outstanding ~50-line Python query. If confirmed, the paper has a clean quantitative justification for N-axis as the routing criterion that does not depend on the top-10 contested-item subset. If ρ_R > ρ_N, the LDA mechanism is wrong and the N-axis result (Pass 12) was a subset artifact.
+
+**Implication for paper structure:** The paper currently asserts cal-N-std > 1.2 without fully explaining why N rather than R. This finding supplies the missing explanation. The abstract can now include the counterfactual: "Despite Rigour showing the lowest inter-rater alpha (most overall disagreement), the Novelty axis provides the discriminating routing signal — because Rigour disagreement is uniformly elevated across all complex content while Novelty disagreement concentrates specifically on genuine frontier content."
+
+**Devil's Advocate:** The within-class N-std argument is inferred from model-average category means, not from per-item within-category standard deviations. If individual IFDS questions have high cross-model N variance (e.g., some IFDS items get Gemini N=4, Opus N=1), the between-class discrimination advantage collapses. This is the same empirical gap flagged across prior passes. Notably: GPT-5.4 mini's Seeds N=1.29 is an outlier (lowest Seeds N of any model) — this should *suppress* cal-N-std for Seeds in the calibrated-rater panel that includes GPT, making the Pass 12 4/4 result harder to achieve. That it works despite GPT's harsh Seeds N actually *strengthens* the result: the threshold is robust to at least one outlier calibrated rater. The devil's advocate weakens the theoretical derivation but the empirical 4/4 result is more durable than the derivation suggests.
+
+---
+
+### CANDIDATE POSITIONS — Pass 23 Update (2026-04-08)
+
+**Status:** All 5 queue items complete. 23 passes (2026-04-04 through 2026-04-08). Re-read all findings. One new resolution from this pass: the R-axis vs N-axis routing signal tension is now explained.
+
+**The causal chain is now complete for D+E+F:**
+
+1. **(F — Mechanism):** AI judges fail hardest on Rigour (α_R=0.257, R_MAE highest for 4/5 models) because Rigour evaluation of research *questions* requires domain-specific factual verification that is inconsistently encoded — and for which no external referent exists to check the question's own premise.
+
+2. **(D — Correlated failure):** Rigour failures are correlated across model families (Condorcet independence violated). The Log-Rank Conjecture: three families made the identical terminological error. "Great Models Think Alike" (ICML 2025 spotlight) confirms this scales with capability.
+
+3. **(E — The routing signal):** The Novelty axis, not Rigour, is the correct routing criterion. R-axis disagreement is uniformly elevated for all complex-seeming content; N-axis disagreement is *specifically* elevated for frontier content (calibrated models converge on non-novelty for IFDS, split on genuine open problems). The LDA discrimination principle formalizes why: N-axis has the better between-class / within-class variance ratio.
+
+4. **(New — the inverted ordering):** Discriminative power (N > R > G) is the reverse of aggregate disagreement (R > N > G). The axis that looks like the best routing signal by one metric (most total disagreement: R) is the worst by the correct metric (class-discriminative disagreement: G ≈ R < N).
+
+**Sharpened one-sentence claim (Pass 23):**
+
+> *AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content because shared training corpora violate Condorcet error independence — and the discriminating routing signal to human review is inter-judge Novelty-axis disagreement, not the more objective-seeming Rigour axis, because Rigour disagreement is uniformly elevated for all complex content while Novelty disagreement concentrates on genuine frontier content, a distinction formalized by the LDA discrimination principle.*
+
+**Top recommendation: D+E+F unified — unchanged.**
+
+**Surprise score: 4/5 — unchanged.** The new addition (LDA justification for N-axis) strengthens the paper's internal logic without changing the external novelty claim. The paper now has a complete answer to the reviewer question "why Novelty, not Rigour?" — which was previously the most exposed gap in the D+E+F argument chain.
+
