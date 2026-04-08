@@ -7696,3 +7696,34 @@ The question-rigour asymmetry (Gap 2) remains unoccupied in all 2025-2026 litera
 2. Reframe Candidate A evidence around FrontierMath comparison to avoid question-type confound.
 3. Compute per-axis α for each content category separately (seeds, IFDS, other-agent) to confirm the gradient is content-type-robust, not format-artifact.
 
+
+---
+
+### Literature Addendum — 2026-04-08 (from search agent, post-33rd Pass)
+
+Three papers not yet in the document, identified by overnight search agent:
+
+**arXiv:2603.14732 — "Criterion-referenceability determines LLM-as-a-judge validity across physics assessment formats" (Yeadon et al., Durham, March 2026):**
+
+Introduces the concept of **criterion-referenceability**: the degree to which the features justifying a score can be made explicit, inspected, and applied consistently. Highly criterion-referenceable tasks (structured exam questions with official solutions) yield strong LLM judge performance (Spearman ρ=0.88); weakly criterion-referenceable tasks (essays, open scientific plots) show larger divergence requiring holistic judgment.
+
+**This is the closest conceptual neighbor to Gap 2 (question-rigour asymmetry) found in any literature sweep.** A frontier research question at the edge of human knowledge is, by definition, weakly criterion-referenceable — not because of rubric ambiguity, but because the question's own technical premise may be unsettled. There is no "official solution" or "ground truth" against which to verify whether the question is rigorously posed. Yeadon et al. demonstrate that criterion-referenceability is the mechanism governing LLM judge reliability — which directly predicts that evaluating frontier research *questions* on Rigour (the most criterion-referenceable dimension when applied to *answers*) becomes the *least* criterion-referenceable task when applied to *questions at the frontier*. This is the theoretical vocabulary our paper needs: R-axis error is highest because frontier research question evaluation is weakly criterion-referenceable, and weak criterion-referenceability causes LLM judge validity to collapse.
+
+Critically, the paper evaluates *answers* to defined questions — it does not make the move to evaluating the *question itself*. Gap 2 remains unoccupied.
+
+**arXiv:2603.04417 — "Same Input, Different Scores: A Multi-Model Study on the Inconsistency of LLM Judges" (Lau, March 2026):**
+
+Benchmarks GPT-4o, GPT-4o-mini, Gemini-2.5-Flash, Claude Haiku 4.5, Claude Sonnet 4.5 on enterprise RAG QA pairs at temperature=0. Finds substantial cross-model score divergence that is systematic and model-family-dependent, not random noise. "Completeness" scoring shows the largest fluctuations — analogous to our Novelty axis (assessing whether an answer is complete/novel relative to the research program). Lower temperature helps GPT-4o and Gemini but has limited/inconsistent effect on Anthropic models, suggesting the divergence is architectural, not sampling-based.
+
+**Relevance for D+E:** Direct empirical support that cross-model score divergence is systematic and family-specific — corroborating that our α=0.28 is structural, not correctable by better prompting or lower temperature. The finding that completeness/Novelty-analog dimensions show the largest fluctuations at temperature=0 is consistent with N-axis disagreement being the genuinely heterogeneous uncertainty signal.
+
+**arXiv:2604.02359 — "Using LLM-as-a-Judge/Jury for Safety Evaluations" (clinical psychosis, April 2026):**
+
+Tests single-judge vs majority-vote jury in a clinical safety domain against clinician consensus. Best single judge achieves Cohen's κ=0.75; the jury approach achieves κ=0.68 — the jury *underperformed* the best individual judge. This is a domain-expert setting where the evaluation task is strongly criterion-referenceable (clinical safety = yes/no, defined protocols exist).
+
+**Relevance for D:** This is the strongest empirical example of jury underperforming best judge found in the entire literature sweep. Prior papers showed ensemble ≈ oracle or ensemble slightly > oracle; this shows ensemble < oracle in an expert domain. For the paper's oracle-counterfactual section: "In expert domains where the evaluation criterion is well-defined but requires specialist knowledge, jury aggregation can hurt (κ drops from 0.75 to 0.68). For frontier intellectual content — where the criterion is both specialized AND poorly defined — jury performance degrades further."
+
+**Amended pre-submission action items (adding one from search agent findings):**
+
+4. Cite arXiv:2603.14732 (criterion-referenceability) in Section 3 on the question-rigour asymmetry — this paper provides the vocabulary ("criterion-referenceability") and the mechanism (holistic judgment required when no external referent exists) for Gap 2.
+
