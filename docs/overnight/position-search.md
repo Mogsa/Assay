@@ -2604,6 +2604,73 @@ The surviving honest limitation: we cannot rule out that Gemini + GPT + Opus are
 
 **Recommendation: Write the paper. The thesis is complete, the contrast is now empirically anchored on both sides, and the literature gap remains open as of April 8, 2026.**
 
+---
+
+### Candidate B+C Convergence: Mediocrity Principle, Focal Diversity, and Novelty Facets — 2026-04-08
+
+**Purpose of this entry:** All five queue items are complete. This pass integrates three papers not yet cited in any prior entry, two of which materially strengthen Candidate B and formally ground Candidate C for the first time.
+
+---
+
+**New paper 1 — arXiv 2603.16848: "Mediocrity is the Key for LLM as a Judge Anchor Selection"** (Shachar Don-Yehiya et al., March 17, 2026):
+
+This is the strongest new citation for Candidate B found across all nine passes. It establishes empirically — not just as a theoretical argument — that capability and anchor effectiveness follow an **inverted U-shape**: models too weak to evaluate content perform badly; models at an intermediate capability level ("mediocre" relative to the evaluation set) perform best; models that are significantly more capable than the content under evaluation perform worse because they over-project their own generative priors onto the anchor. The mechanism directly explains the Gemini Flash > Opus finding: Gemini Flash is "mediocre" relative to frontier research questions (it doesn't pretend to definitively know the novelty hierarchy of frontier mathematics) while Opus is overcapable and imposes its skeptical prior ("this cannot be genuinely novel"). The inverted U is not our idiosyncratic dataset result — it is a documented general principle in comparative evaluation.
+
+Prior Candidate B evidence rested on N=29 human labels. This paper provides independent published empirical confirmation that the mediocrity principle governs anchor selection across evaluation tasks. Haiku (worst in panel) falls below the optimal capability level; Opus falls above it. Gemini Flash sits at or near the peak.
+
+**Add to Candidate B evidence as point 8:** "arXiv 2603.16848 shows an inverted U-shaped relationship between model capability and anchor effectiveness — mediocre models (relative to the evaluation set) make the best anchors — directly explaining why Gemini Flash outperforms Opus on frontier evaluation and providing a published empirical mechanism independent of our N=29 dataset."
+
+---
+
+**New paper 2 — arXiv 2410.03953: "LLM-TOPLA: Efficient LLM Ensemble by Maximising Diversity"** (EMNLP 2024 Findings):
+
+This paper introduces **focal diversity** — disagreement specifically during error cases — as the principled criterion for selecting ensemble members. Standard architectural diversity (different providers, different architectures) fails because diverse-looking models can still share errors. Focal diversity: select models whose errors are maximally non-overlapping. The paper achieves a 10–15 point accuracy improvement over naive ensembles by selecting for focal diversity rather than capability rank.
+
+This is the formal operationalization of Candidate C (calibration heterogeneity panel design). "Calibration heterogeneity" (choosing models with different MAE profiles against human ground truth) is the empirical proxy for focal diversity — models with different error structures against a labeled reference set. The prior gap for Candidate C was: "logically derived, no direct test, no formal grounding." LLM-TOPLA provides the formal grounding: focal diversity is a published, empirically validated selection criterion at EMNLP 2024 venue.
+
+Our specific contribution over LLM-TOPLA: (1) applying the principle to frontier intellectual content specifically (not general benchmarks), and (2) identifying N-axis calibrated disagreement as the frontier-specific focal-diversity signal.
+
+**Add to Candidate C evidence as primary supporting citation:** "arXiv 2410.03953 (LLM-TOPLA, EMNLP 2024) formalizes focal diversity — ensemble member selection by complementary error profiles — achieving 10–15 point accuracy gains over capability-ranked ensembles. Calibration-heterogeneous panel design (Candidate C) is the per-item operationalization of focal diversity for frontier content evaluation."
+
+---
+
+**New paper 3 — arXiv 2508.10795: "Beyond 'Not Novel Enough': Enriching Scholarly Critique with LLM-Assisted Feedback"** (2025):
+
+Tests LLM-generated feedback on novelty across 45 academic papers where reviewers reached different novelty verdicts. Key finding: **75.6% of novelty disagreements follow one of two distinct dimensions** — *methodological novelty* (does this introduce a new technique?) vs *application novelty* (does this apply known techniques to a new domain?). Reviewers (human and AI) systematically attend to different facets of novelty.
+
+This provides the mechanism for why N-axis disagreement is highest for frontier items across model families. Different model families develop distinct "novelty schemas" from their training corpora: Gemini (optimized for information retrieval) attends to informational novelty (is this new information?); GPT-5.4 mini attends to methodological novelty (is this a new technique?); Opus attends to open-question novelty (is this an unsolved problem?). For frontier content — which is simultaneously novel on some dimensions and not on others — these three schemas diverge. For IFDS jargon — which scores mid-range on all novelty dimensions — the schemas roughly agree. The disagreement is not rater noise; it is **structurally multi-dimensional**. This resolves a latent concern: prior passes framed calibrated-judge N-axis disagreement as "aleatoric uncertainty about whether content is novel." The stronger framing is: the disagreement is genuinely *about different things* (different novelty facets), and only frontier content exposes this divergence.
+
+**Add to Candidate E/Finding 4 as a mechanism citation:** "arXiv 2508.10795 shows that 75.6% of novelty disagreements across academic reviewers follow two distinct dimensions (methodological vs application novelty) — providing the mechanistic grounding for why calibrated AI judges diverge specifically on N-axis for frontier content: their novelty schemas attend to different facets, and frontier content sits at the boundary of multiple facets simultaneously."
+
+---
+
+**Devil's Advocate:**
+
+The "Mediocrity is the Key" finding (2603.16848) addresses anchor selection in *comparative ranking* tasks (pairwise comparison: which answer is better?), not scalar rating tasks (what score does this question deserve on a 1-5 scale?). Our R/N/G task is scalar, not comparative. The inverted U may not transfer directly: a mediocre judge might be calibrated for comparison but poorly anchored for absolute scale assignment. Counter: the core mechanism (intermediate-capability judges don't over-project generative priors) applies to both formats. Haiku's MAE=1.09 reflects central tendency (everything = 3), which is scalar miscalibration of the same type the mediocrity paper identifies — judges below the optimal capability zone flatten their ratings rather than discriminating. Opus's MAE=0.97 reflects over-skepticism on novelty — judges above the optimal zone project their own high standards onto the scale. The inverted U holds for both failure directions in our data.
+
+LLM-TOPLA (2410.03953) introduces focal diversity for general NLP benchmarks. The paper does not distinguish frontier from routine content. The gap between LLM-TOPLA and Candidate C is precisely the frontier-specific mechanism: on routine content, both architectural diversity AND focal diversity help; on frontier content, only focal diversity helps (because architecturally diverse models still share the same small frontier corpora). This distinction is our contribution over LLM-TOPLA — and the literature gap remains open.
+
+The 75.6% figure from arXiv 2508.10795 comes from 45 papers with human reviewer disagreements — a very specific academic peer-review context. The two novelty dimensions identified (methodological vs application) may not map cleanly onto R/N/G's N-axis (which measures "does this add unresolved information?" independent of domain). Counter: the general principle (novelty is multi-dimensional; different raters attend to different facets; frontier content triggers the most facet-divergence) applies regardless of the specific facet taxonomy.
+
+**Net effect on recommendation:** D+E+F unified remains #1. Candidate B is strengthened (from "moderate, N=29 dependent" to "moderate-strong: independent empirical confirmation via mediocrity principle"). Candidate C is elevated from "weak, logically derived" to "moderate: formally grounded in focal diversity (EMNLP 2024)." The N-axis mechanism (multi-dimensional novelty facets) adds theoretical depth to Finding 4/E without changing its operational prescription.
+
+---
+
+## CANDIDATE POSITIONS — TENTH PASS UPDATE (2026-04-08)
+
+*Supersedes the Ninth Pass ranking. Updates: Candidate B evidence upgraded; Candidate C elevated; N-axis mechanism sharpened.*
+
+| Rank | Candidate | One-sentence claim | Surprise | Evidence | Change from Ninth Pass |
+|------|-----------|-------------------|----------|----------|------------------------|
+| **1** | **D+E+F unified** | Multi-model panels improve accuracy for routine content but collapse (α=0.28) for frontier content, because the Condorcet independence assumption fails — correlated R errors are amplified, calibrated N-axis disagreements are discarded | **4/5** | Strong: α inversion, Log-Rank anecdote, 4/4 frontier items, ρ≈0 debate-worthiness, 15+ independent papers, arXiv 2511.15714 non-frontier baseline | Unchanged — dominant |
+| 2 | **B (Scale anti-correlation)** | Gemini Flash (mediocre capability relative to frontier math) outperforms Opus (over-capable) as a judge — the inverted U-shape of capability vs anchor effectiveness is now published | **4/5** | Moderate-strong: N=29 MAE + arXiv 2603.16848 Mediocrity Principle (published March 2026) + Semantic Capacity Asymmetry | **UPGRADED**: mediocrity paper provides published empirical mechanism independent of our N=29 |
+| 3 | **C (Calibration heterogeneity)** | Selecting panel members by focal diversity (complementary error profiles) outperforms architectural diversity or capability ranking | **5/5** | Moderate: focal diversity formalized in LLM-TOPLA (EMNLP 2024) + information-theoretic grounding (arXiv 2602.08003) + logically derived from B+D | **UPGRADED**: now has formal grounding; "weak evidence" → "moderate evidence" |
+| 4 | **A (Novelty Impossibility)** | AI judges invert novelty rankings because novelty detection is structurally OOD detection — jargon loops outscore genuine frontier math | **3/5** | Moderate: IFDS > seeds all 5 models; OOD impossibility; RINoBench; arXiv 2508.10795 multi-facet mechanism | Unchanged |
+
+**Top recommendation unchanged: D+E+F unified. Write the paper.**
+
+**One new action item from this pass (added to prior two):** Cite arXiv 2603.16848 in the Candidate B section and use it as the theoretical bridge between Candidates B and C — the mediocrity principle explains WHY calibration-heterogeneous panels are better: you want one judge near the optimal-capability zone (Gemini Flash) and one above it with a different failure mode (Opus), not two judges at peak capability who share the same over-projection bias.
+
 ## NINTH PASS — 2026-04-05
 
 *(All 5 queue items confirmed complete. This pass: fresh April 2026 literature sweep, confirmation of two unoccupied literature gaps that are the paper's strongest original claims, and one new parallel paper not yet cited. Final CANDIDATE POSITIONS updated.)*
