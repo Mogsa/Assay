@@ -8593,4 +8593,66 @@ The paper's contribution is being the first to assemble the structural argument 
 4. Replace "factual checking vs pattern matching" with "operationalizability through distributional pattern-matching" as the Candidate F mechanism. Frame Rigour failure as requiring "external truth-contact" that LLMs cannot provide for frontier questions with no established ground truth.
 5. Open the paper with the IFDS premium table (not the α table) — five models, five positive premiums, GPT +1.70 is the lede. Follow with α_R=0.257 vs α_G=0.319 as the explanation.
 
+---
+
+### The Reliability–Heterogeneity Distinction: Why Adaptive Jury Frameworks Are Wrong for Frontier Content — 2026-04-09
+
+**The gap this filling addresses:** Candidate C (Calibration Heterogeneity as Panel Design Rule) has been assigned the highest surprise score in the document (5/5) but the weakest evidence ("logically derived, no direct test"). Prior passes mentioned the principle but never grounded it against the emerging adaptive jury literature. This entry does that.
+
+**The new papers:**
+
+1. **"LLM Jury-on-Demand" (arXiv 2512.01786, December 2025):** Trains per-judge reliability predictors using token distributions, embeddings, and structural features. For each evaluation instance, dynamically assembles the K judges with highest predicted reliability (agreement with human ground truth). Achieves significantly higher human correlation than static-jury baselines on summarization and RAG tasks.
+
+2. **"Explicit Reasoning Makes Better Judges" (arXiv 2509.13332, September 2025):** Small thinking models (Qwen 3 at 0.6B–4B parameters) beat large non-thinking models by ~10% judge accuracy. The decisive variable is not model size but *reasoning mode* — explicit chain-of-thought enables more consistent judge behavior and is 6% more robust across bias conditions (positional, bandwagon, identity, diversity, random).
+
+**The reliability-heterogeneity distinction (the novel contribution):**
+
+The entire adaptive jury literature — Jury-on-Demand (2512.01786), BT-sigma (2602.16610), PoLL, and related frameworks — optimizes for the same objective: **maximize per-instance reliability**, defined as predicted agreement with human ground truth. This requires ground truth to calibrate against: reliability predictors are trained on annotated data, and their validity extends only as far as their training distribution. For novel frontier content — by definition, content without established human ground truth — reliability-maximizing jury selection becomes undefined. The predictors have no signal to calibrate against for genuinely frontier items.
+
+Our calibration heterogeneity prescription addresses a structurally different objective for a structurally different regime: **maximize disagreement informativeness** by selecting judges whose failure modes are maximally complementary. For Gemini Flash (retrieval-optimized, low perplexity-preference sensitivity, accurate N-axis assessments) and Claude Opus (heavy skepticism, over-penalizes questions without verified open status, high domain-knowledge attempts), their N-axis disagreement on a frontier question is informative precisely *because* they fail in complementary ways — Gemini fires on "does this look informationally novel?" while Opus fires on "has this been established in the domain?". When they agree on N, the answer is legible; when they disagree, the item sits at the exact boundary between those two judgment criteria.
+
+**Why this is not equivalent to reliability maximization:** Jury-on-Demand's reliability predictor, when applied to a frontier question, would assign both Gemini Flash and Opus high reliability (both have historically agreed with humans more than Haiku/Qwen), select both, and aggregate their scores. This suppresses the informative disagreement. The calibration heterogeneity approach instead *preserves* the Gemini/Opus disagreement as the primary signal and routes the item to human review rather than producing a consensus score.
+
+**The reasoning-mode finding (arXiv 2509.13332) sharpens Candidate B:** The anti-correlation between model scale and frontier judge quality (Candidate B) is more precisely characterized as anti-correlation between RLHF-sycophancy-optimization-pressure and judge calibration, modulated by reasoning mode. Small thinking models beat large non-thinking models. In the standard LLM-as-judge paradigm (rubric prompting without thinking tokens, as used in our experiment), larger RLHF-tuned models exhibit sycophancy more strongly. But with explicit chain-of-thought, even large models may partially recover judge calibration — because reasoning forces them to articulate their evaluation steps rather than pattern-matching directly to a score. This nuance doesn't undermine Candidate B; it specifies the confound variable (reasoning mode) that should be controlled in a follow-up experiment. A version of our experiment with thinking-mode ratings would be the clearest test: if Opus-thinking-mode MAE < Opus-non-thinking MAE, the sycophancy mechanism is confirmed (explicit reasoning partially suppresses it); if not, the scale mechanism dominates.
+
+**The Semantic Capacity Asymmetry connection:** arXiv 2601.22588 (already cited) shows that evaluation requires less semantic capacity than generation and can be extracted from intermediate representations of small models (INSPECTOR framework). arXiv 2509.13332 adds: what small models *with reasoning* lack is not evaluation capacity but bias-resistance. Large non-thinking models have bias-resistance problems (sycophancy, positional bias) not capacity problems. Small thinking models have the same evaluation representations plus better bias-resistance from explicit reasoning chains. This two-factor account (capacity × reasoning mode) fully explains the Gemini Flash paradox: Gemini Flash is a small-ish, retrieval-trained model that may be closer to the "high capacity / low sycophancy" sweet spot than Opus ($15/M, very high RLHF sycophancy optimization, no thinking mode in standard evaluation).
+
+**Devil's Advocate:**
+
+The strongest objection to the reliability-heterogeneity distinction is that it's definitional: "you're saying calibration heterogeneity is better for frontier content because frontier content has no ground truth — which is just saying the reliability approach can't be applied, not that heterogeneity is correct." The counter: the calibration heterogeneity approach makes a positive empirical prediction (Gemini Flash + Opus N-axis disagreement should predict frontier labels better than Gemini-only or Opus-only or consensus). This is not merely a statement about the inapplicability of reliability maximization — it's a positive prescription with a falsifiable prediction, derivable from the empirical calibration profiles and confirmed directionally by the 4/4 high-N-std human frontier labels. The reliability-maximizing frameworks can't make this prediction at all (because they have no signal for frontier items); the heterogeneity-maximizing approach makes a specific, testable one. A second objection: the reasoning-mode finding (2509.13332) challenges the Candidate B narrative by showing that *any* model with explicit reasoning can be a good judge, which weakens the "cheapest-is-best" story. The counter: the standard LLM-as-judge paradigm (rubric prompting without explicit thinking) is how all five models in our experiment were run. In that paradigm, sycophancy dominates. The thinking-mode finding is relevant future work, not a refutation of our experimental results.
+
+**Net effect on the recommendation:** D+E+F unified is unchanged as the top recommendation. Candidate C (calibration heterogeneity) gains theoretical grounding from the reliability-heterogeneity distinction and is now precisely positioned as "the correct panel design principle for the frontier regime where reliability-maximizing approaches are inapplicable." The two new papers (2512.01786, 2509.13332) should be cited in the paper's "Related Work on Jury Design" section — 2512.01786 as the closest existing approach (same paradigm, wrong objective for frontier content), and 2509.13332 as a new nuance to Candidate B (reasoning mode is the confound to control).
+
+---
+
+## CANDIDATE POSITIONS — TENTH PASS FINAL UPDATE (2026-04-09)
+
+*This pass adds the reliability-heterogeneity distinction, reasoning-mode nuance for Candidate B, and confirms no new April 9, 2026 papers that change the recommendation. The ranking and core evidence are unchanged from the Ninth Pass (2026-04-09) final update. Only the Candidate C assessment is updated.*
+
+---
+
+### Summary of All Candidates
+
+| Rank | Candidate | One-sentence claim | Surprise | Evidence | Status |
+|------|-----------|-------------------|----------|----------|--------|
+| **1** | **D+E+F unified** | Panels amplify correlated R errors (Condorcet violated via shared training corpora) while discarding calibrated N-axis disagreement — the discarded signal is the frontier probe | **4/5** | Strong: α_R=0.257 vs α_G=0.319; IFDS premium all-positive × 5 families; 4/4 high-N-std items human-labeled frontier; 15+ independent papers | **WRITE THE PAPER** |
+| 2 | **B (Scale anti-correlation)** | Gemini Flash (free, MAE=0.53) outperforms Opus ($15/M, MAE=0.97): RLHF sycophancy optimization pressure and non-thinking evaluation mode anti-correlate with frontier judge quality | 4/5 | Moderate: N=29 human labels; nuanced by reasoning-mode finding (2509.13332); formal proof (2602.01002) | Strong standalone backup |
+| **3 (new)** | **C (Calibration heterogeneity panel design)** | For frontier content without ground truth, optimize panel composition for complementary failure modes (calibration heterogeneity) rather than per-instance reliability — the only principled objective when reliability-maximizing approaches are inapplicable | **5/5** | Moderate: logically derived from B+D; directionally confirmed by 4/4 frontier items under Gemini+Opus calibrated disagreement; distinguished from Jury-on-Demand (2512.01786) which requires ground truth | Best as paper's novel prescriptive contribution; cite 2512.01786 as "closest existing work, wrong objective for frontier regime" |
+| 4 | **A (Novelty Impossibility)** | All five model families show positive IFDS premium over genuine frontier math; LLM novelty judgment is structurally OOD detection, confirmed as open research problem by RINoBench (2603.10303) | 3/5 | Moderate: IFDS premium confirmed all-positive (GPT +1.70 most extreme); FrontierMath partially recovers | Good supporting evidence; cite to set up D+E+F |
+
+---
+
+### TOP RECOMMENDATION — UNCHANGED (Tenth Pass)
+
+**D+E+F unified. Paper title: "Consensus as Confound" or "The Disagreement Dividend."**
+
+The one-sentence position does not change from the Ninth Pass. The Tenth Pass adds one precision: **Candidate C should be included as the paper's concrete prescriptive novel contribution**, since it now has sharper theoretical grounding from the reliability-heterogeneity distinction and is explicitly differentiated from the best existing adaptive jury framework (Jury-on-Demand, arXiv 2512.01786). The paper's structure can accommodate C as Section 6 (Operational Prescription), following E (disagreement as frontier signal) and before the Conclusion.
+
+**Required actions before submission (updated priority order):**
+1. Run Spearman ρ(calibrated-rater N-axis std per item, human frontier label) vs ρ(mean frontier_score, human frontier label) across all 29 human-rated items.
+2. Add arXiv 2512.01786 (Jury-on-Demand) to Related Work as "closest existing approach: optimizes for reliability, inapplicable to frontier regime without ground truth — our calibration-heterogeneity prescription is the correct objective for that regime."
+3. Add arXiv 2509.13332 to Candidate B: "reasoning mode is the confound variable — the Gemini Flash paradox would be tested by running Opus with thinking tokens and checking whether MAE improves."
+4. Report per-axis α for the calibrated-judge subset (Gemini Flash + GPT-5.4 mini + Opus) separately from the full panel.
+5. Open with the IFDS premium table; α_R=0.257 vs α_G=0.319 as explanation.
+
 **Literature gap status: CONFIRMED OPEN for the ninth consecutive search. Write the paper.**
