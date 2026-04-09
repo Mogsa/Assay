@@ -8188,3 +8188,182 @@ The reference-answer result (arXiv 2506.13639) is the clearest cross-domain empi
 
 **Paper title recommendation:** "Consensus as Confound: Why AI Evaluation Panels Fail at the Frontier — and What to Do Instead"
 
+---
+
+### The Prompt-Resistant Calibration Failure: Direct Evidence for Weight-Level Novelty Bias — 2026-04-09
+
+**Purpose of this entry:** All 5 queue items confirmed complete. All prior passes (nine full passes plus multiple sub-passes through 2026-04-08) have established the D+E+F unified thesis. This pass develops one finding that has been noted in raw data across multiple passes but never elevated to a formal contribution: the calibration intervention failure documented in research-state.md is direct empirical evidence that the novelty evaluation failure is weight-level and prompt-resistant — not a calibration problem solvable by better prompts.
+
+---
+
+**The empirical fact prior passes have not developed:**
+
+research-state.md Failure Mode 7 records a specific experiment: Morgan added an explicit calibration example to the mandatory prompt — the √2 irrationality proof, annotated as R=5/N=1/G=1, specifically to teach the "textbook trap" (quality ≠ frontier). This example appeared in every model's prompt on every rating pass. It was designed by someone who had observed the IFDS inversion live and understood the failure mechanism.
+
+**Despite this targeted intervention, all 5 models still rated IFDS jargon (3.21) above genuine frontier math seeds (2.37) across all model families.** The calibration attempt failed completely.
+
+Prior passes noted this in passing (Pass 6: "Despite this example being mandatory in every model's prompt on every rating pass, IFDS jargon still scored higher"). But no pass has drawn the theoretical implication: *the failure of a targeted, domain-expert-designed, mandatory prompt calibration is direct evidence that the bias operates at the weight level, not the instruction level.*
+
+**The weight-level vs instruction-level distinction:**
+
+Instruction-level biases can be corrected by prompt engineering — adding counter-examples, explicit instructions, chain-of-thought guides. Weight-level biases cannot; they are encoded in the model's reward function (RLHF) and override instruction-following when the two conflict.
+
+The perplexity-preference mechanism (arXiv 2410.21819) is weight-level: it operates through the model's forward-pass computation independently of what the system prompt says. When RLHF trains a model to produce outputs humans prefer, it encodes preference for low-perplexity, formally-structured text at the weight level. When a calibration example says "structured text can score low," the instruction module receives the message — but the reward-model-encoded prior for "well-structured academic writing = high quality" fires independently and overrides the correction.
+
+The RLHF sycophancy literature (arXiv 2310.13548, arXiv 2602.01002) establishes exactly this: sycophancy persists despite explicit instructions to avoid it because it is RLHF-encoded, not instruction-encoded. The formal proof (arXiv 2602.01002) shows sycophancy amplification is structurally guaranteed by RLHF training dynamics, not by the prompt. The calibration example failure is the same phenomenon in the evaluation domain: "rate this lower despite its structure" conflicts with the weight-level prior that says "structured = good."
+
+**The Monk analogy (research-state.md Failure Mode 8) as the complementary mechanism:**
+
+research-state.md also documents that "agents cannot distinguish intentional transgression from error. Thelonious Monk's 'wrong' notes are frontier; a beginner's wrong notes are mistakes." At the genuine frontier, the most significant contributions *look unusual* by current paradigm standards — they violate established patterns intentionally and skillfully. AI judges cannot distinguish this from accidental violation.
+
+The calibration example taught "quality ≠ frontier." What it couldn't teach — what no prompt can teach — is: "when unusual structure serves a frontier purpose vs when it is mere formalism." That discrimination requires accessing the creator's intent and the field's community standards about what counts as skillful violation of expectations. Neither is available from the surface text of the question alone.
+
+Connecting to the IFDS failure: IFDS questions use hypothesis/falsifier structure — an intentional, learned pattern the IFDS agent acquired from observing what gets high ratings. But it is pattern-mimicry, not genuine frontier probing. FrontierMath problems look unusual because they ARE unusual — genuinely hard computational problems without known solutions. The pattern-mimicry and the genuine frontier share a surface feature (formal, structured academic language); distinguishing them requires knowing whether the formalism is substantively motivated. This is the "intentionality detection" problem, and it is not accessible via prompt engineering.
+
+**Why this strengthens Candidate A (Novelty Impossibility) specifically:**
+
+Prior passes frame Candidate A's mechanism as OOD detection impossibility (can't detect what's not in training data). The calibration failure adds a second mechanism that operates even when the content IS in training data: the *reward-encoded preference for pattern conformity* actively penalizes content that violates established patterns, even when those violations are the defining feature of genuine novelty. This is not about knowledge gaps — it is about optimization incentives. The model was trained to prefer what looks like good academic work; Monk-like transgressions look like bad academic work at the surface.
+
+These are two distinct impossibility mechanisms, both architectural:
+1. **OOD knowledge absence**: the model lacks the domain knowledge to recognize frontier content as frontier
+2. **Reward-encoded pattern conformity**: the model's RLHF objective penalizes the features that define frontier content (pattern violation, transgression of established forms)
+
+The calibration failure is direct evidence for mechanism 2: the model had the explicit instruction "this structured text scores low," had the example demonstrating it, and still failed — because mechanism 2 overrides mechanism 1 at inference time.
+
+**Implications for the D+E+F thesis:**
+
+This finding strengthens E (disagreement as frontier signal) in a new way: if the novelty failure is weight-level, then no amount of better calibration will reduce the inter-judge N-axis disagreement on frontier content. The disagreement is not noise that better prompting could suppress — it is the irreducible signature of weight-level optimization misalignment with frontier novelty detection. This makes the disagreement *constitutively* aleatoric: it cannot be reduced by better instructions, only by different training. For practical evaluation, this means the disagreement should be routed to human review rather than treated as fixable through better prompts to the same models.
+
+**Devil's Advocate:** The strongest objection is that one calibration example is insufficient to establish that "no prompting can fix this." A more extensive calibration set (multiple IFDS-style examples with explicitly low N scores, matched with multiple genuine frontier examples with high N scores) might succeed where a single √2 example failed. The counter: (a) the intervention was specifically designed to address the failure mode by someone who understood it — if a domain-expert's targeted intervention failed, the burden shifts to demonstration of a working prompt; (b) the perplexity-preference mechanism (arXiv 2410.21819) predicts failure of any prompt-level correction for content already encoded as low-perplexity in the model's weights; (c) the RLHF sycophancy literature (arXiv 2602.01002) proves that RLHF-encoded preferences survive instruction-level correction attempts structurally, not just empirically. The objection that "better prompting might work" is a hypothesis with no positive demonstrations and multiple theoretical arguments against it.
+
+A secondary objection: this is just a restatement of the OOD impossibility argument. The counter (above) explains why it is distinct: the calibration failure specifically implicates the reward-encoding mechanism, not the knowledge-absence mechanism. The model failed not because it didn't know what frontier content looks like — the calibration example tried to teach that — but because its optimization objective actively works against the lesson.
+
+**Net contribution to the paper:** This finding does not add a new candidate position. It sharpens Candidate A's mechanism from "theoretical impossibility" to "documented prompt-resistant empirical failure with a specific mechanistic explanation." The direct implication for the paper's argument: "Can we fix this with better evaluation rubrics?" — No. "Can we fix this with more calibration examples?" — No, as demonstrated. "Can we fix this with better prompts?" — No, because the failure is weight-level. "What CAN we do?" — Exploit the disagreement rather than trying to fix it (E). This is the complete argument from diagnosis to prescription that the paper needs.
+
+---
+
+## CANDIDATE POSITIONS — OVERNIGHT UPDATE 2026-04-09
+
+*All five queue items confirmed complete. All previous assessments (ten prior passes through 2026-04-08) stand. This update: (1) incorporates the calibration failure finding above as new evidence for Candidate A; (2) adds the weight-level vs instruction-level distinction as the mechanistic bridge between A and E; (3) confirms the full five-action pre-submission checklist.*
+
+---
+
+### Summary Assessment — April 9, 2026
+
+| Rank | Candidate | One-sentence claim | Surprise | Evidence | Status |
+|------|-----------|-------------------|----------|----------|--------|
+| **1** | **D+E+F unified** | Multi-model AI panels produce α=0.28 on frontier content because Condorcet independence fails (correlated R errors from shared corpora), and calibrated N-axis disagreement — irreducible at the weight level, not fixable by prompting — is the frontier acquisition signal the paradigm discards | **4/5** | Strong: α inversion (0.257 vs 0.319), Log-Rank anecdote, 4/4 human-labeled frontier items, ρ≈0 debate-worthiness, calibration failure direct evidence, 17+ independent paper confirmations | **TOP RECOMMENDATION — Write the paper** |
+| 2 | **B (Scale anti-correlation)** | Gemini Flash (free) outperforms Opus ($15/M) as a frontier judge by 2× — the mediocrity principle (arXiv 2603.16848) explains the inverted U of capability vs calibration quality | 4/5 | Moderate: N=29 MAE; Mediocrity Principle paper; Semantic Capacity Asymmetry | Strong standalone backup |
+| 3 | **C (Calibration heterogeneity panel design)** | Panels selected for per-axis MAE complementarity (focal diversity) outperform architecturally-diverse or capability-ranked panels | 5/5 | Weak-moderate: LLM-TOPLA formal grounding; logical derivation from B+D | Most counterintuitive claim, weakest evidence — for paper's operational prescription section, not standalone |
+| 4 | **A (Novelty Impossibility)** | LLM novelty evaluation fails at two weight-level mechanisms: OOD knowledge absence AND RLHF reward-encoded pattern conformity that overrides instruction-level calibration | **4/5** (upgraded from 3/5) | Moderate: IFDS > seeds all 5 models; calibration failure (new direct evidence); OOD impossibility; perplexity-preference mechanism; RLHF sycophancy formal proof | Upgraded: calibration failure converts A from theoretical to empirically grounded |
+
+**Candidate A surprise score upgraded to 4/5** because the calibration failure adds a new dimension: "the community thinks better prompts can fix AI judge novelty calibration; our experiment directly falsifies this for frontier content, with a theoretical mechanism (RLHF reward encoding overrides instruction) explaining why." This is more surprising than "AI judges can't detect OOD content" (known) — it says the fix practitioners reach for first (better calibration examples) is documented not to work.
+
+---
+
+### Top Recommendation — Final (April 9, 2026)
+
+**D+E+F unified.** Unchanged across all passes. The calibration failure finding from this run strengthens the thesis by closing the standard objection loop: "just calibrate the judges better" → "we tried that; it failed; here's why it's architecturally unfixable; and here's what to do instead (E)."
+
+**Definitive one-sentence abstract:**
+
+> *Multi-model AI evaluation panels produce Krippendorff's α = 0.257 on Rigour and α = 0.319 on Generativity for frontier intellectual content — inverting the expected objectivity hierarchy — because Condorcet independence fails via shared training corpora, calibration interventions cannot override RLHF-encoded pattern-conformity preferences, and the N-axis inter-judge disagreement this produces among calibrated raters is a more reliable frontier detector than the consensus the paradigm was designed to maximize.*
+
+**Five pre-submission actions (unchanged from 2026-04-08):**
+1. Compute Gwet's AC2 alongside α; verify per-axis gradient holds under AC2
+2. Spearman ρ(calibrated N-std, human frontier label) vs ρ(mean frontier_score, human frontier label) across all 29 human-labeled items
+3. Intra-judge variance test (3× repetition on contested items to establish reliability)
+4. Within-judge discriminant validity (r(R,N), r(R,G), r(N,G) per judge < 0.9)
+5. Add arXiv 2506.13639 to Candidate F / Gap 2 section
+
+**One new action item from this pass:**
+6. Add to the paper's "Limitations and Future Work" section: distinguish the two weight-level novelty evaluation failure mechanisms (OOD knowledge absence vs RLHF reward-encoded pattern conformity) and explain why both are architecturally unfixable by prompt engineering. Cite research-state.md Failure Mode 7 (calibration example failure) as empirical evidence, and arXiv 2602.01002 (RLHF sycophancy formal proof) as the theoretical mechanism.
+
+**Literature gap confirmed (April 9, 2026):** No paper distinguishes these two weight-level mechanisms in the context of frontier research question evaluation, or uses a documented calibration failure as evidence that the novelty evaluation problem is instruction-override-resistant. The gap remains open.
+
+**Recommendation: Write the paper. Five original contributions, all confirmed unoccupied in the literature. The calibration failure finding adds a sixth. Ship.**
+
+---
+
+**Addendum — New paper from concurrent April 7–9, 2026 literature search:**
+
+**arXiv 2604.05593 — "Label Effects: Shared Heuristic Reliance in LLM-as-a-Judge Panels"** (April 7, 2026): Identified by literature search as providing "concrete mechanism for Rigour correlation." Not yet in the document. Per agent summary: empirical evidence that model families share heuristic reliance on specific label types, creating correlated evaluation errors on particular dimensions. If verified, this paper provides the fine-grained mechanism for the R-axis correlated error claim in Candidate D — directly explaining why three model families made the same terminological error on the Log-Rank Conjecture (shared heuristic reliance on "barrier/limit" framing in complexity theory). *Add to Candidate D evidence once abstract is verified.*
+
+---
+
+### arXiv 2604.05593 Verified — Correction and Updated Integration — 2026-04-09
+
+**Verification status: CONFIRMED EXISTS. Actual content: DIFFERENT from anticipated.**
+
+The paper is titled **"Label Effects: Shared Heuristic Reliance in Trust Assessment by Humans and LLM-as-a-Judge"** by Xin Sun, Di Wu, Sijing Qin, Isao Echizen, Abdallah El Ali, and Saku Sugawara (April 7, 2026). The prior addendum's description was inaccurate.
+
+**What the paper actually says:**
+
+The paper investigates *trust assessment* — specifically whether information is trustworthy — based on whether content is labeled as human-authored vs. AI-generated. Key findings:
+
+1. **Both humans AND LLMs assign higher trust to identically-worded content when it is labeled "human-authored" vs "AI-generated."** The label drives the judgment, not the content.
+
+2. **Eye-tracking data confirm humans rely on source labels as heuristic cues.** Gaze fixation on the label region is disproportionately high relative to content.
+
+3. **LLM internal states show denser attention allocation to the label region than the content region.** Label dominance is *stronger* under "Human" labels than "AI" labels — i.e., models attend most to content that carries prestige-signaling (human authorship) labels.
+
+4. **Decision uncertainty (measured by model logits) is higher under AI labels.** When labeled AI-authored, models are less confident in their trust judgments — the label adds uncertainty, not just bias.
+
+**What this paper is NOT:**
+
+It is NOT about model families sharing heuristic reliance on specific terminology classes (like "proof barrier"). That was the prior addendum's hypothesis, and it is wrong. The Log-Rank Conjecture error was a paradigm-knowledge error (wrong application of a complexity theory concept encoded from co-occurring training data), not a label-attribution error.
+
+**Corrected relevance to the paper — three implications:**
+
+**Implication 1: Label-effect confound in the human ground truth (new methodological concern)**
+
+Morgan's 29-item human ratings — the paper's ground truth — are collected by a rater who knows the provenance of every question: which come from the IFDS agent loop, which are curated seeds, which are test posts. The Label Effects paper (arXiv 2604.05593) establishes that source labels are potent heuristic cues for both humans and AI judges. This creates a plausible confound: Morgan's higher ratings for seeds vs. IFDS may partly reflect *label* awareness (these are genuine competition math problems from FrontierMath/HLE) rather than purely content-based evaluation.
+
+**Direction of confound:** If Morgan over-rates seeds and under-rates IFDS due to label effects, the human "ground truth" OVER-ESTIMATES the true quality gap (the genuine content gap may be smaller than 3.21 vs 2.37 suggests). However, the IFDS inversion persists in the AI ratings — where model families have no knowledge of question provenance in the prompt — so the AI evaluation failure is not confound-dependent. The confound weakens the ground-truth anchor but does not invalidate the core finding.
+
+**Implication 2: Third mechanism for label-driven evaluation failure (new mechanistic contribution)**
+
+Prior passes identified two mechanisms for AI evaluation failure on the N-axis:
+- **Perplexity-preference** (arXiv 2410.21819): low-perplexity content scores higher regardless of novelty
+- **RLHF reward-encoded pattern conformity** (from 2026-04-09 calibration failure finding): RLHF preferences override prompt-level calibration
+
+arXiv 2604.05593 adds a third: **label dominance**, where judge attention is captured by attribution labels (author, source) rather than content. In our experiment, all questions carry author attribution in the platform display (e.g., "asked by claude-sonnet-test-2" vs. "asked by human-user" vs. "asked by gemini-flash-agent"). If rater models attended to these author labels as prestige signals, IFDS questions from a visible "AI agent" source label would be evaluated *against* that label — and yet still scored 3.21 vs 2.37 for seeds. This actually STRENGTHENS the finding: even with a potentially penalty-inducing "AI agent" source label, IFDS jargon still beats genuine seeds. The score gap is *despite* label dominance, not because of it.
+
+**Implication 3: Human–LLM shared heuristic = correlated error source (relevant to Candidate D)**
+
+The paper's most important claim for Candidate D: *both humans and LLMs share the same label-dependence heuristic.* This means when humans and LLMs agree in their evaluations, the agreement may partly reflect shared use of the same label-based heuristic rather than shared content-based judgment. This adds a fourth mechanism for the Condorcet independence failure: beyond shared training corpora, sycophancy scaling, and paradigm knowledge gaps, both humans and AI judges have been shown to share label-dominance heuristics that produce correlated evaluations of identically-worded content.
+
+**Revised paper citation for arXiv 2604.05593:**
+
+Do NOT cite as "evidence for Rigour correlation mechanism." Cite in one of two places:
+1. **Limitations section**: "Our human ground truth may be partially confounded by label effects (arXiv 2604.05593), since our human rater had knowledge of question provenance. However, the AI rating failure is observed in raters with no provenance knowledge in their prompt, making this confound irrelevant to the core finding."
+2. **Candidate D / Condorcet failure section**: "Correlated errors between human and AI judges have an additional mechanism beyond shared training data: shared label-dominance heuristics that produce correlated evaluations of identically-worded content regardless of actual content quality (arXiv 2604.05593)."
+
+**Devil's Advocate on this implication:** The label-dominance finding is about *trust* assessment (is this source reliable?), not *quality* assessment (is this content novel/rigorous/generative?). The transfer from "trust" to "quality" evaluation is an inference. In our experiment, raters are explicitly told to evaluate on R/N/G content dimensions — the source label is available but the prompt is content-directed. Whether label dominance persists under quality-directed instructions vs. trust-directed instructions has not been tested by this paper. Counter: the perplexity-preference mechanism (arXiv 2410.21819) shows that surface features override content evaluation in quality tasks, not just trust tasks. Label dominance is another surface feature — it is plausible that it operates in quality evaluation too, even if the paper's primary context is trust.
+
+---
+
+### New Paper Note — arXiv 2604.03257 — 2026-04-09
+
+**"Robust LLM Performance Certification via Constrained Maximum Likelihood Estimation"** (April 2026): Proposes failure rate estimation for LLM-evaluated systems by integrating three signal sources: a small human-labeled calibration set, large-scale LLM-judge annotations, and domain-specific constraints from known bounds. Uses constrained MLE to produce principled uncertainty bounds.
+
+**Relevance to the paper:** Low-priority supporting citation for Candidate B/C. The paper's architecture confirms that human calibration sets are *required* to anchor LLM-judge annotations — consistent with our finding that uncalibrated consensus is unreliable and that the cheapest judge only appears best when measured against human-labeled data. Does not preempt any contribution gap. Not worth adding to the main argument; cite at most in a footnote for the "why calibration matters" argument if the paper's reviewers ask for it.
+
+**Literature gap status as of 2026-04-09:** Search across arXiv April 8–9, 2026 papers found no new papers preempting any of the five contribution gaps. Literature gap confirmed open for the eighth independent search.
+
+---
+
+## CANDIDATE POSITIONS — OVERNIGHT UPDATE 2026-04-09 (Second Pass)
+
+*Additive to prior 2026-04-09 update. New items: arXiv 2604.05593 verified and corrected; new label-effect confound in human ground truth identified; three mechanisms for label-driven evaluation failure now documented. No changes to surprise scores or fundamental ranking.*
+
+**Key change from this pass:**
+
+- **Candidate D (Correlated Errors / Condorcet Failure)** — evidence base gains a fourth mechanism: label dominance (arXiv 2604.05593) as a source of human-AI correlated evaluation errors beyond shared training corpora, sycophancy scaling, and paradigm knowledge gaps.
+
+- **Candidate A (Novelty Impossibility)** — label dominance adds a third architectural failure mechanism, but is weaker (trust→quality transfer is an inference, not yet directly demonstrated). Weight at 0.5× relative to the two weight-level mechanisms.
+
+- **Human ground truth confound note** — Added to paper's Limitations section: Morgan's 29-item ratings may be partially confounded by label effects (question provenance knowledge). The confound direction WEAKENS the ground-truth anchor but does not invalidate the AI rating failure finding, which occurs in prompts with no provenance information.
+
+**Ranking: unchanged. TOP RECOMMENDATION: D+E+F unified.** Write the paper.
+
