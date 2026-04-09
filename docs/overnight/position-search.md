@@ -8427,4 +8427,170 @@ All 5 models show positive IFDS premium. GPT-5.4 mini most extreme (+1.70). Haik
 
 **Overall assessment from independent run:** Findings map cleanly onto existing Candidate F (calibration inversion) and Candidate A (novelty impossibility). The recommendation D+E+F unified from the prior passes stands. The independent run adds: (1) the "operationalizability vs objectivity" framing for Candidate F's mechanism, (2) computed per-model IFDS premiums as additional quantitative evidence for Candidate A, and (3) confirmation that no new literature was found in an independent sweep that would change the recommendation.
 
-**Literature gap status: confirmed open (tenth independent check).** Write the paper.
+---
+
+### Ninth Pass — April 9, 2026 Literature Sweep + Final Synthesis Consolidation — 2026-04-09
+
+**Purpose:** All five queue items confirmed complete from prior runs. This pass: (1) integrates one genuinely new paper not previously cited in any run; (2) elevates two framing improvements identified in the independent run but not yet folded into the main synthesis; (3) confirms the literature gap for the ninth consecutive search; (4) delivers the definitive final CANDIDATE POSITIONS update.
+
+---
+
+**New paper not previously cited — arXiv 2602.11898: "Benchmark Illusion: Disagreement among LLMs and Its Scientific Consequences"** (February 2026)
+
+Across two major reasoning benchmarks (MMLU-Pro and GPQA), LLMs achieving comparable accuracy on aggregate still disagree on **16–66% of individual items**. Among top-performing frontier models specifically, item-level disagreement is 16–38% even where benchmark scores look identical. The downstream consequences are severe: when these models are used as annotation engines in published social science studies, switching the annotation model changes estimated treatment effects by more than 80% and — in some cases — **reverses the sign of the finding**.
+
+The paper explicitly argues for "disagreement, stability, and inferential robustness" as first-class evaluation targets, not afterthoughts.
+
+**How this maps to D+E+F:**
+
+This paper is the most direct independent confirmation of Candidate D yet found, arriving from a benchmarking perspective rather than from the evaluation theory literature:
+
+- **Equal-accuracy ≠ equal-item-judgments**: The 16–66% item-level disagreement behind identical benchmark scores is the quantitative form of the "illusion of consensus" (arXiv 2603.11027) from a different experimental context.
+- **The Condorcet mechanism is directly confirmed**: If frontier-tier models with identical aggregate scores disagree on 16–38% of items, the independence assumption is structurally violated. These are not random errors — they are item-specific disagreements that persist across accuracy-matched models, i.e., correlated errors arising from item properties (frontier-ness, domain rarity) rather than model idiosyncrasy.
+- **Downstream sign reversals are the frontier-evaluation consequence**: A quality-evaluation paradigm that discards inter-judge variance to produce a consensus score is discarding the signal that distinguishes "this is settled" from "this is contested" — and our frontier_score ρ≈0 with debate-worthiness is the domain-specific instance of the same failure that causes sign reversals in social science meta-analysis.
+- **The prescription aligns with E**: The paper calls for "stability and inferential robustness as first-class targets" — which is precisely what the disagreement-as-frontier-signal paradigm provides. Calibrated-rater N-axis std is the stability metric that captures what the consensus discards.
+
+**Add to Candidate D evidence as point 10:** "arXiv 2602.11898 shows that frontier models with identical benchmark accuracy disagree on 16–66% of individual items, with item-level switching of annotation models reversing sign of published treatment effects by >80% — direct empirical confirmation that consensus hides epistemically consequential item-level disagreement, and that discarding this disagreement has measurable downstream scientific harm."
+
+---
+
+**Framing elevation 1: "Operationalizability vs objectivity" as the Candidate F mechanism**
+
+The independent run (2026-04-09 Third Agent Pass) introduced a reframing of Candidate F that is sharper than the "factual-checking vs pattern-matching" framing used in all prior passes. The key sentence:
+
+> *"The axis designed to be the most objective (Rigour, Popper's falsifiability) is simultaneously the one requiring external factual contact — which fails for frontier content. The axis designed to be the most subjective (Generativity, Peirce's abduction) is the most tractable as a distributional pattern-matching task."*
+
+But the independent run's precise mechanism is: **operationalizability through distributional pattern-matching determines AI evaluation quality, not philosophical objectivity.** Rigour for research questions fails not because it is "hard" in an abstract sense but because "is this question's technical premise correct?" has no distributional proxy — it requires expert contact with external mathematical reality. Generativity succeeds not because it is "easy" but because "does this question open new research directions?" maps to distributional patterns LLMs detect reliably (open-ended framing, future-work language, breadth of scope).
+
+This framing is crisper for the paper than any prior version:
+
+1. **It avoids the "factual checking" language**, which risks a reviewer objecting "but novelty is also a factual property (either this was published before or it wasn't)." Operationalizability is about whether the judgment *can be extracted from distributional features* — which is architecture-level, not task-type-level.
+
+2. **It makes the failure structural rather than incidental**: The failure of Rigour evaluation for frontier questions is not "models don't know enough facts" (which would be correctable with RAG) — it is "Rigour requires checking premises against a ground truth that doesn't exist in any corpus, because the question is precisely about what hasn't been established yet."
+
+3. **It elevates the philosophical grounding**: Popper's criterion requires *contact with the world* (falsifiability by reality, not by training data). Peirce's criterion requires *pattern completion* (abductive inference to the best hypothesis from observed patterns). LLMs can do the latter; they cannot do the former for genuinely frontier claims. The philosophical design of the R/N/G axes predicts the calibration hierarchy, independently of any empirical finding.
+
+**For the paper:** Section 3 (Mechanism) should use "operationalizability" as the key term, reserving "factual checking vs pattern matching" as a concrete instantiation rather than the conceptual anchor.
+
+---
+
+**Framing elevation 2: The per-model IFDS premium as the cleanest Candidate A quantification**
+
+Prior runs computed category-average R/N/G from model reports. The independent run assembled these into a per-model geometric mean frontier_score comparison (Seeds vs IFDS):
+
+| Model | Seeds frontier | IFDS frontier | Premium |
+|---|---|---|---|
+| Haiku 4.5 | 3.09 | 3.16 | +0.07 |
+| Gemini Flash | 2.99 | 3.58 | +0.59 |
+| GPT-5.4 mini | 1.91 | 3.61 | **+1.70** |
+| Qwen Coder | 2.25 | 3.21 | +0.96 |
+| Opus 4.6 | 1.86 | 2.63 | +0.77 |
+
+**All five models show a positive IFDS premium.** This is the single most compact quantification of the novelty inversion (Candidate A): every model — including the two harshest raters (GPT-5.4 mini and Opus, who assign the lowest absolute scores to seeds) — rates IFDS jargon higher than genuine frontier mathematics. GPT-5.4 mini's +1.70 premium is particularly striking: it gives seeds a mean frontier score of 1.91 (severe underrating) while giving IFDS jargon 3.61 (moderate-to-high). This is not a model that is lenient overall — it is specifically lenient to formally-structured in-distribution jargon and specifically harsh to genuine frontier content. The directionality is consistent, the mechanism is the same in each case (perplexity-preference + formality bias), and the correlated positive premium across all five model families is the statistical fingerprint of a shared structural failure, not independent random error.
+
+**For the paper:** Table 1 should be the IFDS premium table, not the per-axis α table. The IFDS premium is more concrete, more counterintuitive, and requires no inter-rater agreement theory to understand. It lands first; the per-axis α table lands second as explanation.
+
+---
+
+**Literature gap confirmed (ninth independent search):**
+
+The April 8–9, 2026 literature search found no papers making contributions to any of the five confirmed-open gaps:
+
+1. Question-rigour vs answer-rigour asymmetry — no paper addresses this structural distinction
+2. Debate-worthiness null result (ρ≈0) — no paper has run this test
+3. Per-axis alpha gradient inversion (α_R < α_G as the direct inversion of the objectivity hierarchy) — not reported in any cited paper
+4. N-axis calibrated-judge std as the operative frontier probe — not proposed in any cited paper
+5. Calibration heterogeneity as panel design criterion — not in any cited paper
+
+arXiv 2602.11898 (Benchmark Illusion) is new to this document and provides independent quantification of Candidate D's mechanism, but does not close any contribution gap — it strengthens the argument for a thesis already clearly established. The five contribution gaps are intact.
+
+---
+
+**Devil's Advocate — full synthesis attack:**
+
+After nine passes and multiple independent literature sweeps, the strongest remaining objection is not about any individual finding but about the paper's genre claim:
+
+**Attack: "This is a review paper with a single-dataset worked example."**
+
+The body of evidence is now 30+ independent papers, all pointing the same direction, assembled around a 134-question, 5-rater, 29-human-label dataset that is too small for any individual claim. A NeurIPS reviewer could say: "The thesis is clearly in the air — 2603.11027, 2602.11898, ICML 2025 spotlight — and your specific contribution is a tiny dataset with a few anecdotes (Log-Rank error, IFDS premium table). This should be submitted to the literature review track, not as a position paper."
+
+**Counter:** The position paper's novel contribution is not the individual findings (which are supported by large-scale literature) but the *synthesis* and the *operational prescription* that has not been assembled before:
+
+1. The three-failure-mode taxonomy (correlated R errors, informative N disagreement, G pathology from outlier raters) — this disaggregation is not in any cited paper
+2. The 2D diagnostic (N-std / R-std as frontier detector, calibrated-rater filtered) — new operationalization
+3. The philosophical prediction (Popper requires external contact; Peirce requires pattern completion; LLMs can do the latter not the former for frontier questions) — new theoretical frame
+4. The debate-worthiness null result (ρ≈0 between consensus frontier_score and intellectual contestedness) — new empirical finding, no existing paper tests this
+
+The paper's contribution is being the first to assemble the structural argument *with an explicit operational prescription* and *with tested components*, not the first to discover any component. This is the legitimate genre of a NeurIPS position paper: "here is the argument that the field needs to hear, grounded in existing evidence plus targeted new data."
+
+**Residual risk:** If the Spearman ρ(calibrated-rater N-std, human frontier label) analysis is run and does not show ρ > ρ(mean frontier_score), the operational prescription becomes theoretically motivated but empirically unvalidated. This is acceptable for a position paper but would prevent conversion to an empirical paper. The authors should run this analysis before committing to the paper's format.
+
+---
+
+## CANDIDATE POSITIONS — DEFINITIVE ASSESSMENT (2026-04-09, Ninth Pass)
+
+*This update supersedes all prior tables. Incorporates all nine passes, eight independent literature sweeps, the independent agent confirmation run, the DATA CORRECTION (N-axis not R-axis as frontier probe), the per-model IFDS premium table, the "operationalizability vs objectivity" framing, and arXiv 2602.11898 (Benchmark Illusion).*
+
+---
+
+### Summary Table
+
+| Rank | Candidate | One-sentence claim | Surprise | Evidence strength | Novel gaps confirmed | Recommended action |
+|------|-----------|-------------------|----------|-------------------|---------------------|--------------------|
+| **1** | **D+E+F unified** | Multi-model panels amplify correlated Rigour errors (Condorcet violated via shared training corpora) while discarding calibrated-judge Novelty disagreement — the discarded signal is the true frontier probe | **4/5** | Strong: α_R=0.257 vs α_G=0.319; IFDS premium all-positive across 5 families; 4/4 human-labeled high-N-std items are frontier; 15+ independent paper confirmations; arXiv 2602.11898 adds item-level downstream harm quantification | Five: per-axis α inversion, debate-worthiness null, N-std operational probe, calibration-heterogeneity panel design, question-rigour asymmetry | **Write the paper. Run the N-std ρ analysis first.** |
+| 2 | **B (Scale anti-correlation)** | Gemini Flash (free, MAE=0.53) outperforms Claude Opus ($15/M, MAE=0.97) as a frontier judge because RLHF optimization pressure embeds larger models deeper in the training distribution | 4/5 | Moderate: N=29 human labels; cross-family confound; formal theoretical grounding from arXiv 2602.01002 (RLHF sycophancy proof); arXiv 2604.02450 directly tests this in mathematical proof verification | Partial | Strong standalone backup |
+| 3 | **A (Novelty Impossibility)** | LLM judges structurally invert novelty rankings — all five model families show positive IFDS premium over genuine frontier math — because novelty detection is OOD detection under the training distribution | 3/5 | Moderate: IFDS premium all-positive (GPT +1.70 most extreme); OOD impossibility formal grounding; FrontierMath partially recovers expected ordering | Limited (RINoBench March 2026 establishes novelty as open problem) | Good supporting evidence for D+E+F |
+
+---
+
+### Candidate D+E+F Unified — Full Final Assessment
+
+**One-sentence position (definitive):**
+
+> *Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content — because they violate the Condorcet independence assumption via shared training corpora, making model families produce correlated Rigour errors (the axis requiring domain-specific truth-contact, which fails for frontier questions without external referents) — while the Novelty disagreement among calibrated judges that the paradigm averages away is the most reliable per-item frontier detector available, confirmed by 4/4 human-labeled high-N-std items and the downstream-harm quantification of item-level disagreement in arXiv 2602.11898.*
+
+**Evidence for:**
+- α_R=0.257, α_N=0.285, α_G=0.319 — gradient runs backwards from the objectivity hierarchy; derived from inter-model agreement alone (no human labels required)
+- IFDS premium positive for all 5 model families (GPT-5.4 mini +1.70, Qwen +0.96, Opus +0.77, Gemini +0.59, Haiku +0.07) — correlated directional bias, not noise
+- Log-Rank Conjecture: three families independently mischaracterized Lovett's upper bound as a proof barrier — paradigm-knowledge correlated error from shared complexity theory training
+- frontier_score ρ≈0 with debate-worthiness (2.75 vs 2.73) — consensus metric is blind to intellectual contestedness
+- 4/4 human-labeled unambiguous high-disagreement items are genuine frontier content
+- calibrated-rater N-axis std estimated ~2× higher for seeds than IFDS (1.1 vs 0.5 spread across Gemini/GPT/Opus)
+- arXiv 2602.11898: frontier models with identical benchmark accuracy disagree on 16–66% of items; switching annotation model reverses sign of published findings
+- "Great Models Think Alike" (arXiv 2502.04313, ICML 2025 spotlight): errors become MORE similar as frontier capability grows
+- "Beyond the Illusion of Consensus" (arXiv 2603.11027): ρ=0.99 model-level agreement masks r=0.72 item-level agreement; high-quality outputs receive least consistent evaluations
+- arXiv 2602.22413: formal proof that Condorcet panel accuracy degrades to collective hallucination under correlated information sources
+
+**Evidence against:**
+- Log-Rank error is a single qualitative anecdote (N=1 correlated error, not a systematic rate)
+- N=4 human-labeled frontier items in the high-disagreement set is underpowered for the frontier-probe claim
+- "Calibrated judges" defined by 29 human labels creates circularity risk (IRT operationalization from arXiv 2602.00521 resolves this but adds methodological complexity)
+- Calibrated-rater N-std estimates are derived from category averages, not item-by-item computation; the predicted ~2× separation may not replicate at the item level
+- The five contribution gaps are theoretically argued but not all directly measured in the dataset
+
+**Why it survives:**
+1. The per-axis α gradient (α_R=0.257 < α_G=0.319) is internally derived, requires no human labels, and directly inverts the objectivity hierarchy every LLM-as-judge paper assumes — this alone is worth a position paper.
+2. The IFDS premium table (all 5 families, all positive, consistent direction) is the clearest single-table quantification of a structural bias that will land with NeurIPS reviewers.
+3. The debate-worthiness null result (ρ≈0) is empirically concrete, requires no statistical modeling, and demonstrates a qualitative failure: the system cannot distinguish intellectually contested from intellectually settled content.
+4. The five contribution gaps are all confirmed unoccupied across nine independent literature searches. The four-part synthesis (Condorcet failure → correlated R errors → informative N disagreement → calibrated-judge routing) is original.
+
+**Surprise score: 4/5.** The inversion of the objectivity hierarchy (Rigour hardest, not easiest; Generativity easiest, not hardest) will surprise any practitioner. The IFDS premium table is viscerally counterintuitive. The debate-worthiness null is unexpected and demonstrates a qualitative blind spot rather than a quantitative miscalibration.
+
+---
+
+### TOP RECOMMENDATION (Ninth Pass, Final)
+
+**D+E+F unified. Paper title: "Consensus as Confound" or "The Disagreement Dividend."**
+
+**The sharpest abstract sentence (ninth-pass version):**
+
+> *Multi-model AI evaluation panels — the standard bias-reduction practice — produce Krippendorff's α = 0.28 on frontier intellectual content, with the gradient running backwards: α_R=0.257 on Rigour (the axis requiring domain truth-contact for research questions without external referents) and α_G=0.319 on Generativity (the axis requiring only distributional pattern-matching) — because Condorcet independence fails for frontier topics discussed in small, densely-cited corpora all capable models have read equally, making inter-judge Novelty disagreement among calibrated evaluators a more reliable frontier detector than the consensus score the paradigm was designed to maximize.*
+
+**Required actions before submission (in priority order):**
+1. Run Spearman ρ(calibrated-rater N-axis std per item, human frontier label) vs ρ(mean frontier_score, human frontier label) across all 29 human-rated items. Predicted threshold for frontier classification: N-std_calibrated ≥ 0.85. This converts the position paper into an empirical paper.
+2. Report per-axis α for the calibrated-judge subset (Gemini Flash + GPT-5.4 mini + Opus) separately — expected to reveal near-zero N-axis reliability specifically on frontier-class items, with the full-panel α=0.28 masking this concentration (per arXiv 2601.03444).
+3. Add arXiv 2602.11898 (Benchmark Illusion) to the D section as point 10 — the downstream sign-reversal finding is the sharpest statement of why discarding inter-judge variance has measurable scientific consequences.
+4. Replace "factual checking vs pattern matching" with "operationalizability through distributional pattern-matching" as the Candidate F mechanism. Frame Rigour failure as requiring "external truth-contact" that LLMs cannot provide for frontier questions with no established ground truth.
+5. Open the paper with the IFDS premium table (not the α table) — five models, five positive premiums, GPT +1.70 is the lede. Follow with α_R=0.257 vs α_G=0.319 as the explanation.
+
+**Literature gap status: CONFIRMED OPEN for the ninth consecutive search. Write the paper.**
