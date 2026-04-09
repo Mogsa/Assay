@@ -8655,4 +8655,84 @@ The one-sentence position does not change from the Ninth Pass. The Tenth Pass ad
 4. Report per-axis α for the calibrated-judge subset (Gemini Flash + GPT-5.4 mini + Opus) separately from the full panel.
 5. Open with the IFDS premium table; α_R=0.257 vs α_G=0.319 as explanation.
 
+---
+
+### Disagreement Structure Taxonomy — 2026-04-09
+
+**Purpose of this entry:** All queue items are complete (Twenty-Ninth through Tenth passes fully documented). This pass integrates one genuinely new paper not cited in any prior entry, and updates the CANDIDATE POSITIONS with the final 2026-04-09 assessment.
+
+**New paper — arXiv 2604.03796: "When AI Agents Disagree Like Humans: Reasoning Trace Analysis for Human-AI Collaborative Moderation" (Wawer & Chudziak, April 4, 2026)**
+
+Analyzes ~4,000 human moderation decisions paired with AI agent reasoning traces. Central finding: *disagreement structure*, not disagreement magnitude, predicts human uncertainty. Cases where AI agents produce structurally human-like disagreement patterns require significantly more human scrutiny — effect size d > 0.8. The paper introduces a four-category taxonomy of AI panel outputs:
+
+| Category | Reasoning | Conclusion | Meaning |
+|----------|-----------|------------|---------|
+| 1 | Same | Same | Genuine consensus — reliable |
+| 2 | Different | Same | Fragile consensus — route with caution |
+| 3 | Different | Same (wrong) | **Illusory consensus** — the most dangerous case |
+| 4 | Different | Different | Genuine divergence — frontier signal |
+
+Category 3 is the key new concept not previously articulated in this document. Models can arrive at the *same wrong conclusion via different reasoning paths* — this produces zero score variance (all models agree) but zero accuracy (the consensus is a shared confabulation). Category 3 agreement is undistinguishable from Category 1 agreement if you only measure score variance.
+
+**The Log-Rank Conjecture finding is a documented Category 3 event.** Three model families independently called Lovett's O(√r·log r) upper bound a "proof barrier." Their reasoning paths are almost certainly different — Claude's chain-of-thought about complexity barriers, Gemini's retrieval of related barrier results, GPT's associative connection from the term "Lovett's result" to barrier terminology — but all converge on the same wrong conclusion. Prior passes documented this as "correlated errors from shared training corpora." The Wawer taxonomy makes this precise: it is not just correlation, it is structural Category 3 — different paths, same mistake, invisible to variance-based detection.
+
+**Implication for the D+E+F+C thesis:**
+
+The calibrated N-axis std signal (our E prescription) detects Category 4 disagreements (Galois group: Gemini N=5 vs GPT N=1, both conclusion AND reasoning diverge). It does NOT detect Category 3 failures (Log-Rank: all models converge on "proof barrier" via different routes). This means the E prescription is correctly scoped: it routes *genuine* frontier uncertainty to human review. The D prescription addresses Category 3: these items need human review not because judges disagree (they don't), but because the consensus is an undetectable confabulation. The D and E prescriptions are complementary defenses against different failure modes:
+
+- **E (N-axis std routing):** detects Category 4 — genuine frontier uncertainty where well-calibrated judges diverge
+- **D (skepticism of consensus + Log-Rank type evidence):** detects Category 3 — illusory consensus on frontier content where models converge on shared training-data confabulations
+
+The paper can be sharpened to distinguish these two use cases: "We show two simultaneous failures in AI evaluation panels — they produce Category 3 confabulations (correlated wrong answers invisible to variance detection) and suppress Category 4 signal (genuine uncertainty that should trigger human review). The same panel that converges confidently on a wrong answer about the Log-Rank Conjecture fails to converge on a genuine FrontierMath open problem. The Condorcet paradigm mistakes Category 3 for reliable consensus; the D+E+F+C paradigm uses Category 4 variance as the routing criterion."
+
+**Why this paper was not found in 29 prior passes:** arXiv 2604.03796 was submitted April 4, 2026 — the same week as the prior passes (from April 5–8 searches). The paper likely appeared in arXiv listings during the overnight window. The specific query "reasoning trace analysis disagreement taxonomy" was not among the search terms used in earlier passes; prior searches focused on "disagreement as signal," "correlated errors," and "Condorcet jury."
+
+**Devil's Advocate:**
+
+The strongest objection to the Category 3/4 framing: our experiment collected only R/N/G scores (integers 1–5), not reasoning traces. We cannot empirically classify our 134-item × 5-rater dataset into Categories 1–4 without re-running the experiment with reasoning trace collection. The current claim reduces to: "the Log-Rank finding looks like Category 3 and the Galois group finding looks like Category 4." This is a qualitative observation about two named examples, not a systematic classification. A reviewer will say: "show me the Category 3 rate across your 134 questions, not just one anecdote."
+
+Counter: Category 3 is operationally defined as "all judges agree (low variance) AND the consensus differs from human ground truth." In our 29-item human-labeled set, we can compute: for items where variance is LOW and consensus is WRONG (human label far from consensus score), that is the Category 3 rate. The IFDS jargon inversion may be a Category 3 pattern: all five models agree that IFDS questions are frontier-ish (consensus ≈ 3.21), but the human ground-truth (if we had it for all 37 IFDS items) would presumably disagree. This is a computable claim. Running this analysis — low-variance items where human labels are available, checking consensus error — would provide the Category 3 rate estimate the reviewer is asking for. Two items: Hadamard matrix order 668 (all models agree it's frontier, human agrees at R=5/N=5) is Category 1; any IFDS item where all models give ~3.2 but a domain expert would give ~1.5 would be Category 3.
+
+Net assessment: the Wawer taxonomy is a genuine conceptual contribution to the paper's argument structure, even without the full reasoning trace data. It provides vocabulary (Category 3 vs 4) that makes the D and E prescriptions precisely complementary rather than redundant. The paper should cite arXiv 2604.03796 in the Related Work section and use the Category 3/4 distinction to clarify the two failure modes D and E address.
+
+---
+
+## CANDIDATE POSITIONS — ELEVENTH PASS FINAL UPDATE (2026-04-09)
+
+*Adds arXiv 2604.03796 (Wawer & Chudziak taxonomy). Rankings unchanged from Tenth Pass. One structural clarification added.*
+
+---
+
+### Structural Clarification: D and E Address Different Failure Modes
+
+The document has described D and E as "two sides of the same coin" throughout. The Wawer taxonomy sharpens this into a precise distinction:
+
+- **D (Condorcet failure / correlated errors):** Defends against Category 3 — illusory consensus where all models arrive at the same wrong conclusion via different training-data paths. Detection method: not variance-based (variance is low in Category 3); evidence is qualitative (Log-Rank anecdote) and scale-confirmed by ICML 2025 spotlight (errors converge as capability grows).
+- **E (N-axis disagreement as frontier signal):** Exploits Category 4 — genuine divergence where well-calibrated models apply different knowledge representations to the same frontier item. Detection method: calibrated N-axis std > threshold (0.85–1.20 from per-item analysis). 4/4 human-labeled frontier items confirmed.
+
+These are two different defensive prescriptions:
+1. *Do not trust Category 3 consensus* — be structurally skeptical of AI panel consensus on frontier content, because it may be confabulation.
+2. *Route Category 4 items to human review* — when calibrated judges diverge on N-axis, the item is at the boundary of their shared knowledge; human expertise is irreplaceable.
+
+### Summary Table (Final, 2026-04-09)
+
+| Rank | Candidate | One-sentence claim | Surprise | Evidence |
+|------|-----------|-------------------|----------|----------|
+| **1** | **D+E+F+C unified** | Three structural impossibilities (Arrow, Condorcet, Epistemic Observability) eliminate all consensus-based paradigms for frontier content; calibrated N-axis disagreement (Category 4 signal) is the only available frontier probe, while Category 3 confabulations make panel consensus actively misleading | **4/5** | Very strong: α_R=0.257 vs α_G=0.319 (human-label-free); 4/4 Category 4 items human-labeled frontier; IFDS inversion all 5 families; Log-Rank Category 3 anecdote; 30+ independent papers |
+| 2 | B (Scale anti-correlation) | RLHF scale anti-correlates with frontier judge quality: Gemini Flash (free, MAE=0.53) outperforms Opus ($15/M, MAE=0.97) because sycophancy amplifies with scale | 4/5 | Moderate (N=29); formal proof (2602.01002) |
+| 3 | C (Calibration heterogeneity) | Select panel members by opposite N-axis failure modes (retrieval-optimized vs domain-skeptical) to maximize Category 4 signal informativeness | 5/5 | Moderate (logically derived; Tensor Completion 2604.05460 provides theory; not directly tested) |
+| 4 | A (Novelty Impossibility) | IFDS jargon outscores genuine frontier math across all 5 model families because novelty detection is OOD detection — formally impossible from within the training distribution | 3/5 | Moderate (FrontierMath partially recovers) |
+
+### TOP RECOMMENDATION — UNCHANGED
+
+**D+E+F+C unified. Write the paper.**
+
+The one new citation to add from this pass: **arXiv 2604.03796 (Wawer & Chudziak)** — use the Category 3/4 taxonomy in the Introduction to distinguish the two failure modes the paper addresses, and to give the Log-Rank finding its precise theoretical character: Category 3 illusory consensus, not random error.
+
+**Updated priority action list (no change to the top item):**
+1. Run Spearman ρ(cal-N-std per item, human frontier label) across all 29 human-labeled items — the single analysis that converts position paper → empirical paper.
+2. Compute Category 3 rate estimate: among low-variance items in the 29-item human-labeled set, how many show consensus-human disagreement? This quantifies the Log-Rank type failure mode systematically.
+3. Cite arXiv 2604.03796 in Related Work for the Category 3/4 distinction.
+4. All other pre-submission actions from Tenth Pass remain unchanged.
+
 **Literature gap status: CONFIRMED OPEN for the ninth consecutive search. Write the paper.**
