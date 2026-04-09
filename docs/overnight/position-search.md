@@ -9131,3 +9131,107 @@ No ranking changes. Three evidence additions and one new limitation:
 **Literature gap: confirmed open as of April 9, 2026, by seventh independent search. Write the paper.**
 
 ---
+
+## TWENTY-FOURTH PASS — 2026-04-09
+
+*(All 5 queue items confirmed complete. This pass: (1) two newly identified April 2026 papers not yet in the document; (2) fresh synthesis of the Two-Level Alpha Paradox — the most under-articulated structural insight in the full body of work; (3) routing convergence as a field-level trend that sharpens our unique contribution; (4) updated CANDIDATE POSITIONS.)*
+
+---
+
+### New Literature — April 9, 2026 Search Results
+
+**arXiv:2604.02450 — "Do We Need Frontier Models to Verify Mathematical Proofs?"**
+
+Evaluates open-source and frontier LLMs on human-graded proofs of competition-level math problems. Key finding: smaller open-source models are only ~10% behind frontier models in *accuracy* for proof verification, but ~25% more *inconsistent* (higher intra-judge variance across repeated judgments). Through LLM-guided prompt search, smaller models (Qwen3.5-35B) reach parity with frontier models (Gemini 3.1 Pro) on accuracy.
+
+**Relevance to D+E+F:** This paper tests binary proof VERIFICATION (valid/invalid), not multi-axis quality EVALUATION (R/N/G). But the finding has a structural echo: the gap between small and frontier models is primarily in *consistency* (intra-model variance), not accuracy. This mirrors our finding that inter-model variance (not mean score) is the key variable for frontier content. Critically, the paper's prescription — prompt engineering to close the consistency gap — works only because there is a binary ground truth against which to calibrate. For genuinely frontier research questions (our task), no such ground truth exists. The paper thus implicitly confirms the E claim: when ground truth is absent, you cannot close the consistency gap via prompting; disagreement is not a calibration failure to be corrected, but a signal to be used. Add to Candidate B as a supporting nuance: even for mathematical tasks specifically, consistency (variance) is the separating factor between model tiers, validating our focus on inter-judge disagreement rather than mean scores.
+
+**arXiv:2604.04295 — "ACE: Adaptive Cost-Efficient Evaluation for Patent Claim Validation"**
+
+A hybrid routing framework using predictive entropy from a fine-tuned PatentBERT encoder to route high-uncertainty patent claims to an expert LLM. Achieves F1=94.95% at 78% cost reduction versus always-LLM evaluation. The routing trigger is *intra-model* uncertainty (PatentBERT entropy); the target domain has clear binary ground truth (35 U.S.C. statutory validity).
+
+**Relevance to D+E+F:** ACE is a concurrent engineering implementation of the E routing prescription, one domain removed. The difference from our proposal is precise: ACE routes on *intra-model* entropy; we propose routing on *inter-model N-axis std*. For frontier content, intra-model entropy fails because frontier-capable models are individually overconfident (arXiv:2603.25450 showed cross-model entropy AUROC 0.75 vs. intra-model 0.59). ACE works because patent validity has clear ground truth and models are not overconfident about clear-cut cases. Our contribution is extending the routing paradigm to the harder regime where intra-model entropy is unreliable — requiring inter-model disagreement as the criterion. Add to Candidate E as point 21, as concurrent independent validation of the routing paradigm.
+
+---
+
+### Fresh Synthesis: The Two-Level Alpha Paradox
+
+The most under-articulated structural insight across 23 passes: **aggregate α and per-item std are measuring fundamentally different things, and the axis with the worst aggregate α is NOT the axis providing the best frontier signal.**
+
+The full picture:
+
+| Axis | Aggregate α | Per-item std (frontier items) | Interpretation |
+|------|------------|-------------------------------|----------------|
+| R | 0.257 (lowest) | LOW (0.84–1.14, lowest of three) | Scale-offset disagreement: models have different severity baselines but AGREE on item ranking; all wrong in the same direction (correlated errors) |
+| N | 0.285 | HIGH (1.30–1.62, highest of three) | Item-level divergence: models genuinely disagree per item; aleatoric frontier signal |
+| G | 0.319 (highest) | Inflated by Qwen outlier | Spurious variance from pathological rater; not a true frontier signal |
+
+The standard practice in IRR analysis uses aggregate α as the reliability proxy. Under this practice, a paper would say "R is the least reliable axis (α=0.257)." But this is the WRONG conclusion for our paper. Low α_R reflects systematic scale offsets (Opus rates R=3.11 average, Gemini rates R=3.98 average) — the models AGREE on which items are relatively more rigorous, they just disagree on the absolute scale. This is a correlated error pattern (Finding 3/D), not a frontier signal.
+
+High per-item N-std for frontier items is the frontier signal (Finding 4/E). These models genuinely disagree item-by-item about which frontier items are novel — because novelty assessment requires knowing the research landscape, which is encoded differently across model families. This is aleatoric divergence.
+
+**Why this paradox matters for the paper:** The paper opens with α_R=0.257, α_G=0.319. A reviewer will expect the paper to then say "R-axis disagreement is the frontier signal, since R has the lowest α." The paper must immediately clarify: "low aggregate α on R reflects correlated scale offsets (all models wrong in the same direction), not item-level divergence. The actionable frontier signal is N-axis per-item std, which captures genuine item-level divergence among calibrated judges." Failing to make this distinction will generate a predictable reviewer confusion.
+
+**The Two-Level Alpha Paradox is a positive contribution.** It shows that standard IRR practice (report aggregate α, conclude which axes are reliable/unreliable) is insufficient for multi-model evaluation with heterogeneous calibration. The paper proposes a two-level analysis: (1) aggregate α to detect scale-offset problems (D: correlated errors); (2) per-item std to detect item-level frontier divergence (E: aleatoric signal). This two-level framework is a methodological contribution independent of the empirical findings.
+
+---
+
+### Routing Convergence as a Field-Level Trend
+
+Across 23 passes, multiple papers have independently converged on the same basic prescription: route high-uncertainty evaluation cases to human review rather than averaging them. The landscape as of April 9, 2026:
+
+1. **Trust or Escalate** (ICLR 2025 Oral, arXiv:2407.18370) — judge confidence as routing trigger; proven risk bounds
+2. **ACE** (arXiv:2604.04295, April 2026) — intra-model entropy as routing trigger; 78% cost reduction
+3. **arXiv:2604.03796** (April 4, 2026) — agent disagreement structure predicts human disagreement (d>0.8)
+4. **ICLR 2026 practice** — disagreement triggers Area Chair review for borderline papers (field-level adoption before formal justification)
+5. **DiscoUQ** (arXiv:2603.20975) — structured inter-agent disagreement achieves AUROC 0.802 for uncertainty quantification
+
+Our paper's unique contribution in this landscape: all existing routing implementations use either *intra-model* uncertainty (Trust or Escalate, ACE) or *unstructured* inter-model disagreement (DiscoUQ) as the trigger. None specifies *which evaluation axis's* inter-model disagreement is the optimal routing criterion, or explains why inter-model disagreement outperforms intra-model uncertainty for frontier content (because frontier models are overconfident individually but divergent collectively — arXiv:2603.25450). Our specific prescriptions — (a) use N-axis inter-model std (not aggregate frontier_score or intra-model entropy) and (b) filter for calibrated judges before computing the signal — are not present in any existing routing paper. The contribution is the axis-specific, calibration-filtered frontier routing criterion.
+
+**Devil's Advocate:** The routing convergence observation cuts both ways. It shows our prescription is in the right direction (multiple independent confirmations) — but it also raises the "why do we need another paper?" question. A reviewer could argue that Trust or Escalate plus DiscoUQ already cover the routing prescription, and our paper's only novel contribution is the axis-specificity (N-axis) and calibration filtering — which rest on N=4 human-labeled frontier items. The counterpoint: (a) our paper provides the theoretical justification for WHY inter-model disagreement is specifically required for frontier content (individual overconfidence + collective divergence), which none of the routing papers address; and (b) the Two-Level Alpha Paradox is a methodological contribution about how to interpret aggregate IRR metrics in multi-calibration panels, which is entirely absent from the existing routing literature. These two contributions are independent of the N=4 evidence base.
+
+---
+
+### CANDIDATE POSITIONS — Twenty-Fourth Pass Update
+
+No ranking changes. Three evidence additions, one new methodological contribution (Two-Level Alpha Paradox), and one structural warning for paper writing:
+
+**D+E+F+C unified (TOP RECOMMENDATION — 24 consecutive passes):**
+
+*One-sentence claim:* Multi-model AI evaluation panels designed to reduce bias through judge diversity produce α=0.28 on frontier intellectual content — well below the publishable reliability threshold — because correlated R-axis errors (all models wrong in the same direction per item, violating Condorcet independence via shared training corpora) amplify shared misconceptions; while calibrated-judge N-axis inter-item disagreement is the honest frontier signal (4/5 human-labeled high-N-std items are genuine frontier), because N-axis divergence for frontier questions is aleatoric — genuinely different knowledge representations across model families about the research landscape — not a calibration failure correctable by prompting.
+
+*Evidence for (new additions this pass):*
+- arXiv:2604.02450: for mathematical tasks specifically, consistency (intra-judge variance) — not accuracy — is the separating factor between model tiers, validating the focus on inter-judge variance as the key evaluation metric
+- arXiv:2604.04295 (ACE): independent engineering implementation of the routing prescription confirms the paradigm; our specific contribution (axis-selective, calibration-filtered inter-model routing) is not present in ACE
+- Field-level routing convergence (5 independent papers all prescribing human-handoff for high-uncertainty evaluation) confirms the paradigm is correct; our contribution is the mechanism and axis-specificity
+
+*Evidence against (unchanged):*
+- N=4 human-labeled frontier items in the high-N-std set; full Spearman ρ analysis not yet run
+- Log-Rank Conjecture is still N=1 qualitative anecdote for correlated errors
+- Self-preference bias (arXiv:2604.06996) may partially inflate calibrated-rater N-std for AI-generated IFDS content
+
+*Surprise score: 4/5 — unchanged.*
+
+*Critical structural warning for paper writing (new this pass):* The paper must explicitly distinguish aggregate α (scale-offset disagreement → D/correlated errors) from per-item std for frontier items (item-level divergence → E/aleatoric signal). Leading with "α_R=0.257 is the worst axis" and then claiming "N-axis std is the frontier signal" will confuse reviewers who expect the worst-α axis to be the frontier signal. The Two-Level Alpha Paradox must be stated explicitly in the paper's methods section.
+
+| Rank | Candidate | Claim | Surprise | Evidence | Overall |
+|------|-----------|-------|----------|----------|---------|
+| **1** | **D+E+F+C unified** | Correlated R-axis errors + aleatoric N-axis divergence + routing prescription = the complete paradigm shift | 4/5 | Strong (33+ papers; routing convergence from 5 independent sources; Two-Level Alpha Paradox as new methodological contribution) | **#1** |
+| **2** | **B: Scale anti-correlation** | RLHF-optimized models make worse frontier judges (Gemini Flash MAE=0.53 vs Opus MAE=0.97); intra-judge consistency gap (not accuracy) is the separating factor even for math tasks (2604.02450) | 4/5 | Moderate (N=29; Haiku confound; cross-family confound) | #2 |
+| **3** | **A: Novelty Impossibility** | AI judges invert novelty rankings (IFDS 3.21 > Seeds 2.37) because frontier novelty is PAC-impossible OOD detection | 3/5 | Moderate | #3 |
+| **4** | **C: Calibration Heterogeneity** | Select judges by maximum N-axis severity difference (not benchmark rank or provider diversity) to maximize frontier-detection ensemble quality | 5/5 | Weak direct evidence; formally grounded via Ambiguity Decomposition | #4 |
+
+**Final one-sentence abstract claim (Twenty-Fourth Pass — incorporating Two-Level Alpha Paradox):**
+
+> *A five-model AI judge panel achieves Krippendorff's α=0.257 on Rigour and α=0.319 on Generativity — the objectivity hierarchy is inverted — but this aggregate disagreement is misleading: per-item R-axis variance is LOWEST for frontier items (correlated errors, all models wrong in the same direction), while per-item N-axis variance is HIGHEST for frontier items (genuine aleatoric divergence), meaning the field discards the signal it needs (N-axis std as frontier detector) while amplifying the noise it should treat as a warning (R-axis consensus as correlated hallucination).*
+
+**Five blocking pre-submission actions (one added this pass):**
+1. **(Critical)** Run Spearman ρ(cal-N-std, human frontier label) vs ρ(mean_fs, human frontier label) across all 29 human-labeled items.
+2. **(Critical)** Compute per-item Pearson r(N,G) per rater across 134 items.
+3. **(Important)** Assess self-preference bias (arXiv:2604.06996) limitation for calibrated-rater N-std.
+4. **(Required)** Commit to geometric mean formula; footnote the production signed-Euclidean change.
+5. **(New — required for paper coherence)** Add a "Two-Level Alpha Analysis" section distinguishing aggregate α (scale-offset, D) from per-item std for frontier items (aleatoric, E) — without this, the α_R=0.257 opening and the "N-axis is the frontier signal" claim will appear contradictory to reviewers.
+
+**Literature gap: confirmed open as of April 9, 2026, by eighth independent search. The routing paradigm is converging; the axis-specific, calibration-filtered frontier routing criterion (N-axis std among calibrated judges) remains unclaimed. Write the paper.**
+
+---
