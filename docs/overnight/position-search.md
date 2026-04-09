@@ -8367,3 +8367,24 @@ Do NOT cite as "evidence for Rigour correlation mechanism." Cite in one of two p
 
 **Ranking: unchanged. TOP RECOMMENDATION: D+E+F unified.** Write the paper.
 
+---
+
+### Background Literature Agent Cross-Check — 2026-04-09
+
+A concurrent background literature agent ran a full sweep of April 7–9, 2026 and recent 2026 arXiv papers across all five thesis areas. Cross-check results:
+
+**Already in document (confirmed by agent as TIER 1/2):**
+- arXiv 2604.05460 (Tensor Completion / Low-Rank correlated family structure) — in document since 27th Pass
+- arXiv 2604.05593 (Label Effects) — corrected and integrated in this pass
+- arXiv 2603.00039 (CARE: Confounder-Aware Aggregation) — in document since 15th Pass
+- arXiv 2603.04417 (Same Input, Different Scores) — in document since 25th–26th Passes
+- arXiv 2603.05399 (Judge Reliability Harness, RAND) — in document since 30th Pass
+
+**One genuinely new paper (TIER 3, not previously cited):**
+
+**arXiv 2603.06594 — "A Coin Flip for Safety: LLM Judges Fail to Reliably Measure Adversarial Robustness"** (March 6, 2026): LLM judges applied to safety/adversarial robustness evaluation perform near random chance on certain task categories. The failure is systematic and correlates with judge model family. The agent rated this TIER 3: "supports narrowly; useful for the AI safety evaluation angle." Assessment: relevance is limited — our paper focuses on frontier intellectual content, not adversarial safety. However, the paper adds a sixth cross-domain confirmation of the pattern (alongside clinical/CAMP, genomics/arXiv 2604.04287, radiology/VERT, peer review/Mind the Blind Spots, qualitative/arXiv 2508.14764) that LLM judge failure is most severe in exactly the domains where reliable evaluation matters most. *Add as a footnote-level citation in the "the problem is not domain-specific" framing if needed, but not essential to the main argument.*
+
+**Literature gap status as of 2026-04-09 (ninth independent search):** No paper found in the April 7–9, 2026 window that preempts any of the five contribution gaps. The agent's conclusion: "Your α = 0.28 finding remains, as far as I can tell, unreplicated in the literature. The four-part synthesis remains the paper's original contribution."
+
+**Confirmed open for the ninth consecutive search: Write the paper.**
+
