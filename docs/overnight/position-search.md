@@ -9338,3 +9338,69 @@ The recommendation is unchanged across 25 passes. This pass adds two structural 
 **Literature gap: confirmed open as of April 9, 2026, twenty-fifth independent check. Calibration-filtered per-axis inter-judge std as a frontier detector remains unclaimed. The Two-Level Alpha Paradox as a methodological contribution for heterogeneous content evaluation remains unaddressed in any cited paper. The paper structure is complete. Write it.**
 
 ---
+
+### FrontierScience as Real-World Deployment Evidence — 2026-04-09 (Twenty-Sixth Pass)
+
+**Purpose of this entry:** One paper from the April 9 overnight search queue was not yet integrated into any prior pass: arXiv 2601.21165 (FrontierScience, OpenAI, January 2026). All five queue items remain [x]. This pass adds FrontierScience as motivation-section evidence for D+E+F and closes the overnight research queue. No ranking changes; the Twenty-Fifth Pass assessment stands.
+
+---
+
+**arXiv 2601.21165 — FrontierScience: Evaluating AI's Ability to Perform Expert-Level Scientific Tasks (OpenAI, January 2026)**
+
+FrontierScience is OpenAI's expert-constructed benchmark for frontier scientific reasoning across physics, chemistry, and biology. Two tracks: Olympiad (IPhO/IChO/IBO-level, verifiable answers) and Research (PhD-level open-ended research sub-tasks, rubric-graded). The Research track is the relevant domain for our thesis.
+
+**Evaluation design for the Research track:** Each question has a granular rubric with up to 10 pass/fail points for specific intermediate reasoning conditions (e.g., "Writes equation X correctly"). Questions are authored and verified by PhD scientists — doctoral candidates, post-docs, professors. To evaluate model responses *at deployment time*, a single GPT-5 oracle at high reasoning effort is used as judge: given the attempted answer and the rubric, return a score.
+
+**Performance:** GPT-5.2 scores 25% on the Research track (77% on Olympiad). Meaning 75% of PhD-level research sub-tasks are beyond the capability frontier of the best current model.
+
+**Why this is the deployment-scale failure mode D+E+F documents:**
+
+*Candidate D (Correlated errors):* The evaluator (GPT-5) and the evaluated model (also GPT-5 family) share training distributions. For the 25% of items where the solver produces a plausible answer, the oracle judge may validate incorrect responses that conform to the training distribution's expected form — the same correlated-error mechanism documented in our Log-Rank Conjecture case. Both judge and solver learned from the same sources; a reasoning path that looks correct to the solver will also look correct to the judge.
+
+*Candidate E (Disagreement as routing signal):* FrontierScience uses a single oracle judge with no inter-judge disagreement measurement. Our paper's prescription is precisely what FrontierScience skips: run multiple calibrated judges and use N-axis inter-judge std > 1.2 to route items for human expert review. With 75% of Research track items at or beyond the frontier, the calibrated-N-std signal would flag the majority of items for the human review that FrontierScience's PhD authors already provide at *construction time* — but not at *evaluation time*. The benchmark encodes the insight (human experts needed for frontier content) at the creation stage and then discards it at the scoring stage.
+
+*Candidate A (Novelty Impossibility):* FrontierScience's 25% Research accuracy implies that 75% of items are genuinely novel relative to the current AI training frontier. A single AI oracle judging these items faces the PAC-impossible OOD detection problem we document: the judge is evaluating content that is outside its reliable competence boundary, with no external signal that it has crossed that boundary.
+
+**The motivation section framing:**
+
+> OpenAI's own frontier scientific benchmark relies on a single GPT-5 oracle judge for open-ended PhD-level research questions — questions that GPT-5 can answer correctly only 25% of the time. No inter-judge reliability check is run. Our empirical finding (α=0.285 on Novelty, a five-model panel, frontier academic content) shows that even a panel produces below-threshold reliability on frontier content. The single-oracle approach has no mechanism to detect when it has crossed its reliability boundary. The calibrated inter-judge disagreement protocol we propose — N-axis std > 1.2 among calibrated judges as a routing signal — is the minimum viable reliability check for frontier evaluation at scale.
+
+**Scope limitation:** FrontierScience's rubric-graded approach (explicit pass/fail conditions per intermediate step) is more structured than our holistic R/N/G ratings, which partially mitigates the judge reliability problem. Our setting — holistic novelty ratings with no structured rubric — is the harder case, making inter-judge calibration more important, not less. The FrontierScience example shows the problem exists even in the rubric-structured case; our setting compounds it.
+
+---
+
+**Devil's Advocate**
+
+The FrontierScience argument proves too much. Single-expert peer review — the standard for scientific publishing — exhibits similarly low inter-rater reliability on frontier papers. If the prescription is "always use multi-judge panels with disagreement routing," then peer review also fails by this standard. FrontierScience's design (construct with human experts, evaluate with AI oracle) is a pragmatic scalability compromise: full multi-human-expert evaluation of thousands of model responses is infeasible. The paper isn't ignoring the reliability problem — it's making an explicit tradeoff between reliability and scale.
+
+Counter: The paper doesn't prescribe full human re-evaluation. It prescribes *routing* — inter-judge disagreement signals which items need human review. The empirical threshold (N-axis std > 1.2) selects approximately 15-20% of frontier items, not all of them. FrontierScience's rubric already encodes what human experts would check; the ask is to run a second calibrated AI judge on high-disagreement items and flag them before scoring. This is a smaller overhead than FrontierScience's own expert authorship process. The scalability objection addresses a straw-man version of the prescription.
+
+A sharper objection: FrontierScience's Research track items have explicit rubrics — the "ground truth" is operationalized. Our experiment uses holistic ratings with no rubric; the α=0.285 finding may simply reflect rubric absence, not fundamental frontier-content unreliability. Our prescription (calibrated N-axis std as routing signal) addresses a problem that structured rubrics mitigate. The paper should be clear: our findings are most relevant to evaluation settings *without* structured rubrics, which includes most open-ended intellectual evaluation (debate quality, argument novelty, policy relevance) — not settings where rubrics are feasible.
+
+---
+
+## CANDIDATE POSITIONS — FINAL UPDATE (2026-04-09, Twenty-Sixth Pass)
+
+*This update supersedes the Twenty-Fifth Pass. One change only: arXiv 2601.21165 (FrontierScience) added to D+E+F evidence as motivation-section anchor. No ranking changes. The Twenty-Fifth Pass abstract claim stands verbatim.*
+
+| Rank | Candidate | One-sentence claim | Surprise | Change from prior |
+|------|-----------|--------------------|----------|-------------------|
+| **1** | **D+E+F+C unified** | Multi-model panels produce α=0.28 on frontier content and discard the only informative per-item signal (N-axis inter-judge std) while amplifying correlated R-axis errors — because aggregate α and per-item std measure structurally different things, the standard paradigm suppresses the signal it needs | **4/5** | FrontierScience added as real-world deployment evidence for motivation section |
+| **2** | **B (Scale anti-correlation)** | Gemini Flash MAE=0.53 vs Opus MAE=0.97; RLHF-scale amplifies praise-bias sycophancy at the cost of frontier calibration | 4/5 | Unchanged |
+| **3** | **A (Novelty Impossibility)** | LLM judges invert novelty rankings (IFDS 3.21 > Seeds 2.37) because novelty is OOD detection — structurally impossible from a fixed training distribution | 3/5 | Unchanged |
+| **4** | **C (Calibration Heterogeneity)** | Select evaluation panel members by maximum per-axis MAE profile difference, not architectural diversity or benchmark rank | 5/5 | Unchanged |
+
+**Final one-sentence abstract claim (Twenty-Sixth Pass — unchanged from Twenty-Fifth):**
+
+> *Multi-model AI evaluation panels aggregate two structurally different signals — correlated scale-offset errors on the Rigour axis (all models wrong in the same direction per item, so their "disagreement" is model-family bias, not item information) and genuine aleatoric divergence on the Novelty axis (models with different research-landscape representations disagree item-by-item about what is frontier) — and by averaging them into a consensus score, the paradigm amplifies the misleading signal and discards the informative one; operationally, the correct frontier detector is not mean(R/N/G) but N-axis inter-judge std among calibrated judges, which separates frontier from non-frontier content where mean frontier_score cannot.*
+
+**Five blocking pre-submission actions (unchanged from Twenty-Fifth Pass):**
+1. **(Critical)** Run Spearman ρ(cal-N-std, human frontier label) vs ρ(mean_fs, human frontier label) across all 29 human-labeled items.
+2. **(Critical)** Compute per-item Pearson r(N,G) per rater across 134 items.
+3. **(Important)** Assess self-preference bias (arXiv:2604.06996) limitation for calibrated-rater N-std.
+4. **(Required)** Commit to geometric mean formula; footnote the production signed-Euclidean change.
+5. **(Required for paper coherence)** Add a "Two-Level Alpha Analysis" section distinguishing aggregate α (scale-offset, D) from per-item std for frontier items (aleatoric, E).
+
+**Literature gap: confirmed open as of April 9, 2026, twenty-sixth independent check. All papers from the overnight research queue are now integrated. Calibration-filtered per-axis inter-judge std as a frontier detector remains unclaimed. The Two-Level Alpha Paradox as a methodological contribution for heterogeneous content evaluation remains unaddressed in any cited paper. The research queue is exhausted. Write the paper.**
+
+---
