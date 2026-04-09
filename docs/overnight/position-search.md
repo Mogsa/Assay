@@ -8388,3 +8388,43 @@ A concurrent background literature agent ran a full sweep of April 7–9, 2026 a
 
 **Confirmed open for the ninth consecutive search: Write the paper.**
 
+
+---
+
+### Independent Confirmation Run — 2026-04-09 (Third Agent Pass)
+
+A third overnight agent ran independently from scratch, rebuilding the brief from first principles before discovering this document already existed in the remote. Two queue items were fully researched with devil's advocate sections before the conflict was detected. Key results:
+
+**Queue item researched: "The Objectivity Inversion"** (maps to Candidate F in this document)
+
+Independent literature sweep confirms:
+- LLM-as-judge survey papers (arXiv 2411.15594, arXiv 2412.05579) explicitly state subjective dimensions are harder — confirming the conventional wisdom this finding overturns.
+- SchNovel benchmark (arXiv 2409.16605): Novelty tractable via retrieval/pattern-matching — consistent with N_error being *lower* than R_error in our data.
+- Lu et al. 2024 (arXiv 2409.04109, 100+ NLP researcher study): LLM judges overvalue "novel-sounding" ideas — structural mimicry mechanism confirmed independently.
+- "When Judgment Becomes Noise" (arXiv 2509.20293): LLM judges don't faithfully implement rubrics even with explicit criteria — they evaluate via distributional priors. This supports the operationalizability-not-objectivity mechanism.
+- Sage (arXiv 2512.16041): "Situational preference" = judges change criteria based on content. Already cited in document.
+
+**Key new framing from independent run:** The objectivity inversion is best explained not as "subjective = harder" being wrong, but as: *operationalizability through distributional pattern-matching determines AI evaluation quality, not philosophical objectivity*. Rigour for questions fails because "is this question well-posed?" is an expert judgment that cannot be extracted from surface form. Generativity partially succeeds because it can be proxied via structural patterns LLMs detect. This framing aligns with Candidate F's mechanism and strengthens the "pattern-recognizer" argument.
+
+**Queue item researched: "Format-Reward Bias in LLM Judges"** (maps to Candidate A in this document)
+
+Independent literature sweep confirms:
+- "Beyond Consensus" (arXiv 2510.11822): TPR > 96%, TNR < 25% — ensemble majority-voting amplifies rather than corrects agreeableness bias. Already cited. Key new framing: domain-pattern mimicry (IFDS formal notation + hypothesis framing) is a more specific mechanism than generic "style bias" — it activates the "rigorous research question" pattern at high specificity.
+- JudgeLM: format bias identified as one of three key biases. Already cited.
+- EMNLP 2024 (ACL Anthology 2024.emnlp-main.474): fake references boost scores — synthetic manipulation confirms pattern.
+
+**Computed per-model IFDS premium** (geometric mean frontier_score from R/N/G values in analysis):
+
+| Model | Seeds frontier | IFDS frontier | Premium |
+|---|---|---|---|
+| Haiku 4.5 | 3.09 | 3.16 | +0.07 |
+| Gemini Flash | 2.99 | 3.58 | +0.59 |
+| GPT-5.4 mini | 1.91 | 3.61 | +1.70 |
+| Qwen Coder | 2.25 | 3.21 | +0.96 |
+| Opus 4.6 | 1.86 | 2.63 | +0.77 |
+
+All 5 models show positive IFDS premium. GPT-5.4 mini most extreme (+1.70). Haiku shows near-zero premium (consistent with its central-tendency bias suppressing discrimination). Shared direction across all 5 model families = correlated bias, not noise.
+
+**Overall assessment from independent run:** Findings map cleanly onto existing Candidate F (calibration inversion) and Candidate A (novelty impossibility). The recommendation D+E+F unified from the prior passes stands. The independent run adds: (1) the "operationalizability vs objectivity" framing for Candidate F's mechanism, (2) computed per-model IFDS premiums as additional quantitative evidence for Candidate A, and (3) confirmation that no new literature was found in an independent sweep that would change the recommendation.
+
+**Literature gap status: confirmed open (tenth independent check).** Write the paper.
