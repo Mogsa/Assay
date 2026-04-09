@@ -8981,3 +8981,53 @@ Multi-model AI evaluation panels — the field's standard bias-reduction mechani
 
 **Literature gap status: CONFIRMED OPEN for the tenth consecutive independent search. Write the paper.**
 
+---
+
+### Twelfth Pass: New Literature Integration — 2026-04-09
+
+**Purpose:** All five queue items are complete across 30+ synthesis passes. This entry integrates the single new paper found in a targeted April 7–9 literature search and delivers the final candidate positions update.
+
+**New paper: arXiv:2604.05460 — "LLM Evaluation as Tensor Completion: Low Rank Structure and Semiparametric Efficiency" (April 7, 2026)**
+
+Multi-judge evaluation reframed as a low-rank latent score tensor observed through pairwise comparisons under Bradley-Terry-Luce models. Two findings directly strengthen the D+E+F+C thesis:
+
+1. **Anisotropic information operator.** Judges are structurally non-interchangeable: some pairings extract orders of magnitude more information about item quality than others. This is formal grounding for Candidate C (Calibration Heterogeneity). The Gemini Flash / Opus pairing — representing opposite systematic N-axis biases (Gemini retrieval-lenient, Opus domain-skeptical) — is precisely the high-information pairing that tensor structure predicts. Flat consensus averaging collapses the anisotropy and destroys the signal in the high-information dimensions.
+
+2. **Severely underquantified uncertainty in consensus scores.** The effective rank of the evaluation information matrix is lower than judges × items, meaning consensus point estimates carry false precision. The 2.69 = 2.69 debate-worthiness null result is consistent with this: consensus projects onto a low-rank space that erases the dimensions where frontier content differs from routine content. The paper derives influence functions showing that sparse, non-uniformly-sampled judge coverage produces calibration artifacts — directly relevant to our 5-model × 134-item evaluation with no held-out withheld splits.
+
+**Implication for Candidate C (Calibration Heterogeneity Design Rule):** The Krogh-Vedelsby Ambiguity Decomposition (NeurIPS 1995) gives the *selection criterion* for calibration-heterogeneous panel members; arXiv:2604.05460 gives the *formal reason it matters*. These two citations together make Candidate C the most technically grounded novel claim in the paper — a design rule derivable from first principles of tensor completion and ensemble theory, not an empirical heuristic.
+
+**Second new paper — arXiv:2604.01504 ("Magic, Madness, Heaven, Sin: LLM Output Diversity is Everything, Everywhere, All at Once," April 2, 2026):** Argues there is no task-agnostic definition of informative vs. harmful variation in LLM outputs — diversity is always normative. For frontier evaluation: treating inter-judge disagreement as noise is a normative choice, not a statistical necessity. When the task is frontier detection, disagreement is definitionally the signal. Framing value only — no empirical results — but useful as a one-sentence citation supporting E.
+
+**Devil's Advocate:** arXiv:2604.05460 operates in the pairwise comparison setting (BTL model), not our absolute 3-axis rating setup. The tensor rank structure for binary preference data may differ from 5-rater × 3-axis × 134-item numerical ratings. Anisotropy in the pairwise information matrix does not mechanically translate to anisotropy in our absolute-scale disagreement metric. Cite as formal support for the qualitative principle (some judge pairings are more informative than others), not as a direct empirical confirmation of the N-axis routing claim.
+
+**Literature gap status: CONFIRMED OPEN for the eleventh consecutive independent search.** No April 7–9 paper challenges the D+E+F+C thesis. All five contribution gaps remain unoccupied.
+
+---
+
+## CANDIDATE POSITIONS — FINAL UPDATE (2026-04-09, Twelfth Pass)
+
+*Supersedes nothing: this is an addendum to the Definitive Authoritative Table (2026-04-09, Current Session). Rankings unchanged. One evidence update to Candidate C.*
+
+**Candidate C evidence update (Calibration Heterogeneity):**
+
+Add arXiv:2604.05460 as the final bullet under Candidate C evidence:
+
+> "LLM Evaluation as Tensor Completion" (arXiv:2604.05460, April 2026): In multi-judge evaluation modeled as a low-rank latent tensor, the information operator is anisotropic — some judge pairings are orders of magnitude more informative than others. This provides the most rigorous formal grounding for the calibration-heterogeneity selection criterion: selecting judges with maximally opposed N-axis biases maximizes the contribution of the high-information dimensions, while flat consensus averaging destroys exactly the anisotropic structure that distinguishes frontier from routine content.
+
+**Final one-sentence position (unchanged from Definitive Authoritative Table, 2026-04-09):**
+
+> *Multi-model AI evaluation panels produce Krippendorff's α = 0.28 on frontier intellectual content because they violate the Condorcet independence assumption: model families share training corpora and make identical Rigour errors, while their genuine Novelty disagreements — the only informative per-item frontier signal — are averaged away.*
+
+**Why D+E+F+C unified remains the recommendation (summary for any reader entering here):**
+
+All five queue items produced convergent evidence for one structural claim: the multi-model panel paradigm is anti-correlated with the domain where it is most urgently needed. The thesis has survived 30+ synthesis passes, eleven independent literature searches, primary data verification, and targeted devil's advocate engagement. The five contribution gaps — (1) Condorcet-corpus framing for frontier-specific correlated errors; (2) N-axis calibrated-judge std as the routing criterion; (3) calibration heterogeneity as panel design rule from Ambiguity Decomposition; (4) debate-worthiness null result (ρ≈0); (5) question-rigour vs answer-rigour structural asymmetry — remain unoccupied in the literature as of April 9, 2026.
+
+**Four blocking pre-submission analyses (carried forward from the Definitive Authoritative Table):**
+1. **(Critical)** Spearman ρ(cal-N-std per item, human frontier label) vs ρ(mean frontier_score, human frontier label) across all 29 human-labeled items
+2. **(Critical)** Per-item Pearson r(N,G) per rater across 134 items — determines whether the routing criterion is N-axis alone or N+G combined
+3. **(Important)** Category 3 rate: among low-variance items in the 29-item set, fraction where consensus disagrees with human — quantifies the confabulation mode beyond the Log-Rank anecdote
+4. **(Required)** Harmonize frontier_score formula: commit to geometric mean (1–5 scale) throughout; footnote the production signed-Euclidean change
+
+**Literature gap status: CONFIRMED OPEN. Write the paper.**
+
