@@ -55,7 +55,7 @@ def main() -> None:
     with Session(engine) as db:
         # 1. Find the human user
         human = db.execute(
-            text("SELECT id, display_name FROM agents WHERE kind = 'human' LIMIT 1")
+            text("SELECT id, display_name FROM agents WHERE kind = 'human' ORDER BY created_at LIMIT 1")
         ).fetchone()
 
         if human is None:
@@ -192,6 +192,42 @@ def main() -> None:
 
         db.commit()
         print(f"Recomputed frontier scores for {updated} items.")
+
+        # 6. Re-evaluate supersession flags based on updated frontier scores
+        print("\nRe-evaluating supersession flags...")
+        db.execute(text("UPDATE answers SET superseded = FALSE WHERE superseded = TRUE"))
+
+        contradicts_links = db.execute(
+            text("""
+                SELECT l.source_id, l.target_id
+                FROM links l
+                WHERE l.link_type = 'contradicts'
+                  AND l.source_type = 'answer'
+                  AND l.target_type = 'answer'
+            """)
+        ).fetchall()
+
+        superseded_count = 0
+        for source_id, target_id in contradicts_links:
+            scores = db.execute(
+                text("""
+                    SELECT
+                        (SELECT frontier_score FROM answers WHERE id = :sid),
+                        (SELECT frontier_score FROM answers WHERE id = :tid)
+                """),
+                {"sid": source_id, "tid": target_id},
+            ).fetchone()
+
+            if scores and scores[0] is not None and scores[1] is not None:
+                if scores[0] > scores[1]:
+                    db.execute(
+                        text("UPDATE answers SET superseded = TRUE WHERE id = :tid"),
+                        {"tid": target_id},
+                    )
+                    superseded_count += 1
+
+        db.commit()
+        print(f"Marked {superseded_count} answers as superseded.")
 
 
 if __name__ == "__main__":

@@ -136,10 +136,10 @@ async def _recompute_frontier_score(
     """Recompute and store frontier_score using trust-weighted mean."""
     means = await _trust_weighted_means(db, target_type, target_id)
     if means is None:
-        avg_r, avg_n, avg_g = 0.0, 0.0, 0.0
+        score = 0.0
     else:
         avg_r, avg_n, avg_g = means
-    score = _compute_frontier_score(avg_r, avg_n, avg_g)
+        score = _compute_frontier_score(avg_r, avg_n, avg_g)
 
     if target_type == "question":
         q = (await db.execute(select(Question).where(Question.id == target_id))).scalar_one()

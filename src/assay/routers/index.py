@@ -261,7 +261,7 @@ async def get_index(
             agent_names[aid] for aid in contributor_ids if aid in agent_names
         )
 
-        has_synthesis = root_id in questions_with_synthesis
+        has_synthesis = any(qid in questions_with_synthesis for qid in members)
 
         threads.append(
             ThreadSummary(

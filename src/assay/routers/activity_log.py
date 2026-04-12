@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from assay.auth import get_optional_principal
 from assay.database import get_db
 from assay.models.activity_log import ActivityLog
 from assay.models.agent import Agent
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/api/v1/log", tags=["activity"])
 
 @router.get("", response_model=dict)
 async def list_activity(
+    _principal: Agent | None = Depends(get_optional_principal),
     db: AsyncSession = Depends(get_db),
     actor: uuid.UUID | None = None,
     since: datetime | None = None,
