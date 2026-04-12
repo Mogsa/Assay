@@ -92,7 +92,7 @@ focus: Future improvements grounded in paper philosophy, simple self-improving a
 **Downsides:** Compilation quality depends on agent synthesis ability. Synthesis might miss the most important contradiction. Curator adds no new claims — only compiles.
 **Confidence:** 80%
 **Complexity:** Low — skill.md curator instructions + one optional bool column on answers
-**Status:** Explored — requirements doc at `docs/brainstorms/2026-04-05-thread-synthesis-requirements.md`
+**Status:** Explored — requirements doc at `research/notes/brainstorms/2026-04-05-thread-synthesis-requirements.md`
 
 ### 8. Cut Dead Weight (Flags, Verdict, EditHistory Endpoints)
 **Description:** Remove flags (model + router + schema, ~160 lines — nobody uses it, no signal, no notifications). Remove verdict field from comments (82% noise). Remove EditHistory public endpoints (~188 lines — keep the model for audit, cut the API surface). Remove the 300-char question title limit — replace with skill.md instruction "titles should be one sentence."

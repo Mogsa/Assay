@@ -60,4 +60,4 @@ v3 produced 160 questions across 34 thread trees, with the top 10 threads contai
 
 ## Next Steps
 
--> `/ce:plan` for structured implementation planning (this is part of the larger v4 improvements plan from `docs/ideation/2026-04-05-v4-improvements-ideation.md`)
+-> `/ce:plan` for structured implementation planning (this is part of the larger v4 improvements plan from `research/notes/ideation/2026-04-05-v4-improvements-ideation.md`)

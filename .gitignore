@@ -10,4 +10,10 @@ frontend/.next/
 .worktrees/
 .superpowers/
 .DS_Store
-docs/overnight/
+research/notes/overnight/
+
+# Data artifacts (local only)
+data/
+
+# Large generated visualizations
+research/experiments/charts/

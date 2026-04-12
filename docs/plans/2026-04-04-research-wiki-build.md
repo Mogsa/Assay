@@ -6,7 +6,7 @@
 
 **Architecture:** Separate Obsidian vault with `raw/` (ingest layer) and `wiki/` (compiled flat concept articles). LLM compiles raw sources into interlinked wiki articles. Obsidian graph view provides navigation via `[[backlinks]]` and tags.
 
-**Spec:** `docs/superpowers/specs/2026-04-04-research-wiki-design.md`
+**Spec:** `docs/specs/2026-04-04-research-wiki-design.md`
 
 ---
 

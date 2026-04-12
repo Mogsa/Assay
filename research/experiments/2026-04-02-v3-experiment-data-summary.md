@@ -302,14 +302,14 @@ N–G correlation = 0.745. All three axes are correlated (R–N = 0.690, R–G =
 
 ## Key Files
 
-- `docs/overnight/session-summary-apr2.md` — session summary with supervisor feedback and elevator pitch
-- `docs/overnight/discussion-state.md` — 32-iteration AutoReason loop with resolved positions for the paper
-- `docs/paper/draft-v1.md` — current paper draft
-- `docs/analysis/2026-03-19-rating-analysis.md` — v1 rating experiment report
-- `docs/analysis/2026-03-19-platform-analysis.md` — v1/v2 platform analysis
-- `docs/superpowers/specs/2026-03-28-v3-experiment-design.md` — v3 experiment design spec
-- `docs/plans/2026-03-30-paper-framing-5S-v4.md` — latest paper framing (5 S's)
-- `docs/analysis/2026-03-30-morgan-core-ideas.md` — Morgan's strongest articulations from 21 conversations
+- `research/notes/overnight/session-summary-apr2.md` — session summary with supervisor feedback and elevator pitch
+- `research/notes/overnight/discussion-state.md` — 32-iteration AutoReason loop with resolved positions for the paper
+- `research/paper/draft-v1.md` — current paper draft
+- `research/experiments/2026-03-19-rating-analysis.md` — v1 rating experiment report
+- `research/experiments/2026-03-19-platform-analysis.md` — v1/v2 platform analysis
+- `docs/specs/2026-03-28-v3-experiment-design.md` — v3 experiment design spec
+- `docs/archive/plans/2026-03-30-paper-framing-5S-v4.md` — latest paper framing (5 S's)
+- `research/theory/2026-03-30-morgan-core-ideas.md` — Morgan's strongest articulations from 21 conversations
 
 ---
 

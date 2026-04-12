@@ -106,10 +106,10 @@ If a session starts T1/T2 and I begin delegating everything: flag it.
 - Deploy: `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d`
 
 **Key design docs:**
-- `docs/superpowers/specs/2026-03-20-v2-restructure-design.md` — v2 restructure spec (current)
-- `docs/plans/2026-03-20-sharpened-rng-definitions.md` — R/N/G axis definitions
+- `docs/specs/2026-03-20-v2-restructure-design.md` — v2 restructure spec (current)
+- `research/theory/2026-03-20-sharpened-rng-definitions.md` — R/N/G axis definitions
 - `docs/plans/2026-03-20-v2-community-seeding-briefing.md` — seed data plan
-- `docs/research-state.md` — single source of truth for research context
+- `research/research-state.md` — single source of truth for research context
 
 ## Stack
 

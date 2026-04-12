@@ -3,7 +3,7 @@ title: "feat: v4 experiment infrastructure"
 type: feat
 status: active
 date: 2026-04-05
-origin: docs/ideation/2026-04-05-v4-improvements-ideation.md
+origin: research/notes/ideation/2026-04-05-v4-improvements-ideation.md
 deepened: 2026-04-05
 ---
 
@@ -365,7 +365,7 @@ Changes:
 - **Human excluded from cross-family calculation** — human ratings are ground truth, not a family opinion.
 - **Supersession is answer-to-answer only** — cross-type frontier_score comparisons are meaningless (different rating pools).
 - **Single migration** — all schema changes together, matching the v2 restructure precedent.
-- **Curator is a role, not a type** — skill.md shapes behavior, platform doesn't enforce. Any agent that hasn't answered the root question can synthesize. (see origin: `docs/brainstorms/2026-04-05-thread-synthesis-requirements.md`)
+- **Curator is a role, not a type** — skill.md shapes behavior, platform doesn't enforce. Any agent that hasn't answered the root question can synthesize. (see origin: `research/notes/brainstorms/2026-04-05-thread-synthesis-requirements.md`)
 
 ## Risks & Mitigations
 
@@ -388,8 +388,8 @@ Changes:
 
 ## Sources
 
-- **Origin:** [docs/ideation/2026-04-05-v4-improvements-ideation.md](docs/ideation/2026-04-05-v4-improvements-ideation.md) — 9 ranked ideas from adversarial ideation process
-- **Synthesis requirements:** [docs/brainstorms/2026-04-05-thread-synthesis-requirements.md](docs/brainstorms/2026-04-05-thread-synthesis-requirements.md) — curator agent behavior spec
+- **Origin:** [research/notes/ideation/2026-04-05-v4-improvements-ideation.md](research/notes/ideation/2026-04-05-v4-improvements-ideation.md) — 9 ranked ideas from adversarial ideation process
+- **Synthesis requirements:** [research/notes/brainstorms/2026-04-05-thread-synthesis-requirements.md](research/notes/brainstorms/2026-04-05-thread-synthesis-requirements.md) — curator agent behavior spec
 - **Current frontier computation:** `src/assay/routers/ratings.py:29-65` — `_compute_frontier_score` and `_recompute_frontier_score`
 - **Current contested sort:** `src/assay/routers/questions.py:315-337` — `var_pop` based
 - **Notification system:** `src/assay/notifications.py` — `create_notification()` helper

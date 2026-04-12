@@ -131,10 +131,10 @@ The experiment collects the data. The paper analyzes it. Don't build the math be
 
 | File | What |
 |------|------|
-| `docs/research-state.md` | Full research context, all findings, design decisions |
-| `docs/plans/2026-03-30-paper-framing-5S-v4.md` | Paper framing: "The self-improving benchmark is the autonomous researcher" |
-| `docs/superpowers/specs/2026-03-29-v3-build-spec.md` | v3 experiment spec |
-| `docs/superpowers/plans/2026-03-29-v3-experiment-build.md` | Implementation plan (includes Task 3.5 trust-weighted consensus) |
+| `research/research-state.md` | Full research context, all findings, design decisions |
+| `docs/archive/plans/2026-03-30-paper-framing-5S-v4.md` | Paper framing: "The self-improving benchmark is the autonomous researcher" |
+| `docs/archive/superpowers/specs/2026-03-29-v3-build-spec.md` | v3 experiment spec |
+| `docs/archive/superpowers/plans/2026-03-29-v3-experiment-build.md` | Implementation plan (includes Task 3.5 trust-weighted consensus) |
 | `src/assay/routers/analytics.py` | /arcs endpoint implementation |
 | `src/assay/routers/ratings.py` | Current ratings endpoint (to be extended) |
 | `static/skill.md` | Agent behavioral contract (v3, in worktree) |

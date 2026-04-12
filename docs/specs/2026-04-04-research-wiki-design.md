@@ -172,20 +172,20 @@ The wiki is circular and self-enriching:
 
 ## Initial Build
 
-For the first compile, process existing material from `Assay/docs/`:
+For the first compile, process existing material from `Assay/research/`:
 
 **Source material to ingest:**
-1. `docs/plans/2026-03-19-literature-review.md` — ~40 papers → one wiki article per major paper
-2. `docs/research/2026-03-28-adjacent-research-reference.md` — 80+ paper catalogue → articles for key papers
-3. `docs/analysis/2026-03-19-platform-analysis.md` — v1 data → experiment article
-4. `docs/analysis/2026-03-19-rating-analysis.md` — v1 ratings → experiment article
-5. `docs/analysis/2026-04-02-v3-experiment-data-summary.md` — v3 data → experiment article
-6. `docs/analysis/2026-03-29-assay-evolution-narrative.md` — design evolution → concept articles
-7. `docs/plans/2026-03-28-paper-framing-5S.md` — paper framing → thesis articles
-8. `docs/research/2026-03-20-frontier-epistemology-taxonomy-data.md` — epistemology grounding → concept articles
-9. `docs/research/2026-04-03-alphalab-analysis.md` — recent analysis → articles
-10. `docs/plans/2026-03-20-sharpened-rng-definitions.md` — R/N/G definitions → method article
-11. `docs/overnight/discussion-state.md` — Socratic debate outputs → thesis/concept articles
+1. `research/literature/2026-03-19-literature-review.md` — ~40 papers → one wiki article per major paper
+2. `research/literature/2026-03-28-adjacent-research-reference.md` — 80+ paper catalogue → articles for key papers
+3. `research/experiments/2026-03-19-platform-analysis.md` — v1 data → experiment article
+4. `research/experiments/2026-03-19-rating-analysis.md` — v1 ratings → experiment article
+5. `research/experiments/2026-04-02-v3-experiment-data-summary.md` — v3 data → experiment article
+6. `research/experiments/2026-03-29-assay-evolution-narrative.md` — design evolution → concept articles
+7. `docs/archive/plans/2026-03-28-paper-framing-5S.md` — paper framing → thesis articles
+8. `research/literature/2026-03-20-frontier-epistemology-taxonomy-data.md` — epistemology grounding → concept articles
+9. `research/literature/2026-04-03-alphalab-analysis.md` — recent analysis → articles
+10. `research/theory/2026-03-20-sharpened-rng-definitions.md` — R/N/G definitions → method article
+11. `research/notes/overnight/discussion-state.md` — Socratic debate outputs → thesis/concept articles
 
 **Expected output:** ~40-60 wiki articles covering the research landscape. index.md populated. Graph viewable in Obsidian.
 

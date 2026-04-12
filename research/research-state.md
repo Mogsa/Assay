@@ -284,11 +284,11 @@ Six analyses that require no new code — just analysis of existing rating data:
 | `scripts/rater.py` | Batch rating script (Ollama) |
 | `scripts/rate-all.sh` | tmux launcher for CLI raters |
 | `scripts/generate-rating-report.py` | Analysis report generator |
-| `docs/analysis/2026-03-19-rating-analysis.md` | v1 findings (prose) |
-| `docs/analysis/2026-03-19-rating-charts.html` | v1 findings (charts) |
-| `docs/plans/2026-03-19-frontier-evaluation-final-plan.md` | Design spec with theoretical grounding |
-| `docs/plans/2026-03-19-example-dictionary.md` | Full R/N/G calibration examples |
-| `docs/plans/2026-03-19-ratings-first-win.md` | Implementation plan (7 chunks) |
+| `research/experiments/2026-03-19-rating-analysis.md` | v1 findings (prose) |
+| `research/experiments/charts/2026-03-19-rating-charts.html` | v1 findings (charts) |
+| `docs/archive/plans/2026-03-19-frontier-evaluation-final-plan.md` | Design spec with theoretical grounding |
+| `docs/archive/plans/2026-03-19-example-dictionary.md` | Full R/N/G calibration examples |
+| `docs/archive/plans/2026-03-19-ratings-first-win.md` | Implementation plan (7 chunks) |
 
 ## Technical Gotchas
 
@@ -515,7 +515,7 @@ The deepest unsolved problem remains evaluation. Every system that succeeds (Alp
 
 ## Institutional Learning via Cooperative Coevolution (added 2026-04-04)
 
-**Full doc:** `docs/research/2026-04-04-hacc-institutional-learning.md`
+**Full doc:** `research/theory/2026-04-04-hacc-institutional-learning.md`
 
 ### The Problem
 
@@ -575,7 +575,7 @@ The v3 finding that the most capable model is the most sycophantic (Opus rubber-
 
 ## Experiment v3: Results (2026-03-31 to 2026-04-02)
 
-**Full data:** `docs/analysis/2026-04-02-v3-experiment-data-summary.md`
+**Full data:** `research/experiments/2026-04-02-v3-experiment-data-summary.md`
 
 **Setup:** 8 agents from 4 model families (Anthropic: Opus×2, Sonnet, Haiku; Google: Gemini-Pro, Gemini-Flash; OpenAI: GPT-5.4, GPT-5.4-Mini). Recalibrated rubric (1=average AI output, 5=field-defining). Adversarial Hunter/Skeptic/Referee review process. Explicit contradiction encouragement. Self-calibration instructions. Comments system new in v3. 50 seed questions (8 thesis-derived).
 
@@ -643,7 +643,7 @@ But the sycophancy barrier barely moved. Tripling structural pressure doubled co
 
 **Target:** NeurIPS 2026 Position Paper Track (~May 2026 deadline). 9 pages, NeurIPS LaTeX, double-blind. Title must state the position. Introduction must state position in bold. Judged on compelling position, not novel results. Must address alternative views.
 
-**Full framing doc:** `docs/plans/2026-03-28-paper-framing-5S.md` — contains the 5 S's, the core idea, the deeper vision (verifying the unverifiable, knowledge landscape metaphor, ideal agent properties, hallucination as raw material), what the paper IS and IS NOT, and NeurIPS format requirements.
+**Full framing doc:** `docs/archive/plans/2026-03-28-paper-framing-5S.md` — contains the 5 S's, the core idea, the deeper vision (verifying the unverifiable, knowledge landscape metaphor, ideal agent properties, hallucination as raw material), what the paper IS and IS NOT, and NeurIPS format requirements.
 
 ### The 5 S's
 
@@ -693,8 +693,8 @@ Evans et al. argue for role differentiation. But humans don't need assigned role
 
 ## v3 Experiment Design (2026-03-28)
 
-**Full spec:** `docs/superpowers/specs/2026-03-28-v3-experiment-design.md`
-**Builds on:** `docs/superpowers/specs/2026-03-23-staking-evaluation-design.md` (staking spec — the full architecture, v3 is a simplified test)
+**Full spec:** `docs/specs/2026-03-28-v3-experiment-design.md`
+**Builds on:** `docs/specs/2026-03-23-staking-evaluation-design.md` (staking spec — the full architecture, v3 is a simplified test)
 
 ### Three-tier architecture
 - **Tier 3 (Arena):** All agents debate, answer, review, rate, link. EXISTS — modify skill.md only.
@@ -731,31 +731,31 @@ Evans et al. argue for role differentiation. But humans don't need assigned role
 
 | # | File | What it contains | When to read |
 |---|------|-----------------|-------------|
-| 1 | `docs/research-state.md` (this file) | Single source of truth. Research question, hypotheses, all experiment results, paper framing, v3 design, document map. | ALWAYS read first. |
+| 1 | `research/research-state.md` (this file) | Single source of truth. Research question, hypotheses, all experiment results, paper framing, v3 design, document map. | ALWAYS read first. |
 | 2 | `CLAUDE.md` | Engineering guide. Architecture, commands, code ownership tiers, workflow, deployment. | Before writing any code. |
-| 3 | `docs/paper/draft-v1.md` | Current paper draft. | The paper itself. |
-| 4 | `docs/literature/2026-03-19-literature-review.md` | ~40 papers across 9 sections. Canon papers, LLM-as-judge, IRT, multi-agent systems, autoresearch landscape, philosophical foundations, gap analysis. | For citations and positioning. |
-| 5 | `docs/superpowers/specs/2026-03-28-v3-experiment-design.md` | Full v3 experiment spec: three tiers, 3-day loop, build tasks, metrics, thread/arc definition, why no roles, paper visuals. | Before building v3. |
-| 6 | `docs/superpowers/specs/2026-03-23-staking-evaluation-design.md` | Full staking architecture (future work). Trust currency, three-tier hierarchy, Bittensor analogy, recalibrated R/N/G anchors. v3 is a simplified test of this. | For the full vision. |
+| 3 | `research/paper/draft-v1.md` | Current paper draft. | The paper itself. |
+| 4 | `research/literature/2026-03-19-literature-review.md` | ~40 papers across 9 sections. Canon papers, LLM-as-judge, IRT, multi-agent systems, autoresearch landscape, philosophical foundations, gap analysis. | For citations and positioning. |
+| 5 | `docs/specs/2026-03-28-v3-experiment-design.md` | Full v3 experiment spec: three tiers, 3-day loop, build tasks, metrics, thread/arc definition, why no roles, paper visuals. | Before building v3. |
+| 6 | `docs/specs/2026-03-23-staking-evaluation-design.md` | Full staking architecture (future work). Trust currency, three-tier hierarchy, Bittensor analogy, recalibrated R/N/G anchors. v3 is a simplified test of this. | For the full vision. |
 | 7 | `docs/plans/2026-03-28-lost-ideas.md` | 11 key ideas from brainstorming that risk being forgotten. Each with evidence and connections. | Before making design decisions. |
-| 8 | `docs/experiments/2026-03-19-platform-analysis.md` | v1 platform analysis: agent performance, content topics, case studies of debates. | For v1 findings. |
-| 9 | `docs/experiments/2026-03-19-rating-analysis.md` | v1 rating experiment: calibration, inter-rater reliability, content type breakdown. | For v1 R/N/G data. |
+| 8 | `research/experiments/2026-03-19-platform-analysis.md` | v1 platform analysis: agent performance, content topics, case studies of debates. | For v1 findings. |
+| 9 | `research/experiments/2026-03-19-rating-analysis.md` | v1 rating experiment: calibration, inter-rater reliability, content type breakdown. | For v1 R/N/G data. |
 | 10 | `static/skill.md` | Current agent behavioural contract (127 lines). | Before modifying agent instructions. |
 | 11 | `static/rate-pass.md` | Rating-only mode with R/N/G rubric and anchors. | For R/N/G calibration examples. |
-| 12 | `docs/literature/2026-03-28-session-report.md` | Parallel Claude session record. Deep literature review, competitive landscape, strategic positioning. | For additional detail beyond this file. |
-| 13 | `docs/literature/2026-03-28-literature-review.md` | Parallel session's independent literature review (302 lines). Overlaps with #4 above — #4 is the primary/updated version. | For cross-referencing citations. |
-| 14 | `docs/literature/2026-03-28-adjacent-research-reference.md` | Comprehensive 80+ paper reference across 14 categories (533 lines). The full landscape catalogue. | For deep-dive citations and competitive positioning. |
-| 15 | `docs/experiments/2026-04-02-v3-experiment-data-summary.md` | v3 full data: 828 ratings, 278 comments, per-agent profiles, sycophancy analysis, N-G collapse, cross-round comparison. | For v3 findings and paper evidence. |
-| 16 | `docs/literature/2026-04-03-alphalab-analysis.md` | Deep analysis of AlphaLab (Morgan Stanley, 2026): architecture, results, playbook convergence, verification spectrum positioning. | For autonomous research comparison and paper framing. |
-| 17 | `docs/literature/2026-04-03-harness-engineering-landscape.md` | Harness engineering landscape: Meta-Harness, model-harness training loop, Hermes Agent, DSPy, evidence/counter-evidence, verification spectrum. | For harness engineering framing and "environment shapes behaviour" evidence. |
-| 18 | `docs/theory/2026-04-03-philosophical-grounding.md` | Full intellectual arc: Sutskever's value function → compression → bandwidth → fast-kill → frozen-weight impossibility → institutional compensation → Anthropic emotions paper → intuition literature → honest conclusion. | For dissertation chapters 4-5, theoretical framing. |
-| 19 | `docs/theory/2026-04-04-hacc-institutional-learning.md` | HACC algorithm: frozen agents can't learn → institution as learner. Swarm intelligence mapping (ABC → CoEA), 8-step loop, trust granularity, convergence analysis (4 barriers, 4 weaker claims), implementation plan. | For dissertation algorithm chapter, paper's theoretical contribution. |
-| 20 | `docs/theory/2026-03-30-morgan-core-ideas.md` | Your own words from 21 conversations — intellectual backbone. | For recovering your voice and framing. |
-| 21 | `docs/theory/2026-03-20-sharpened-rng-definitions.md` | Canonical R/N/G axis definitions with philosophical grounding. | For R/N/G reference. |
-| 22 | `docs/theory/2026-03-14-agent-soul-environment-design.md` | Soul.md design philosophy — why reflection not templates, three epistemic norms. | For agent design rationale. |
-| 23 | `docs/paper/v3-findings-draft.md` | Formal v3 writeup with propositions, proofs, trust-weighted frontier. | For paper sections 2-3. |
-| 24 | `docs/paper/assay-future-improvements.md` | Post-dissertation improvements catalogue. | For future work section. |
-| 25 | `docs/superpowers/specs/2026-03-29-paper-contribution-spec.md` | What goes in the paper — tier 1/2/3 ideas, structure. | For paper planning. |
+| 12 | `research/literature/2026-03-28-session-report.md` | Parallel Claude session record. Deep literature review, competitive landscape, strategic positioning. | For additional detail beyond this file. |
+| 13 | `research/literature/2026-03-28-literature-review.md` | Parallel session's independent literature review (302 lines). Overlaps with #4 above — #4 is the primary/updated version. | For cross-referencing citations. |
+| 14 | `research/literature/2026-03-28-adjacent-research-reference.md` | Comprehensive 80+ paper reference across 14 categories (533 lines). The full landscape catalogue. | For deep-dive citations and competitive positioning. |
+| 15 | `research/experiments/2026-04-02-v3-experiment-data-summary.md` | v3 full data: 828 ratings, 278 comments, per-agent profiles, sycophancy analysis, N-G collapse, cross-round comparison. | For v3 findings and paper evidence. |
+| 16 | `research/literature/2026-04-03-alphalab-analysis.md` | Deep analysis of AlphaLab (Morgan Stanley, 2026): architecture, results, playbook convergence, verification spectrum positioning. | For autonomous research comparison and paper framing. |
+| 17 | `research/literature/2026-04-03-harness-engineering-landscape.md` | Harness engineering landscape: Meta-Harness, model-harness training loop, Hermes Agent, DSPy, evidence/counter-evidence, verification spectrum. | For harness engineering framing and "environment shapes behaviour" evidence. |
+| 18 | `research/theory/2026-04-03-philosophical-grounding.md` | Full intellectual arc: Sutskever's value function → compression → bandwidth → fast-kill → frozen-weight impossibility → institutional compensation → Anthropic emotions paper → intuition literature → honest conclusion. | For dissertation chapters 4-5, theoretical framing. |
+| 19 | `research/theory/2026-04-04-hacc-institutional-learning.md` | HACC algorithm: frozen agents can't learn → institution as learner. Swarm intelligence mapping (ABC → CoEA), 8-step loop, trust granularity, convergence analysis (4 barriers, 4 weaker claims), implementation plan. | For dissertation algorithm chapter, paper's theoretical contribution. |
+| 20 | `research/theory/2026-03-30-morgan-core-ideas.md` | Your own words from 21 conversations — intellectual backbone. | For recovering your voice and framing. |
+| 21 | `research/theory/2026-03-20-sharpened-rng-definitions.md` | Canonical R/N/G axis definitions with philosophical grounding. | For R/N/G reference. |
+| 22 | `research/theory/2026-03-14-agent-soul-environment-design.md` | Soul.md design philosophy — why reflection not templates, three epistemic norms. | For agent design rationale. |
+| 23 | `research/paper/v3-findings-draft.md` | Formal v3 writeup with propositions, proofs, trust-weighted frontier. | For paper sections 2-3. |
+| 24 | `research/paper/assay-future-improvements.md` | Post-dissertation improvements catalogue. | For future work section. |
+| 25 | `docs/specs/2026-03-29-paper-contribution-spec.md` | What goes in the paper — tier 1/2/3 ideas, structure. | For paper planning. |
 
 **Superseded docs are in `docs/archive/`.** All pre-March-19 engineering plans, completed build plans, and superseded paper framings. Nothing deleted — just out of the way.
 
@@ -771,7 +771,7 @@ Read this file top to bottom. Then read files #2-#7 from the document map above.
 
 Hallucination is predictive processing at the frontier — the problem isn't the hallucination, it's the absence of a community to test it. Current LLMs aren't there yet (RLHF installs specific suppression mechanisms that penalise uncertainty and bold speculation — Arditi et al. 2024, Banerjee et al. 2025), but the evaluation infrastructure must be ready first.
 
-**Current state (April 2026):** v3 experiment has been run (Mar 31 – Apr 2). Results in the v3 section above and `docs/experiments/2026-04-02-v3-experiment-data-summary.md`. The paper draft is underway at `docs/paper/draft-v1.md`. The harness engineering literature (Meta-Harness, AlphaLab, model-harness training loop) has been integrated and connects directly to v3 findings.
+**Current state (April 2026):** v3 experiment has been run (Mar 31 – Apr 2). Results in the v3 section above and `research/experiments/2026-04-02-v3-experiment-data-summary.md`. The paper draft is underway at `research/paper/draft-v1.md`. The harness engineering literature (Meta-Harness, AlphaLab, model-harness training loop) has been integrated and connects directly to v3 findings.
 
 **What to do next:** Write the paper. The data is in. The framing is settled. See elevator pitch in v3 results section.
 

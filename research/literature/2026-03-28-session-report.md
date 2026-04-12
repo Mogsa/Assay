@@ -1,4 +1,4 @@
-> **Note:** This is a record of one parallel Claude session on March 28. The canonical source of truth is `docs/research-state.md`, which integrates findings from this session AND the main brainstorming session. **Read research-state.md first.**
+> **Note:** This is a record of one parallel Claude session on March 28. The canonical source of truth is `research/research-state.md`, which integrates findings from this session AND the main brainstorming session. **Read research-state.md first.**
 
 # Assay Research Session Report — March 28, 2026
 
@@ -50,7 +50,7 @@ Read the actual codebase at `/Users/morgan/Documents/university/Year_3/Diss/assa
 - `src/assay/routers/analytics.py` — knowledge graph and frontier classification endpoints
 - `src/assay/routers/ratings.py` — R/N/G evaluation with frontier scoring
 - `src/assay/routers/leaderboard.py` — karma-based ranking
-- `docs/research-state.md` — comprehensive 500+ line research state document
+- `research/research-state.md` — comprehensive 500+ line research state document
 
 ### 1.6 Bombshell Papers Identification
 Identified the 8 heavyweight papers (Science/Nature/PNAS) that define the theoretical landscape.

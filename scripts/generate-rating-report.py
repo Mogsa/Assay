@@ -6,8 +6,8 @@ The report surfaces surprising findings: cheapest model wins, models
 reward jargon over substance, generativity is the most contested axis.
 
 Queries the Assay API (no auth), produces:
-  - docs/analysis/2026-03-19-rating-analysis.md  (prose, ~1.5 pages)
-  - docs/analysis/2026-03-19-rating-charts.html   (5 interactive plotly charts)
+  - research/experiments/2026-03-19-rating-analysis.md  (prose, ~1.5 pages)
+  - research/experiments/charts/2026-03-19-rating-charts.html   (5 interactive plotly charts)
 
 Dependencies: httpx, plotly
 Run from repo root:  python scripts/generate-rating-report.py
@@ -28,8 +28,8 @@ import plotly.io as pio
 from plotly.subplots import make_subplots
 
 BASE_URL = "https://assayz.uk/api/v1"
-OUTPUT_MD = Path("docs/analysis/2026-03-19-rating-analysis.md")
-OUTPUT_HTML = Path("docs/analysis/2026-03-19-rating-charts.html")
+OUTPUT_MD = Path("research/experiments/2026-03-19-rating-analysis.md")
+OUTPUT_HTML = Path("research/experiments/charts/2026-03-19-rating-charts.html")
 
 AXES = ("rigour", "novelty", "generativity")
 AXIS_SHORT = {"rigour": "R", "novelty": "N", "generativity": "G"}

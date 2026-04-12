@@ -111,21 +111,21 @@ If a session starts T1/T2 and I begin delegating everything: flag it.
 - Deploy: `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d`
 
 **Key design docs:**
-- `docs/superpowers/specs/2026-03-20-v2-restructure-design.md` — v2 restructure spec (current)
-- `docs/plans/2026-03-20-sharpened-rng-definitions.md` — R/N/G axis definitions
+- `docs/specs/2026-03-20-v2-restructure-design.md` — v2 restructure spec (current)
+- `research/theory/2026-03-20-sharpened-rng-definitions.md` — R/N/G axis definitions
 - `docs/plans/2026-03-20-v2-community-seeding-briefing.md` — seed data plan
-- `docs/research-state.md` — single source of truth for research context
+- `research/research-state.md` — single source of truth for research context
 
 **Paper target: NeurIPS 2026 Position Paper Track (~May 2026 deadline)**
 
-The paper coins "questions, not papers" as a design principle for AI research. Position: every AI research system that succeeds uses small questions (Karpathy, Tao, FunSearch). Every system that automates papers fails (AI Scientist 42% failure, Agent Laboratory 3.8/10). The unit is wrong. Assay demonstrates what a question-based research platform looks like — where question chains create traceable social proof in domains without formal verifiers, where disagreement between agents marks the frontier, and where humans govern through the chain rather than reviewing every item. The paper is NOT a literature review and NOT a claim to solve research. It names the problem and points the direction. See `docs/plans/2026-03-28-paper-framing-5S.md` for the full 5 S's (Slogan/Symbol/Story/Surprise/Salient idea).
+The paper coins "questions, not papers" as a design principle for AI research. Position: every AI research system that succeeds uses small questions (Karpathy, Tao, FunSearch). Every system that automates papers fails (AI Scientist 42% failure, Agent Laboratory 3.8/10). The unit is wrong. Assay demonstrates what a question-based research platform looks like — where question chains create traceable social proof in domains without formal verifiers, where disagreement between agents marks the frontier, and where humans govern through the chain rather than reviewing every item. The paper is NOT a literature review and NOT a claim to solve research. It names the problem and points the direction. See `docs/archive/plans/2026-03-28-paper-framing-5S.md` for the full 5 S's (Slogan/Symbol/Story/Surprise/Salient idea).
 
 **Research context (read research-state.md first — it has a full document map):**
-- `docs/research-state.md` — **START HERE.** Research question, all experiment results (v1/v2), paper framing (5 S's), v3 experiment design, document map with read order, what NOT to do.
-- `docs/plans/2026-03-28-paper-framing-5S.md` — Paper framing: "Questions, not papers." Hallucination as predictive processing. 5 S's. Connection to Evans et al., Kim et al., Aletheia.
-- `docs/superpowers/specs/2026-03-28-v3-experiment-design.md` — v3 experiment spec: three tiers, 3-day human governance loop, adversarial review, build tasks.
-- `docs/plans/2026-03-19-literature-review.md` — Primary literature review (~40 papers, 9 sections, gap analysis).
-- `docs/research/2026-03-28-adjacent-research-reference.md` — Full 80+ paper landscape catalogue (533 lines).
+- `research/research-state.md` — **START HERE.** Research question, all experiment results (v1/v2), paper framing (5 S's), v3 experiment design, document map with read order, what NOT to do.
+- `docs/archive/plans/2026-03-28-paper-framing-5S.md` — Paper framing: "Questions, not papers." Hallucination as predictive processing. 5 S's. Connection to Evans et al., Kim et al., Aletheia.
+- `docs/specs/2026-03-28-v3-experiment-design.md` — v3 experiment spec: three tiers, 3-day human governance loop, adversarial review, build tasks.
+- `research/literature/2026-03-19-literature-review.md` — Primary literature review (~40 papers, 9 sections, gap analysis).
+- `research/literature/2026-03-28-adjacent-research-reference.md` — Full 80+ paper landscape catalogue (533 lines).
 
 ## Stack
 

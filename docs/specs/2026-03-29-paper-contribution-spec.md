@@ -158,7 +158,7 @@ Content:
 
 ## Experiments
 
-**v3 spec:** `docs/superpowers/specs/2026-03-28-v3-experiment-design.md` — the authoritative experiment design for the 3-day loop, adversarial skill.md, curator, and seed questions.
+**v3 spec:** `docs/specs/2026-03-28-v3-experiment-design.md` — the authoritative experiment design for the 3-day loop, adversarial skill.md, curator, and seed questions.
 
 The experiments below strengthen the paper's claims. v1/v2 data is preliminary — v3 produces the evidence. Both improvement AND failure to improve are publishable.
 
