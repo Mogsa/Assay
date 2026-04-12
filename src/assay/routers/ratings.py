@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from assay.activity import create_activity_entry
 from assay.auth import get_current_participant, get_optional_principal
 from assay.karma import recompute_review_karma
-from assay.notifications import create_notification
 from assay.database import get_db
 from assay.models.agent import Agent
 from assay.models.answer import Answer
@@ -51,6 +50,33 @@ def _population_variance(values: list[float]) -> float:
         return 0.0
     mean = sum(values) / len(values)
     return sum((v - mean) ** 2 for v in values) / len(values)
+
+
+async def _trust_weighted_means(
+    db: AsyncSession, target_type: str, target_id: uuid.UUID
+) -> tuple[float, float, float] | None:
+    """Trust-weighted means of R/N/G for a target.
+
+    Returns ``None`` if the target has no ratings. Single source of truth for
+    rating aggregation — used by both ``_recompute_frontier_score`` (write path)
+    and ``get_ratings`` (read path) so the stored ``frontier_score`` always
+    matches the ``consensus`` returned by the API.
+    """
+    total_trust = sqlfunc.sum(Agent.trust_score)
+    result = await db.execute(
+        select(
+            sqlfunc.sum(Rating.rigour * Agent.trust_score) / total_trust,
+            sqlfunc.sum(Rating.novelty * Agent.trust_score) / total_trust,
+            sqlfunc.sum(Rating.generativity * Agent.trust_score) / total_trust,
+        )
+        .select_from(Rating)
+        .join(Agent, Rating.rater_id == Agent.id)
+        .where(Rating.target_type == target_type, Rating.target_id == target_id)
+    )
+    row = result.one()
+    if row[0] is None:
+        return None
+    return float(row[0]), float(row[1]), float(row[2])
 
 
 async def _recompute_question_disagreement(
@@ -108,23 +134,12 @@ async def _recompute_frontier_score(
     db: AsyncSession, target_type: str, target_id: uuid.UUID
 ) -> float:
     """Recompute and store frontier_score using trust-weighted mean."""
-    total_trust = sqlfunc.sum(Agent.trust_score)
-    result = await db.execute(
-        select(
-            sqlfunc.sum(Rating.rigour * Agent.trust_score) / total_trust,
-            sqlfunc.sum(Rating.novelty * Agent.trust_score) / total_trust,
-            sqlfunc.sum(Rating.generativity * Agent.trust_score) / total_trust,
-        )
-        .select_from(Rating)
-        .join(Agent, Rating.rater_id == Agent.id)
-        .where(Rating.target_type == target_type, Rating.target_id == target_id)
-    )
-    row = result.one()
-    # Guard against zero total trust (shouldn't happen — default is 1.0)
-    avg_r = row[0] if row[0] is not None else 0
-    avg_n = row[1] if row[1] is not None else 0
-    avg_g = row[2] if row[2] is not None else 0
-    score = _compute_frontier_score(float(avg_r), float(avg_n), float(avg_g))
+    means = await _trust_weighted_means(db, target_type, target_id)
+    if means is None:
+        avg_r, avg_n, avg_g = 0.0, 0.0, 0.0
+    else:
+        avg_r, avg_n, avg_g = means
+    score = _compute_frontier_score(avg_r, avg_n, avg_g)
 
     if target_type == "question":
         q = (await db.execute(select(Question).where(Question.id == target_id))).scalar_one()
@@ -207,29 +222,10 @@ async def submit_rating(
         summary=f"Rated {body.target_type}/{str(body.target_id)[:8]} R={body.rigour} N={body.novelty} G={body.generativity}",
     )
 
-    # Cascade notifications: when a human rates, notify agents who rated the same target
-    if agent.kind == "human":
-        prior_raters = await db.execute(
-            select(Rating.rater_id, Rating.rigour, Rating.novelty, Rating.generativity)
-            .where(
-                Rating.target_type == body.target_type,
-                Rating.target_id == body.target_id,
-                Rating.rater_id != agent.id,
-            )
-        )
-        for rater_id, their_r, their_n, their_g in prior_raters:
-            delta_r = body.rigour - their_r
-            delta_n = body.novelty - their_n
-            delta_g = body.generativity - their_g
-            preview = (
-                f"Human rated R={body.rigour} N={body.novelty} G={body.generativity}. "
-                f"Your delta: R={delta_r:+d} N={delta_n:+d} G={delta_g:+d}"
-            )
-            create_notification(
-                db, rater_id, "human_rating",
-                body.target_type, body.target_id,
-                source_agent_id=agent.id, preview=preview,
-            )
+    # Human ratings enter the system only through trust recalibration (batch,
+    # via scripts/recompute_trust.py), which reweights frontier ordering on the
+    # next agent pass. No direct feedback to agents — see v4 architecture
+    # rationale, "one channel for human→agent signal" (cascades removed).
 
     await db.commit()
 
@@ -296,9 +292,13 @@ async def get_ratings(
                 frontier_score=0.0,
             )
 
-    avg_r = sum(r.rigour for r in ratings) / len(ratings)
-    avg_n = sum(r.novelty for r in ratings) / len(ratings)
-    avg_g = sum(r.generativity for r in ratings) / len(ratings)
+    # Trust-weighted aggregation — matches the value stored in frontier_score
+    # by _recompute_frontier_score. Single source of truth: _trust_weighted_means.
+    means = await _trust_weighted_means(db, target_type, target_id)
+    if means is None:
+        avg_r, avg_n, avg_g = 0.0, 0.0, 0.0
+    else:
+        avg_r, avg_n, avg_g = means
 
     return RatingsForItem(
         ratings=ratings,

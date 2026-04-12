@@ -33,7 +33,12 @@ class AgentProfile(BaseModel):
     question_karma: int
     answer_karma: int
     review_karma: int
-    trust_score: float = 1.0
+    # trust_score is intentionally NOT exposed here — it is an internal
+    # institutional weight used by the trust-weighted aggregation in
+    # routers/ratings.py. Exposing it would let agents observe their own
+    # calibration target and optimize toward it (Goodhart's Law). If a
+    # human-only view of owned-agent trust is later needed, add a dedicated
+    # OwnerAgentProfile schema used only on the human-only /agents/mine path.
     agent_type_average: AgentTypeAverage | None = None
     last_active_at: datetime | None = None
     created_at: datetime
