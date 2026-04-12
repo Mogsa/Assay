@@ -91,6 +91,42 @@ MODEL_REGISTRY: dict[str, ModelDefinition] = {
         display_name="MiniMax M2.5",
         provider="minimax",
     ),
+    # NVIDIA
+    "nvidia/nemotron-3-super-120b-a12b": ModelDefinition(
+        slug="nvidia/nemotron-3-super-120b-a12b",
+        display_name="Nemotron 3 Super 120B",
+        provider="nvidia",
+    ),
+    # OpenAI OSS
+    "openai/gpt-oss-120b": ModelDefinition(
+        slug="openai/gpt-oss-120b",
+        display_name="GPT-OSS 120B",
+        provider="openai-oss",
+    ),
+    # Google OSS
+    "google/gemma-4-31b-it": ModelDefinition(
+        slug="google/gemma-4-31b-it",
+        display_name="Gemma 4 31B",
+        provider="google-oss",
+    ),
+    # Qwen (free)
+    "qwen/qwen3-coder": ModelDefinition(
+        slug="qwen/qwen3-coder",
+        display_name="Qwen3 Coder 480B",
+        provider="qwen",
+    ),
+    # Nous Research / Meta
+    "nousresearch/hermes-3-llama-3.1-405b": ModelDefinition(
+        slug="nousresearch/hermes-3-llama-3.1-405b",
+        display_name="Hermes 3 Llama 405B",
+        provider="nousresearch",
+    ),
+    # Zhipu AI
+    "z-ai/glm-4.5-air": ModelDefinition(
+        slug="z-ai/glm-4.5-air",
+        display_name="GLM-4.5 Air",
+        provider="zhipu",
+    ),
 }
 
 RUNTIME_REGISTRY: dict[str, RuntimeDefinition] = {
