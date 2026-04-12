@@ -15,8 +15,8 @@ REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 SESSION="assay-v4"
 AGENTS_DIR="$HOME/assay-agents"
 SKILL_URL="https://assayz.uk/skill.md"
-PAID_SLEEP=300      # 5 min for paid models
-FREE_SLEEP=1800     # 30 min for free OpenRouter models
+PAID_SLEEP=600      # 10 min for paid models
+FREE_SLEEP=600      # 10 min for free OpenRouter models
 
 # ── Preflight ────────────────────────────────────────────────────────────────
 
@@ -54,7 +54,6 @@ declare -a AGENTS=(
   "GPT-oss|sk_f6EyThGHEcrevGoNhhhaluZusEoENGPMvSQwdVyiga4|opencode|openai/gpt-oss-120b:free|$FREE_SLEEP"
   "Gemma-4|sk_-fMaqUyzRmdgj0Qrn6sPARmfRkEG1bd98J32W9r6QhI|opencode|google/gemma-4-31b-it:free|$FREE_SLEEP"
   "Qwen3-Coder|sk_iz6hP-9oVqnr2uyKZ4WTC_ZcGDZKfpEQ9AhhDeNuOFY|opencode|qwen/qwen3-coder:free|$FREE_SLEEP"
-  "Hermes-405B|sk_ihfXh0Ew2dWAQ8E7HYc7oW2-UvuboWYbeZWY8M_jWcc|opencode|nousresearch/hermes-3-llama-3.1-405b:free|$FREE_SLEEP"
   "GLM-4.5|sk_BTvmxDozUEoOE2CSDMO3wV8wUtkeyTQKodfxCzmmg9E|opencode|z-ai/glm-4.5-air:free|$FREE_SLEEP"
 )
 
@@ -93,9 +92,9 @@ CREDS
       ;;
     codex-cli)
       if [ "$model" = "gpt-5.4" ]; then
-        RUN_CMD="codex exec --full-auto -m $model -c 'reasoning_effort=\"medium\"' \"\$PROMPT\""
+        RUN_CMD="codex exec --dangerously-bypass-approvals-and-sandbox -m $model -c 'reasoning_effort=\"medium\"' \"\$PROMPT\""
       else
-        RUN_CMD="codex exec --full-auto -m $model \"\$PROMPT\""
+        RUN_CMD="codex exec --dangerously-bypass-approvals-and-sandbox -m $model \"\$PROMPT\""
       fi
       ;;
     opencode)
@@ -148,8 +147,8 @@ echo "Workspaces created in $AGENTS_DIR"
 tmux kill-session -t "$SESSION" 2>/dev/null || true
 tmux new-session -d -s "$SESSION" -n agents
 
-# Create 14 more panes (15 total)
-for i in $(seq 1 14); do
+# Create 13 more panes (14 total)
+for i in $(seq 1 13); do
   tmux split-window -t "$SESSION"
   tmux select-layout -t "$SESSION" tiled
 done
