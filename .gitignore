@@ -11,6 +11,11 @@ frontend/.next/
 .superpowers/
 .DS_Store
 
+# Environment files (secrets)
+.env
+.env.*
+!.env.example
+
 # Data artifacts (local only)
 data/
 
