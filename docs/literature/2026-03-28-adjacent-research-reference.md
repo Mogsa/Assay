@@ -290,7 +290,12 @@ This document contains every paper, system, and framework identified across two 
 - Multi-Agent Decomposed Evolution for domains WITHOUT objective fitness functions. Uses LLM judges as evaluators. "Fundamental paradigm shift: from optimizing 'computable metrics' to 'describable qualities.'"
 - **Assay relevance:** Directly validates that evolutionary search works with subjective LLM evaluation. Bridge from FunSearch (formal) to Assay (subjective).
 
-### 5.7 CodeEvolve
+### 5.8 PostTrainBench (Rank et al., March 2026)
+- Rank, B., Bhatnagar, H., Prabhu, A., Eisenberg, S., Nguyen, K., Bethge, M. & Andriushchenko, M. "PostTrainBench: Can LLM Agents Automate LLM Post-Training?" arXiv:2603.08640 (March 2026).
+- Benchmark: can frontier agents (Claude Code Opus 4.6, GPT-5.1 Codex) autonomously post-train base LLMs within 10h on one H100? Best agent: 23.2% on AIME (vs 51.1% official instruction-tuned). But jagged: GPT-5.1 Codex Max hit 89% on BFCL with Gemma-3-4B vs 67% for the official model. Failure modes: reward hacking, training on test sets, downloading existing checkpoints, unauthorized API key use.
+- **Assay relevance:** (i) Classic jagged frontier in action — agents exceed baselines in some domains, badly underperform in others. Supports per-task evaluation over aggregate benchmarks. (ii) The failure modes (reward hacking, test contamination) are exactly what evaluation infrastructure like Assay needs to surface — blind trust in agent output is dangerous even when aggregate quality is high. (iii) Shows the "AI automating AI research" frontier is real but unreliable, reinforcing the need for human governance in the loop.
+
+### 5.9 CodeEvolve
 - arxiv:2510.14150 (2025)
 - Open-source implementation of FunSearch/AlphaEvolve paradigm.
 
@@ -417,7 +422,12 @@ This document contains every paper, system, and framework identified across two 
 - Hypothesis prior probability = algorithmic universal probability. Best model achieves best compression. At evaluative frontier, no existing model class compresses well.
 - **Assay relevance:** Connects to Morgan's Telepathic Benchmark work on BLC.
 
-### 9.5 Boundary Objects
+### 9.5 The Platonic Representation Hypothesis (Huh et al., 2024)
+- Huh, M., Cheung, B., Wang, T. & Isola, P. "The Platonic Representation Hypothesis." arXiv:2405.07987 (2024).
+- Empirical evidence that different neural networks are converging toward the same representation of reality as they scale. Vision and language models increasingly measure distances between data points similarly. The authors invoke Plato's ideal forms: all models are converging toward a shared statistical model of reality — the "platonic representation."
+- **Assay relevance:** Creates a productive tension with the jagged frontier. If representations converge, cross-model R/N/G agreement should increase with scale — testable on Assay's multi-family agent data. But convergence in representation ≠ convergence in reliability (Gans shows jaggedness persists under scaling). Also reframes sycophancy: if models share the same latent representation, their agreement on evaluations may be genuine convergence toward a shared statistical model, not performative agreement. This supports the "sycophancy as feature" framing in the paper.
+
+### 9.6 Boundary Objects
 - Star, S.L. & Griesemer, J.R. *Social Studies of Science* (1989)
 - Objects "plastic enough to adapt to local needs yet robust enough to maintain common identity across sites." Assay as boundary object mediating cross-disciplinary evaluation.
 
@@ -512,6 +522,26 @@ This document contains every paper, system, and framework identified across two 
 
 ### 14.4 Semantic Scholar API
 - Used by SciAgents, GoAI, and others for novelty checking and literature retrieval.
+
+---
+
+## 15. JAGGED FRONTIER THEORY
+
+### 15.1 Dell'Acqua et al. (2025) — "Navigating the Jagged Technological Frontier"
+- Dell'Acqua, F. et al. "Navigating the Jagged Technological Frontier: Field Experimental Evidence of the Effects of Artificial Intelligence on Knowledge Worker Productivity and Quality." *Organization Science* (2025). DOI: 10.1287/orsc.2025.21838
+- Field experiment with 758 BCG consultants using GPT-4 on 18 realistic tasks. Tasks "inside the frontier" (AI-capable): 40% performance increase. Tasks "outside the frontier" (AI-incapable): 19% performance DECREASE. Coined "jagged technological frontier" — the boundary of AI capability is uneven and unpredictable across task space. Workers who trusted AI indiscriminately performed WORSE than the control group on frontier-crossing tasks.
+- **Assay relevance:** Foundational framing. Assay's entire design thesis is that AI performance is jagged — excellent at question-scale tasks, poor at paper-scale automation. The jagged frontier concept explains WHY evaluation must be per-question, not per-system: a model that aces one question can fail the next. R/N/G ratings on individual contributions are the mechanism for discovering where the frontier lies. Dell'Acqua's paper gives Assay its motivating empirical phenomenon.
+
+### 15.2 Gans (2026) — "A Model of Artificial Jagged Intelligence"
+- Gans, J.S. "A Model of Artificial Jagged Intelligence." NBER Working Paper 34712 (January 2026). http://www.nber.org/papers/w34712
+- Formalizes AJI as an information problem. Three core properties: (i) local heterogeneity — performance is uneven with "pockets" of competence and "holes" of high error, (ii) opacity — users don't initially know where the pockets and holes are, (iii) discoverability matters — adoption depends on whether users can locate reliable regions. Models truth as a rough Brownian process, AI knowledge as scattered Poisson points, local error as posterior variance. Derives adoption threshold for blind users. Key insight: a calibrated user who can condition on local uncertainty enjoys positive expected value even in domains that fail the blind adoption test. Mastery modelled as Gaussian process regression yields a learning-rate bound driven by information gain.
+- Gans interprets scaling laws (Kaplan et al., 2020) as λ↑ — increasing Poisson density improves average quality without eliminating jaggedness. Builds on the spatial knowledge framework of Carnehl & Schneider (2025, Econometrica); cite Gans directly unless invoking the spatial framework explicitly.
+- **Assay relevance:** Direct theoretical underpinning. Gans's three properties map exactly to Assay's design: (i) local heterogeneity → per-question R/N/G ratings capture local quality variation, (ii) opacity → blind ratings and community evaluation reveal what individual agents can't see, (iii) discoverability → frontier scoring and knowledge graph topology are the mechanism for discovering where "the model works." The calibration result is especially important: it formalizes why Morgan's human gold-standard calibration matters — a calibrated evaluator extracts value from AI even in unreliable domains.
+
+### 15.3 Kaplan et al. (2020) — Scaling Laws for Neural Language Models
+- Kaplan, J., McCandlish, S., Henighan, T., Brown, T.B., Chess, B., Child, R., Gray, S., Radford, A., Wu, J. & Amodei, D. "Scaling Laws for Neural Language Models." arXiv:2001.08361 (2020).
+- Established power-law scaling of LLM performance with model size, dataset size, and compute. Smooth, predictable improvement curves at the aggregate level.
+- **Assay relevance:** Gans reinterprets scaling as λ↑ (denser Poisson coverage of task space). The key tension: scaling laws predict smooth average improvement, but Dell'Acqua's field data shows the frontier stays jagged. Assay can adopt the same interpretation — scaling improves the AVERAGE frontier_score across questions, but per-question variance remains high, which is why continuous per-item evaluation doesn't become obsolete as models improve.
 
 ---
 

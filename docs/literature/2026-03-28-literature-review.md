@@ -134,6 +134,20 @@ Zhou et al. (2024) conducted a detailed evaluation of LLMs as automated paper re
 
 **Key open problem for Assay:** The reliability of LLM reviewers is negatively correlated with the novelty of what they're evaluating. Zhou et al.'s finding that LLMs struggle with logical reasoning in review is particularly concerning for frontier questions, which by definition require reasoning about unfamiliar territory.
 
+### 2.5 Rubrics as Rewards (Gunjal et al., 2025) — arxiv:2507.17746
+
+Gunjal et al. propose Rubrics as Rewards (RaR), an on-policy reinforcement learning approach that uses instance-specific rubric-based feedback as reward signals, extending RL with verifiable rewards (RLVR) beyond domains with binary correctness answers into open-ended evaluation tasks in medical and scientific reasoning.
+
+**Key findings:**
+- RaR achieved up to 31% relative improvement on HealthBench and 7% on GPQA-Diamond versus LLM-as-judge baselines
+- Smaller judges showed better alignment with rubric-based signals — performance variance decreased across judge scales
+- Structured rubric decomposition outperformed holistic Likert-scale LLM-as-judge scoring
+- Policies trained with RaR generalised well to both rubric-based and multiple-choice evaluations
+
+**Relevance to Assay:** This paper provides direct external validation for two of Assay's design choices. First, Assay's R/N/G axis framework is structurally a rubric decomposition — evaluating along explicit criteria rather than asking for a holistic quality judgment. RaR's finding that rubric-based signals outperform LLM-as-judge baselines supports this architectural decision. Second, the finding that smaller judges align better with rubric-based signals echoes Assay's empirical result that the cheapest model (Gemini Flash, MAE=0.53) calibrates best with human judgment while the most capable (Opus, MAE=0.97) calibrates worst. RaR suggests this is not an anomaly but a structural property of rubric-based evaluation: smaller models may be less prone to overriding structured criteria with their own implicit preferences.
+
+**Gap:** RaR operates in domains where rubrics can be pre-specified per instance (medical checklists, science QA). Assay's frontier evaluation problem is harder — the rubric axes (Rigour, Novelty, Generativity) must generalise across diverse question types where "correct" evaluation is itself contested. RaR demonstrates rubrics work when you know the right rubric; Assay asks what happens when the rubric is philosophically grounded but the ground truth is absent.
+
 ---
 
 ## 3. Bradley-Terry and Pairwise Comparison Methods
@@ -266,6 +280,8 @@ TDA, particularly persistent homology, provides mathematical tools for detecting
 10. Yano, T. et al. "An Empirical Study of LLM-as-a-Judge: How Design Choices Impact Evaluation Reliability." arxiv:2506.13639 (2025)
 11. Statistical Framework for Ranking LLM-Based Chatbots. arxiv:2412.18407 — generalized BT/Rao-Kupper/Davidson models
 12. HindSight. "Evaluating LLM-Generated Research Ideas via Future Impact." arxiv:2603.15164 (March 2026)
+
+13. Gunjal, A. et al. "Rubrics as Rewards: Reinforcement Learning Beyond Verifiable Domains." arxiv:2507.17746 (2025)
 
 ### Tier 3: Knowledge Graphs & Frontier Detection
 13. GoAI. "Graph of AI Ideas: Leveraging Knowledge Graphs and LLMs for AI Research Idea Generation." arxiv:2503.08549 (2025)
