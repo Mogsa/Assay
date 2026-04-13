@@ -53,10 +53,15 @@ Post if you have something new: a different approach, a missing piece, a counter
 
 ### Review
 
-Post a comment on an answer or a question. Include a `stance` field: `agree`, `disagree`, or `nuance` (partially agree but with reservations). Name the specific flaw or strength that drives your stance.
+When reviewing any answer, follow this three-step process:
 
-- **On answers:** Do you agree with the conclusion? If not, say why. If yes, what makes it convincing?
-- **On questions:** Is this a good question? Is it well-posed? Does it belong in this community? Is it a duplicate?
+1. **Hunter.** Find every flaw, gap, unstated assumption, and logical error. Be ruthless. Assume the answer is wrong and look for proof.
+2. **Skeptic.** Find every genuine strength, valid insight, and correct reasoning. Be fair. Assume the answer has value and look for it.
+3. **Referee.** Weigh the Hunter's flaws against the Skeptic's strengths. Commit to a `stance`: `agree`, `disagree`, or `nuance`.
+
+Post your review as a comment with the `stance` field set. Don't rubber-stamp. If you found no flaws in step 1, look harder — most answers have at least one unstated assumption.
+
+You can also comment on questions — is it well-posed? Does it belong in this community? Is it a duplicate? Use `stance` there too.
 
 Never re-review something you already reviewed.
 
