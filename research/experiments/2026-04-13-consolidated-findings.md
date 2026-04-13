@@ -358,6 +358,14 @@ Verdict: **correct.**
 > "The link-poster who writes contradicts ('this was wrong from the start') vs. extends ('this was right but is no longer true') faces the SAME uncertainty the discriminant is supposed to resolve. [...] The narrowing needs an independent criterion for compositional correctness that does not rely on the N-trajectory it seeks to classify."
 Verdict: **correct.**
 
+**Example 4 (v3, Opus-2 — identifies category does not hold, stamps correct):**
+> "If the category of cross-session behavior is determined by whether the write event produced a principle-level or incident-level entry, then persistent state does not create a new epistemic category. [...] The claim that Category 3 is NOT a third epistemic category is too strong."
+Verdict: **correct.** The reviewer argues the answer's central claim doesn't hold — the proposed category collapses under the reviewer's own analysis.
+
+**Example 5 (v2, Opus-2 — identifies self-contradiction, stamps correct):**
+> "'Computational depth fails' is overstated. The answer's own example actually supports a refined depth hypothesis: depth of the VERIFICATION procedure, not just the problem. [...] The claim 'we cannot actually construct C=0 benchmarks' contradicts the answer's own C=0 construction two paragraphs earlier."
+Verdict: **correct.** The reviewer identifies that the answer (a) overstates its central claim, and (b) internally contradicts itself — claiming C=0 benchmarks are impossible while having just constructed one. This example is from **v2** — the text-score gap existed BEFORE the adversarial protocol was introduced.
+
 **Source:** `text-score-gap.md` (all sections), `P1-RESOLUTIONS.md` (verdict counts), blind content analysis (session Apr 13).
 
 ---
@@ -476,7 +484,7 @@ Agent quotes:
 - **GPT-54:** "Not the same latent variable." Decomposed into corpus rarity vs representation mismatch.
 - **Haiku:** Extended to 3-way: Personal N, Statistical N, Field-level N.
 
-This finding potentially explains the v3 N-G collapse (r=0.745): if Factual-N measures the same thing as G (both are about whether something generates new territory), while Impact-N is a distinct construct, collapsing them into one axis produces the observed correlation.
+This finding potentially explains the v3 N-G collapse (r=0.738): if Factual-N measures the same thing as G (both are about whether something generates new territory), while Impact-N is a distinct construct, collapsing them into one axis produces the observed correlation.
 
 **Source:** `rating-ecology.md` (Sections 1-3), `P1-RESOLUTIONS.md`, `2026-04-13-v4-experiment-findings.md`.
 
@@ -533,6 +541,10 @@ Restored in commit `49f2e9c` (Apr 13). Pending measurement in batch 2.
 
 Only 6/16 questions improve while 10 get worse. The mean improvement is driven by a few large wins. One catastrophic failure: when the sole GPT-rated question is held out, GPT has zero calibration data, and the system falls back on Gemini-only ratings (R=5, N=5, G=5), producing trust-weighted error of 6.93 (theoretical maximum).
 
+**Robustness check — excluding catastrophic outlier (jackknife, n=15):** Removing the GPT outlier question: 10.3% improvement, but still only 6 questions improve vs 9 worse. The mechanism is directionally correct even without the outlier, but individual-question reliability remains poor.
+
+**Source:** `calibration-story.md` Section 6.
+
 **Per-axis MAE (v3):**
 
 | Family | R (Rigour) | N (Novelty) | G (Generativity) | Overall |
@@ -545,6 +557,10 @@ Only 6/16 questions improve while 10 get worse. The mean improvement is driven b
 | **Mean** | **1.10** | **1.12** | **1.35** | **1.19** |
 
 Best-calibrated axis: R (mean MAE 1.10). Worst: G (mean MAE 1.35). The calibration gradient reproduces the verifiability gradient: R (most verifiable) is easiest, G (least verifiable) is hardest.
+
+**Novelty is the most contested axis:** 13 of the 15 questions with the highest cross-family disagreement diverged primarily on N (Novelty). Agents from different families agree roughly on R (is this well-constructed?) and G (does this open doors?) but disagree sharply on N (is this genuinely new?). This is consistent with N being the axis most dependent on the rater's training data — different training corpora produce different assessments of what counts as novel.
+
+**Source:** `RESULTS-NARRATIVE.md` Section IV.3.
 
 **The 16 human-rated questions (v3, from `calibration-story.md`):**
 
