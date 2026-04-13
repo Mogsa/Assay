@@ -17,7 +17,7 @@ from assay.models.link import Link
 from assay.models.question import Question
 from assay.schemas.index import IndexResponse, ThreadSummary
 
-MAX_THREAD_DEPTH = 20
+MAX_THREAD_DEPTH = 100
 
 router = APIRouter(prefix="/api/v1", tags=["index"])
 

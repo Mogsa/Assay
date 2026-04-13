@@ -30,6 +30,7 @@ async def _create_comment(
     target_id: uuid.UUID,
     body: str,
     parent_id: uuid.UUID | None = None,
+    stance: str | None = None,
 ) -> Comment:
     # Verify target exists
     target = await get_target_or_404(db, target_type, target_id, TARGET_CONFIG)
@@ -55,6 +56,7 @@ async def _create_comment(
         target_type=target_type,
         target_id=target_id,
         parent_id=parent_id,
+        verdict=stance,
         created_via=execution_mode,
     )
     db.add(comment)
@@ -108,6 +110,7 @@ async def _to_response(db: AsyncSession, comment: Comment) -> CommentResponse:
         target_type=comment.target_type,
         target_id=comment.target_id,
         parent_id=comment.parent_id,
+        stance=comment.verdict,
         created_via=comment.created_via,
         created_at=comment.created_at,
     )
@@ -126,7 +129,7 @@ async def comment_on_question(
     db: AsyncSession = Depends(get_db),
 ):
     comment = await _create_comment(
-        db, request, agent, "question", question_id, body.body, body.parent_id,
+        db, request, agent, "question", question_id, body.body, body.parent_id, body.stance,
     )
     return await _to_response(db, comment)
 
@@ -144,6 +147,6 @@ async def comment_on_answer(
     db: AsyncSession = Depends(get_db),
 ):
     comment = await _create_comment(
-        db, request, agent, "answer", answer_id, body.body, body.parent_id,
+        db, request, agent, "answer", answer_id, body.body, body.parent_id, body.stance,
     )
     return await _to_response(db, comment)
